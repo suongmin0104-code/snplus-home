@@ -1,6 +1,19 @@
 let activeSlide = 0;
 let slideTimer;
+const DEFAULT_VIEW = "home";
 const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function hasView(viewName) {
+  return Array.from(document.querySelectorAll("[data-view]")).some((view) => view.dataset.view === viewName);
+}
+
+function normalizeView(viewName) {
+  return hasView(viewName) ? viewName : DEFAULT_VIEW;
+}
+
+function getHashView() {
+  return location.hash.replace("#", "") || DEFAULT_VIEW;
+}
 
 function showSlide(index) {
   const slides = document.querySelectorAll(".start-slide");
@@ -38,18 +51,30 @@ function bindSlider() {
 }
 
 function showView(viewName) {
+  const targetView = normalizeView(viewName);
   const viewLinks = document.querySelectorAll("[data-view-link]");
   const views = document.querySelectorAll("[data-view]");
   views.forEach((view) => {
-    view.classList.toggle("active", view.dataset.view === viewName);
+    view.classList.toggle("active", view.dataset.view === targetView);
   });
 
   viewLinks.forEach((link) => {
-    link.classList.toggle("active", link.dataset.viewLink === viewName);
+    link.classList.toggle("active", link.dataset.viewLink === targetView);
   });
 
   window.scrollTo({ top: 0, behavior: prefersReducedMotion ? "auto" : "smooth" });
-  history.replaceState(null, "", `#${viewName}`);
+}
+
+function navigateToView(viewName) {
+  const targetView = normalizeView(viewName);
+  const targetHash = `#${targetView}`;
+
+  if (location.hash !== targetHash) {
+    location.hash = targetView;
+    return;
+  }
+
+  showView(targetView);
 }
 
 function bindNavigation() {
@@ -57,7 +82,7 @@ function bindNavigation() {
     link.addEventListener("click", (event) => {
       event.preventDefault();
       closeDropdowns();
-      showView(link.dataset.viewLink);
+      navigateToView(link.dataset.viewLink);
     });
   });
 }
@@ -134,17 +159,24 @@ function initializePage() {
   bindDropdowns();
   bindCatalogFilters();
 
-  const initialView = location.hash.replace("#", "") || "home";
-  if (initialView && document.querySelector(`[data-view="${initialView}"]`)) {
-    showView(initialView);
+  const initialView = getHashView();
+  if (!hasView(initialView)) {
+    location.replace("#home");
+    return;
   }
+
+  showView(initialView);
 }
 
 window.addEventListener("hashchange", () => {
-  const nextView = location.hash.replace("#", "") || "home";
-  if (document.querySelector(`[data-view="${nextView}"]`)) {
-    showView(nextView);
+  const nextView = getHashView();
+  if (!hasView(nextView)) {
+    location.replace("#home");
+    return;
   }
+
+  closeDropdowns();
+  showView(nextView);
 });
 
 initializePage();

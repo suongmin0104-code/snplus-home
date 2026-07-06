@@ -472,6 +472,40 @@ img {
   text-align: center;
 }
 
+.internal-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  width: fit-content;
+  max-width: 1180px;
+  margin: 0 auto 18px;
+  padding: 0 14px;
+  border: 1px solid rgba(21, 33, 38, 0.12);
+  border-radius: var(--radius);
+  color: #2f444b;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 10px 24px rgba(20, 38, 45, 0.08);
+  font-size: 14px;
+  font-weight: 900;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.internal-back:hover,
+.internal-back:focus-visible {
+  transform: translateY(-2px);
+  border-color: rgba(42, 166, 160, 0.48);
+  box-shadow: var(--soft-shadow);
+}
+
+.section > .internal-back {
+  display: flex;
+}
+
+.contact-back {
+  margin-top: -8px;
+}
+
 .page-title h2 {
   margin: 0;
   font-size: clamp(34px, 5vw, 58px);

@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const indexPath = join(root, "index.html");
 const html = readFileSync(indexPath, "utf8");
+const script = readFileSync(join(root, "script.js"), "utf8");
 const failures = [];
 
 function requireMatch(pattern, message) {
@@ -46,6 +47,19 @@ requireMatch(/name="robots"\s+content="index, follow"/, "robots 메타 태그 �
 requireMatch(/031-852-2918/, "대표 전화번호 확인이 필요합니다.");
 requireMatch(/031-852-2919/, "팩스번호 확인이 필요합니다.");
 requireMatch(/https:\/\/blog\.naver\.com\/sn6221/, "네이버 블로그 HTTPS 주소 확인이 필요합니다.");
+
+const forbiddenNavigationApis = [
+  "history.back(",
+  "history.go(",
+  "history.pushState(",
+  "history.replaceState("
+];
+
+for (const api of forbiddenNavigationApis) {
+  if (script.includes(api)) {
+    failures.push(`브라우저 이전 기록에 의존하는 API를 사용하지 마세요: ${api}`);
+  }
+}
 
 requireFile("assets/docs/sn-catalog.pdf", "제품 카탈로그 PDF가 필요합니다.");
 requireFile("assets/docs/sn-company-profile-2026-cover.pdf", "공사 지명원 공개용 첫 페이지 PDF가 필요합니다.");
