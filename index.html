@@ -680,12 +680,68 @@
           <p class="section-note">제목과 문의 내용을 정리한 뒤 전화 또는 카카오톡으로 바로 상담할 수 있습니다.</p>
         </div>
         <div class="estimate-contact-layout">
-          <form class="estimate-form" aria-label="견적 문의 내용 작성">
-            <label for="estimate-subject">제목</label>
-            <input id="estimate-subject" name="subject" type="text" placeholder="예: 자전거보관소 설치 견적 문의" />
+          <form class="estimate-form" aria-label="견적 문의 내용 작성" data-contact-form novalidate>
+            <div class="form-grid">
+              <label>
+                <span>회사명 <em>*</em></span>
+                <input id="estimate-company" name="companyName" type="text" autocomplete="organization" placeholder="예: 주식회사 에스앤" required />
+              </label>
 
-            <label for="estimate-message">문의 내용</label>
-            <textarea id="estimate-message" name="message" rows="8" placeholder="현장 위치, 설치 수량, 희망 제품, 납품 희망일 등을 적어주세요."></textarea>
+              <label>
+                <span>담당자명 <em>*</em></span>
+                <input id="estimate-name" name="contactName" type="text" autocomplete="name" placeholder="예: 홍길동" required />
+              </label>
+
+              <label>
+                <span>연락처 <em>*</em></span>
+                <input id="estimate-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="예: 031-852-2918" required />
+              </label>
+
+              <label>
+                <span>이메일</span>
+                <input id="estimate-email" name="email" type="email" autocomplete="email" placeholder="예: sn6221@naver.com" />
+              </label>
+            </div>
+
+            <div class="form-grid">
+              <label>
+                <span>문의 유형</span>
+                <select id="estimate-type" name="inquiryType">
+                  <option value="">선택 안 함</option>
+                  <option value="디자인형 울타리">디자인형 울타리</option>
+                  <option value="교량난간">교량난간</option>
+                  <option value="볼라드 및 교통안전시설">볼라드 및 교통안전시설</option>
+                  <option value="철구조물 및 시설물 시공">철구조물 및 시설물 시공</option>
+                  <option value="관급·조달 제출자료">관급·조달 제출자료</option>
+                  <option value="기타 문의">기타 문의</option>
+                </select>
+              </label>
+
+              <label>
+                <span>문의 제목</span>
+                <input id="estimate-subject" name="subject" type="text" placeholder="예: 자전거보관소 설치 견적 문의" />
+              </label>
+            </div>
+
+            <label>
+              <span>문의 내용 <em>*</em></span>
+              <textarea id="estimate-message" name="message" rows="7" placeholder="현장 위치, 설치 수량, 희망 제품, 납품 희망일 등을 적어주세요." required></textarea>
+            </label>
+
+            <div class="hp-field" aria-hidden="true">
+              <label for="estimate-website">홈페이지</label>
+              <input id="estimate-website" name="website" type="text" tabindex="-1" autocomplete="off" />
+            </div>
+
+            <label class="consent-row">
+              <input id="estimate-privacy" name="privacyConsent" type="checkbox" value="true" required />
+              <span>견적 상담을 위해 입력한 개인정보 수집 및 이용에 동의합니다.</span>
+            </label>
+
+            <div class="form-submit-row">
+              <button class="button primary dark estimate-submit" type="submit" data-contact-submit>문의 접수하기</button>
+              <p class="form-status" data-contact-status role="status" aria-live="polite"></p>
+            </div>
           </form>
 
           <aside class="consult-panel" aria-label="바로 상담">

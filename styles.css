@@ -2130,12 +2130,32 @@ img {
   padding: clamp(22px, 3vw, 34px);
 }
 
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
 .estimate-form label {
+  display: grid;
+  gap: 8px;
   color: #152126;
   font-weight: 900;
 }
 
+.estimate-form label span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.estimate-form label em {
+  color: #1c9b9a;
+  font-style: normal;
+}
+
 .estimate-form input,
+.estimate-form select,
 .estimate-form textarea {
   width: 100%;
   border: 1px solid var(--line);
@@ -2146,8 +2166,80 @@ img {
   font: inherit;
 }
 
+.estimate-form input:focus,
+.estimate-form select:focus,
+.estimate-form textarea:focus {
+  border-color: var(--teal);
+  outline: 3px solid rgba(28, 155, 154, 0.16);
+}
+
 .estimate-form textarea {
   resize: vertical;
+}
+
+.hp-field {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.consent-row {
+  display: flex !important;
+  align-items: flex-start;
+  grid-template-columns: none;
+  gap: 10px !important;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #f8fbfb;
+  color: #31464d !important;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.consent-row input {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  accent-color: var(--teal);
+}
+
+.form-submit-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.estimate-submit {
+  border: 0;
+  cursor: pointer;
+}
+
+.estimate-submit:disabled {
+  cursor: wait;
+  opacity: 0.68;
+}
+
+.form-status {
+  flex: 1;
+  min-width: min(100%, 260px);
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.form-status.success {
+  color: #0b7f65;
+}
+
+.form-status.error {
+  color: #b42318;
 }
 
 .consult-panel {
@@ -2755,6 +2847,7 @@ img {
   .section-head.inline,
   .greeting-layout,
   .check-panel,
+  .form-grid,
   .proof-card,
   .history-list li,
   .org-teams,

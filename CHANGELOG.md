@@ -7,6 +7,10 @@
 - Vite 기반 배포 구성 추가
 - `.gitignore` 추가
 - `.env.example` 추가
+- Vercel Serverless Function 기반 견적 문의 접수 API `/api/contact` 추가
+- 견적센터 운영 필드, 개인정보 동의, honeypot 스팸 방지 추가
+- `DOCS/CONTACT_SYSTEM.md` 작성
+- `DOCS/CONTACT_SYSTEM_ROADMAP.md` 작성
 - 정적 사이트 lint 스크립트 추가
 - `public/robots.txt` 추가
 - `public/sitemap.xml` 추가
@@ -33,6 +37,9 @@
 - 이미지 lazy loading 및 async decoding 적용
 - 자동 슬라이드가 `prefers-reduced-motion` 설정을 존중하도록 변경
 - 정적 사이트 lint 스크립트를 SEO, manifest, 404, 공개 PDF, 로컬 링크, lazy loading까지 검사하도록 강화
+- 견적센터 폼을 회사명, 담당자명, 연락처, 문의 유형, 제목, 문의내용 기반으로 확장
+- 문의폼 제출 중/성공/실패 UX와 5초 재전송 방지 적용
+- `.env.example`을 Vercel 문의 시스템 환경변수 기준으로 갱신
 
 ### Verified
 

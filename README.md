@@ -7,6 +7,7 @@
 - `index.html`: 홈페이지 본문
 - `styles.css`: 전체 스타일
 - `script.js`: 화면 전환, 드롭다운, 슬라이더 동작
+- `api/contact.js`: 견적센터 문의 접수 API
 - `assets/`: 이미지, 카탈로그 이미지, 공개 PDF
 - `public/`: robots, sitemap
 - `DOCS/`: 배포 및 운영 문서
@@ -44,6 +45,21 @@ http://127.0.0.1:4173/
 npm run lint
 ```
 
+## 견적 문의 시스템
+
+견적센터 문의폼은 Vercel Serverless Function `/api/contact`와 Resend API로 회사 메일 `sn6221@naver.com`에 접수됩니다.
+
+Vercel 환경변수:
+
+```text
+RESEND_API_KEY=
+CONTACT_RECEIVER_EMAIL=sn6221@naver.com
+CONTACT_FROM_EMAIL=
+VITE_SITE_URL=https://snplus.ai.kr
+```
+
+운영 방법은 `DOCS/CONTACT_SYSTEM.md`를 확인합니다.
+
 ## 빌드
 
 ```bash
@@ -67,6 +83,8 @@ Vercel 배포 기준:
 - `DOCS/VERCEL_DEPLOYMENT_GUIDE.md`
 - `DOCS/DOMAIN_CONNECTION_GUIDE.md`
 - `DOCS/PRODUCTION_CHECKLIST.md`
+- `DOCS/CONTACT_SYSTEM.md`
+- `DOCS/CONTACT_SYSTEM_ROADMAP.md`
 
 ## 도메인 연결
 
