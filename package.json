@@ -1,0 +1,15 @@
+{
+  "name": "sn-home",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "lint": "node scripts/lint-static-site.mjs",
+    "build": "vite build && node scripts/copy-linked-static-assets.mjs",
+    "preview": "vite preview --host 127.0.0.1"
+  },
+  "devDependencies": {
+    "vite": "^7.0.0"
+  }
+}
