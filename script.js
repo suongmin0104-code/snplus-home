@@ -1,5 +1,6 @@
 let activeSlide = 0;
 let slideTimer;
+const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 function showSlide(index) {
   const slides = document.querySelectorAll(".start-slide");
@@ -17,7 +18,7 @@ function showSlide(index) {
 
 function startSlideTimer() {
   const slides = document.querySelectorAll(".start-slide");
-  if (!slides.length) return;
+  if (!slides.length || prefersReducedMotion) return;
 
   window.clearInterval(slideTimer);
   slideTimer = window.setInterval(() => {
@@ -47,7 +48,7 @@ function showView(viewName) {
     link.classList.toggle("active", link.dataset.viewLink === viewName);
   });
 
-  window.scrollTo({ top: 0, behavior: "auto" });
+  window.scrollTo({ top: 0, behavior: prefersReducedMotion ? "auto" : "smooth" });
   history.replaceState(null, "", `#${viewName}`);
 }
 
