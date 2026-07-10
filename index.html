@@ -35,7 +35,7 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
     <link rel="preload" as="image" href="./assets/photos/lane-delineator-hero-web.jpg" fetchpriority="high" />
-    <link rel="stylesheet" href="./styles.css?v=20260710-premium-refinement-4" />
+    <link rel="stylesheet" href="./styles.css?v=20260710-corporate-showcase-3" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -112,7 +112,7 @@
           </div>
         </div>
       </nav>
-      <a class="nav-cta" href="#contact" data-view-link="contact">문의하기</a>
+      <a class="nav-cta" href="#contact" data-view-link="contact"><span aria-hidden="true">☎</span> 문의하기</a>
     </header>
 
     <main>
@@ -140,45 +140,81 @@
       </section>
 
       <section id="dashboard" class="section dashboard view active" data-view="home" aria-labelledby="dashboard-title">
-        <div class="start-slider" aria-label="대표 사업 이미지 슬라이드">
-          <article class="start-slide active" data-slide="0">
-            <img src="./assets/photos/lane-delineator-hero-web.jpg" alt="차선규제봉 도로 설치 이미지" fetchpriority="high" decoding="async" />
-            <div class="start-copy">
-              <span>도로 안전시설 전문기업</span>
-              <h1>우리는 도로의 안전을 창조합니다.</h1>
-              <p>
-                다년간 쌓아온 기술과 현장 경험을 통해<br />
-                사고 없는 미래와 안전한 교통 문화를 만들어가겠습니다.
-              </p>
+        <div class="home-hero">
+          <img src="./assets/photos/bicycle-shelter-hero-web.jpg" alt="주식회사 에스앤 자전거보관소 및 금속 구조물 시공 이미지" fetchpriority="high" decoding="async" />
+          <div class="home-hero-shade"></div>
+          <div class="home-hero-copy">
+            <span>교통안전시설물 전문 제조·시공 기업</span>
+            <h1 id="dashboard-title">우리는<br />생활의 안전을 설계합니다.</h1>
+            <p>자전거보관소와 캐노피, 금속 구조물부터 현장 맞춤형 안전시설까지 기획·제작·시공을 한 흐름으로 제공합니다.</p>
+            <div class="home-hero-actions">
+              <a class="home-button primary" href="#estimate" data-view-link="estimate">견적 문의하기 <b aria-hidden="true">›</b></a>
+              <a class="home-button outline" href="#field" data-view-link="field">시공사례 보기 <b aria-hidden="true">›</b></a>
             </div>
-          </article>
-          <article class="start-slide" data-slide="1">
-            <img src="./assets/photos/bicycle-shelter-hero-web.jpg" alt="자전거보관소 설치 이미지" loading="lazy" decoding="async" />
-            <div class="start-copy">
-              <span>생활 안전시설 맞춤 제작</span>
-              <h1>우리는 생활의 안전을 설계합니다.</h1>
-              <p>
-                자전거보관소와 캐노피, 금속 구조물까지<br />
-                현장에 맞춘 제작·시공 솔루션을 제공합니다.
-              </p>
-            </div>
-          </article>
-          <div class="slider-dots" aria-label="대표 이미지 선택">
-            <button type="button" class="active" data-slide-target="0" aria-label="차선규제봉 보기"></button>
-            <button type="button" data-slide-target="1" aria-label="자전거보관소 보기"></button>
+          </div>
+          <div class="home-capability-grid" aria-label="에스앤 핵심 역량">
+            <article><span aria-hidden="true">⌁</span><strong>현장 맞춤 제작</strong><small>최적의 설계·제작</small></article>
+            <article><span aria-hidden="true">⌖</span><strong>전국 시공 대응</strong><small>신속한 현장 대응</small></article>
+            <article><span aria-hidden="true">▤</span><strong>조달·납품 지원</strong><small>나라장터 제출 대응</small></article>
+            <article><span aria-hidden="true">♢</span><strong>유지관리 기준</strong><small>지속적인 사후 관리</small></article>
           </div>
         </div>
 
-        <div class="home-contact-bar" aria-label="주식회사 에스앤 연락처">
-          <strong>주식회사 에스앤</strong>
-          <span>본사·공장: 경기도 화성시 마도면 청원로231번길 4</span>
-          <span>지사: 경기도 부천시 양지로 205 서영아너시티2 1004호</span>
-          <a href="tel:031-852-2918">TEL 031-852-2918</a>
-          <span>FAX 031-852-2919</span>
+        <div class="home-trust-strip" aria-label="에스앤 품질 기준">
+          <article><span>01</span><div><strong>안전 최우선</strong><small>사용자의 안전을 먼저 생각합니다.</small></div></article>
+          <article><span>02</span><div><strong>품질 제작</strong><small>현장에 맞는 정밀 제작을 수행합니다.</small></div></article>
+          <article><span>03</span><div><strong>전문 기술력</strong><small>설계·제작·시공 역량을 갖췄습니다.</small></div></article>
+          <article><span>04</span><div><strong>신뢰와 책임</strong><small>완성까지 책임 있게 대응합니다.</small></div></article>
+        </div>
+
+        <div class="home-block home-business">
+          <div class="home-block-title">
+            <div><span>Business</span><h2>사업분야</h2><p>에스앤의 핵심 사업 분야를 확인해보세요.</p></div>
+            <a href="#business" data-view-link="business">사업분야 전체 보기 <b aria-hidden="true">›</b></a>
+          </div>
+          <div class="home-business-grid">
+            <a href="#business-fence" data-view-link="business-fence"><img src="./assets/photos/design-railing-hero-web.jpg" alt="디자인형 울타리" loading="lazy" decoding="async" /><span>01</span><h3>디자인형 울타리</h3><p>도시의 안전과 경관을 함께 설계합니다.</p><small>자세히 보기 ›</small></a>
+            <a href="#business-bridge" data-view-link="business-bridge"><img src="./assets/photos/bridge-railing-new-web.jpg" alt="교량난간" loading="lazy" decoding="async" /><span>02</span><h3>교량난간</h3><p>안전한 이동을 위한 견고한 품질입니다.</p><small>자세히 보기 ›</small></a>
+            <a href="#business-traffic" data-view-link="business-traffic"><img src="./assets/photos/traffic-bollard-web.jpg" alt="볼라드 및 교통안전시설" loading="lazy" decoding="async" /><span>03</span><h3>볼라드·안전시설</h3><p>사람을 먼저 생각하는 교통안전시설입니다.</p><small>자세히 보기 ›</small></a>
+            <a href="#business-steel" data-view-link="business-steel"><img src="./assets/photos/bicycle-shelter-hero-web.jpg" alt="철구조물 및 시설물 시공" loading="lazy" decoding="async" /><span>04</span><h3>철구조물 시공</h3><p>기술력으로 완성하는 생활 시설물입니다.</p><small>자세히 보기 ›</small></a>
+          </div>
+        </div>
+
+        <div class="home-block home-cases">
+          <div class="home-block-title">
+            <div><span>Projects</span><h2>시공사례</h2><p>현장과 환경에 맞춰 완성한 주요 시설물입니다.</p></div>
+            <a href="#field" data-view-link="field">시공사례 전체 보기 <b aria-hidden="true">›</b></a>
+          </div>
+          <div class="home-case-grid">
+            <a href="#business-steel" data-view-link="business-steel"><img src="./assets/photos/bicycle-shelter-hero-web.jpg" alt="자전거보관소 시공사례" loading="lazy" decoding="async" /><span>생활 안전시설</span><h3>금속 구조물 자전거보관소</h3><p>안전한 이동과 보관을 고려한 생활 시설물</p></a>
+            <a href="#business-fence" data-view-link="business-fence"><img src="./assets/photos/design-railing-hero-web.jpg" alt="디자인형 울타리 시공사례" loading="lazy" decoding="async" /><span>디자인 울타리</span><h3>보행 안전 디자인 울타리</h3><p>경관과 안전을 함께 고려한 도로 시설물</p></a>
+            <a href="#business-traffic" data-view-link="business-traffic"><img src="./assets/photos/traffic-safety-rail-web.jpg" alt="도로 교통안전시설 시공사례" loading="lazy" decoding="async" /><span>교통 안전시설</span><h3>도로 안전시설 설치</h3><p>현장 조건에 맞춘 제작과 책임 시공</p></a>
+          </div>
+        </div>
+
+        <div class="home-block home-process">
+          <div class="home-block-title compact"><div><span>Process</span><h2>시공 프로세스</h2><p>기획부터 시공까지 체계적으로 진행합니다.</p></div></div>
+          <ol class="home-process-grid">
+            <li><span>01</span><strong>상담</strong><p>현장과 필요한 제품을 확인합니다.</p></li>
+            <li><span>02</span><strong>현장 검토</strong><p>설치 조건과 수량을 검토합니다.</p></li>
+            <li><span>03</span><strong>설계·제작</strong><p>현장 규격에 맞춰 제작합니다.</p></li>
+            <li><span>04</span><strong>시공·관리</strong><p>안전하게 시공하고 관리합니다.</p></li>
+          </ol>
+        </div>
+
+        <div class="home-contact-cta">
+          <div><span>프로젝트에 맞는</span><strong>구조물 솔루션이 필요하신가요?</strong><p>현장 조건과 설치 수량을 알려주시면 빠르게 검토해 드립니다.</p></div>
+          <a href="tel:031-852-2918"><small>전화 상담</small><b>031-852-2918</b></a>
+          <a href="mailto:sn6221@naver.com"><small>이메일</small><b>sn6221@naver.com</b></a>
+          <a class="home-cta-button" href="#estimate" data-view-link="estimate">문의 남기기 <b aria-hidden="true">›</b></a>
         </div>
       </section>
 
       <section id="company" class="section company-menu view with-sub-visual banner-company" data-view="company" data-banner="COMPANY" aria-labelledby="company-title">
+        <div class="sub-banner-copy">
+          <h1>회사소개</h1>
+          <p>에스앤의 방향, 기본 정보, 연혁과 조직 구성을<br />한눈에 확인할 수 있습니다.</p>
+        </div>
         <div class="section-head">
           <span class="kicker">Company</span>
           <h2 id="company-title">회사소개</h2>
@@ -186,33 +222,43 @@
         </div>
         <div class="company-card-grid">
           <a class="company-card" href="#greeting" data-view-link="greeting">
-            <img src="./assets/illustrations-soft/company-greeting.png" alt="인사말 이미지" loading="lazy" decoding="async" />
+            <div class="card-scene company-scene scene-1" role="img" aria-label="신뢰를 상징하는 비즈니스 악수"></div>
             <span class="service-icon">01</span>
             <h3>인사말</h3>
             <p>안전과 경관을 함께 설계하는 에스앤의 약속.</p>
           </a>
           <a class="company-card" href="#overview" data-view-link="overview">
-            <img src="./assets/illustrations-soft/company-overview.png" alt="회사 개요 이미지" loading="lazy" decoding="async" />
+            <div class="card-scene company-scene scene-2" role="img" aria-label="현대적인 기업 사옥"></div>
             <span class="service-icon">02</span>
             <h3>회사 개요</h3>
             <p>창업, 법인 설립, 전문 면허와 주요 사업 정보.</p>
           </a>
           <a class="company-card" href="#history" data-view-link="history">
-            <img src="./assets/illustrations-soft/company-history.png" alt="연혁 이미지" loading="lazy" decoding="async" />
+            <div class="card-scene company-scene scene-3" role="img" aria-label="성장과 발전을 나타내는 도시 그래프"></div>
             <span class="service-icon">03</span>
             <h3>연혁</h3>
             <p>2010년 창업 이후 현재까지 이어온 성장 과정.</p>
           </a>
           <a class="company-card" href="#organization" data-view-link="organization">
-            <img src="./assets/illustrations-soft/company-org.png" alt="조직도 이미지" loading="lazy" decoding="async" />
+            <div class="card-scene company-scene scene-4" role="img" aria-label="프로젝트를 논의하는 전문 인력"></div>
             <span class="service-icon">04</span>
             <h3>조직도</h3>
             <p>관리, 영업, 생산, 시공 체계를 갖춘 조직 구성.</p>
           </a>
         </div>
+        <div class="page-help-strip">
+          <div class="page-help-copy"><span aria-hidden="true">◎</span><div><strong>더 자세한 정보가 필요하신가요?</strong><p>에스앤의 사업, 제품, 시공, 조달 관련 문의는 전문 담당자가 안내해 드립니다.</p></div></div>
+          <a href="tel:031-852-2918"><span aria-hidden="true">☎</span><div><strong>031-852-2918</strong><small>전화 상담하기</small></div></a>
+          <a href="#estimate" data-view-link="estimate"><span aria-hidden="true">✉</span><div><strong>문의하기</strong><small>온라인 문의</small></div></a>
+          <a class="page-help-primary" href="#resources" data-view-link="resources"><span aria-hidden="true">▣</span><div><strong>자료 요청하기</strong><small>카탈로그·도면 요청</small></div></a>
+        </div>
       </section>
 
       <section id="greeting" class="section greeting view with-sub-visual banner-company" data-view="greeting" data-banner="COMPANY" aria-labelledby="greeting-title">
+        <div class="sub-banner-copy">
+          <h1>인사말</h1>
+          <p>안전과 경관을 최우선으로 생각하는<br />에스앤의 약속입니다.</p>
+        </div>
         <a class="internal-back" href="#company" data-view-link="company" data-internal-back>← 목록으로</a>
         <div class="greeting-layout text-only">
           <div class="greeting-copy">
@@ -349,9 +395,14 @@
       </section>
 
       <section id="business" class="section view with-sub-visual banner-business" data-view="business" data-banner="BUSINESS" aria-labelledby="business-title">
+        <div class="sub-banner-copy">
+          <h1>사업분야</h1>
+          <p>사람과 도시의 안전을 위한 에스앤의<br />핵심 사업 영역을 소개합니다.</p>
+        </div>
         <div class="section-head">
           <span class="kicker">Business Scope</span>
           <h2 id="business-title">사업분야</h2>
+          <p class="section-note">에스앤이 제공하는 핵심 사업 분야를 확인할 수 있습니다.</p>
         </div>
         <div class="business-card-grid">
           <a class="business-card" href="#business-fence" data-view-link="business-fence">
@@ -378,6 +429,12 @@
             <h3>철구조물 및 시설물 시공</h3>
             <p>기술력으로 완성하는 공간.</p>
           </a>
+        </div>
+        <div class="page-help-strip">
+          <div class="page-help-copy"><span aria-hidden="true">◎</span><div><strong>더 자세한 사업 정보가 필요하신가요?</strong><p>사업 분야, 제품, 시공, 조달 관련 문의는 전문 담당자가 안내해 드립니다.</p></div></div>
+          <a href="tel:031-852-2918"><span aria-hidden="true">☎</span><div><strong>031-852-2918</strong><small>전화 상담하기</small></div></a>
+          <a href="#estimate" data-view-link="estimate"><span aria-hidden="true">✉</span><div><strong>문의하기</strong><small>온라인 문의</small></div></a>
+          <a class="page-help-primary" href="./assets/docs/sn-catalog.pdf" target="_blank" rel="noopener"><span aria-hidden="true">▣</span><div><strong>자료 요청하기</strong><small>카탈로그·도면 요청</small></div></a>
         </div>
       </section>
 
@@ -531,6 +588,10 @@
       </section>
 
       <section id="resources" class="section menu-page view with-sub-visual banner-resources" data-view="resources" data-banner="RESOURCES" aria-labelledby="resources-title">
+        <div class="sub-banner-copy">
+          <h1>조달·자료</h1>
+          <p>입찰과 관급 제출에 필요한 실적 및<br />공개 자료를 확인할 수 있습니다.</p>
+        </div>
         <div class="section-head">
           <span class="kicker">Resources</span>
           <h2 id="resources-title">조달·자료</h2>
@@ -561,6 +622,12 @@
             <h3>제품 카탈로그</h3>
             <p>디자인형 울타리, 볼라드, 표지판, 방음벽 등 제품 자료.</p>
           </a>
+        </div>
+        <div class="page-help-strip">
+          <div class="page-help-copy"><span aria-hidden="true">◎</span><div><strong>제출용 자료가 필요하신가요?</strong><p>공개용 자료 외 상세 실적과 증빙 자료는 회사 확인 후 안내해 드립니다.</p></div></div>
+          <a href="tel:031-852-2918"><span aria-hidden="true">☎</span><div><strong>031-852-2918</strong><small>전화 상담하기</small></div></a>
+          <a href="#estimate" data-view-link="estimate"><span aria-hidden="true">✉</span><div><strong>자료 문의</strong><small>온라인 문의</small></div></a>
+          <a class="page-help-primary" href="./assets/docs/sn-catalog.pdf" target="_blank" rel="noopener"><span aria-hidden="true">▣</span><div><strong>카탈로그 보기</strong><small>공개 자료 확인</small></div></a>
         </div>
       </section>
 
@@ -639,6 +706,10 @@
       </section>
 
       <section id="support" class="section menu-page support-menu view with-sub-visual banner-support" data-view="support" data-banner="SUPPORT" aria-labelledby="support-title">
+        <div class="sub-banner-copy">
+          <h1>고객지원</h1>
+          <p>견적 요청, 전화 상담, 카카오톡 상담을<br />한눈에 확인할 수 있습니다.</p>
+        </div>
         <div class="section-head">
           <span class="kicker">Customer Support</span>
           <h2 id="support-title">고객지원</h2>
@@ -646,29 +717,35 @@
         </div>
         <div class="menu-card-grid">
           <a class="menu-card" href="#estimate" data-view-link="estimate">
-            <img src="./assets/illustrations-soft/support-estimate.png" alt="견적센터 이미지" loading="lazy" decoding="async" />
+            <div class="card-scene support-scene scene-1" role="img" aria-label="도면과 견적 검토 자료"></div>
             <span class="service-icon">01</span>
             <h3>견적센터</h3>
             <p>현장 조건, 설치 수량, 희망 제품을 정리해 견적 문의.</p>
           </a>
           <a class="menu-card" href="#contact" data-view-link="contact">
-            <img src="./assets/illustrations-soft/support-contact.png" alt="문의하기 이미지" loading="lazy" decoding="async" />
+            <div class="card-scene support-scene scene-2" role="img" aria-label="온라인 문의 화면"></div>
             <span class="service-icon">02</span>
             <h3>문의하기</h3>
             <p>전화, 팩스, 카카오톡, 네이버 블로그 연락처 확인.</p>
           </a>
           <a class="menu-card" href="tel:031-852-2918">
-            <img src="./assets/illustrations-soft/support-phone.png" alt="전화 상담 이미지" loading="lazy" decoding="async" />
+            <div class="card-scene support-scene scene-3" role="img" aria-label="업무용 전화 상담 장비"></div>
             <span class="service-icon">03</span>
             <h3>전화 상담</h3>
             <p>근무시간 내 031-852-2918로 바로 상담.</p>
           </a>
           <a class="menu-card kakao-menu-card" href="https://pf.kakao.com/" target="_blank" rel="noopener">
-            <img src="./assets/illustrations-soft/support-kakao.png" alt="카카오톡 상담 이미지" loading="lazy" decoding="async" />
+            <div class="card-scene support-scene scene-4" role="img" aria-label="모바일 채팅 상담 화면"></div>
             <span class="service-icon">04</span>
             <h3>카카오톡 상담</h3>
             <p>카카오톡 채널 주소 연결 후 바로 상담 가능.</p>
           </a>
+        </div>
+        <div class="page-help-strip">
+          <div class="page-help-copy"><span aria-hidden="true">◎</span><div><strong>빠른 상담이 필요하신가요?</strong><p>현장 사진과 설치 위치를 준비하시면 더 빠르게 안내받을 수 있습니다.</p></div></div>
+          <a href="tel:031-852-2918"><span aria-hidden="true">☎</span><div><strong>031-852-2918</strong><small>전화 상담하기</small></div></a>
+          <a href="#estimate" data-view-link="estimate"><span aria-hidden="true">✉</span><div><strong>문의하기</strong><small>온라인 문의</small></div></a>
+          <a class="page-help-primary" href="https://pf.kakao.com/" target="_blank" rel="noopener"><span aria-hidden="true">●</span><div><strong>카카오톡 상담</strong><small>빠른 상담 연결</small></div></a>
         </div>
       </section>
 
@@ -885,6 +962,10 @@
       </section>
 
       <section id="contact" class="section contact view with-sub-visual banner-contact" data-view="contact" data-banner="CONTACT" aria-labelledby="contact-title">
+        <div class="sub-banner-copy">
+          <h1>문의하기</h1>
+          <p>전화, 팩스, 카카오톡, 네이버 블로그를 통해<br />에스앤과 쉽게 연결할 수 있습니다.</p>
+        </div>
         <div>
           <span class="kicker">Contact</span>
           <h2 id="contact-title">연락처</h2>
@@ -907,12 +988,14 @@
       </a>
       <p class="footer-address">
         <span>본사·공장: 경기도 화성시 마도면 청원로231번길 4</span>
+        <span>지사: 경기도 부천시 양지로 205 서영아너시티2 1004호</span>
         <span>TEL 031-852-2918 · FAX 031-852-2919</span>
-        <small>© 주식회사 에스앤. All rights reserved.</small>
+        <span>E-MAIL sn6221@naver.com</span>
+        <small>© 2026 주식회사 에스앤. All rights reserved.</small>
       </p>
       <a class="footer-top" href="#home" data-view-link="home">맨 위로</a>
     </footer>
 
-    <script type="module" src="./script.js?v=20260710-premium-refinement"></script>
+    <script type="module" src="./script.js?v=20260710-corporate-showcase-1"></script>
   </body>
 </html>
