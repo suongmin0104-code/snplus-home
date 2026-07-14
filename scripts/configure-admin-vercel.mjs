@@ -10,7 +10,7 @@ if (!username || username.length > 80) {
 }
 
 if (!stdin.isTTY) {
-  console.error("보안을 위해 대화형 터미널에서 실행해 주세요.");
+  console.error("보안을 위해 별도의 터미널 창에서 실행해 주세요.");
   process.exit(1);
 }
 
@@ -46,10 +46,16 @@ function readSecret(prompt) {
         return;
       }
       if (character === "\u007f" || character === "\b") {
-        if (value.length > 0) value = value.slice(0, -1);
+        if (value.length > 0) {
+          value = value.slice(0, -1);
+          stdout.write("\b \b");
+        }
         return;
       }
-      if (character >= " ") value += character;
+      if (character >= " ") {
+        value += character;
+        stdout.write("*");
+      }
     };
 
     stdin.on("data", onData);
@@ -102,8 +108,8 @@ try {
   addProductionEnvironmentVariable("ADMIN_USERNAME", username);
   addProductionEnvironmentVariable("ADMIN_PASSWORD_HASH", passwordHash);
   addProductionEnvironmentVariable("ADMIN_SESSION_SECRET", sessionSecret);
-  console.log("\n관리자 계정 보안값을 Vercel Production에 등록했습니다.");
-  console.log("새 배포가 완료되면 https://snplus.ai.kr/admin 에서 로그인할 수 있습니다.");
+  console.log("\n관리자 계정 보안값을 Vercel 운영 환경에 등록했습니다.");
+  console.log("재배포가 완료되면 https://snplus.ai.kr/admin 에서 로그인할 수 있습니다.");
 } catch (error) {
   console.error("\nVercel 환경변수 등록에 실패했습니다.");
   console.error(String(error.message || error));
