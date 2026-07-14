@@ -6,7 +6,12 @@ const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const indexPath = join(root, "index.html");
 const html = readFileSync(indexPath, "utf8");
 const script = readFileSync(join(root, "script.js"), "utf8");
+const adminHtml = readFileSync(join(root, "admin.html"), "utf8");
+const adminScript = readFileSync(join(root, "admin.js"), "utf8");
+const adminAuth = readFileSync(join(root, "lib", "admin-auth.js"), "utf8");
 const envExample = readFileSync(join(root, ".env.example"), "utf8");
+const robots = readFileSync(join(root, "public", "robots.txt"), "utf8");
+const vercelConfig = JSON.parse(readFileSync(join(root, "vercel.json"), "utf8"));
 const failures = [];
 
 function requireMatch(pattern, message) {
@@ -17,6 +22,12 @@ function requireMatch(pattern, message) {
 
 function requireFile(relativePath, message) {
   if (!existsSync(join(root, relativePath))) {
+    failures.push(message);
+  }
+}
+
+function requireAdminMatch(pattern, message) {
+  if (!pattern.test(adminHtml)) {
     failures.push(message);
   }
 }
@@ -60,6 +71,12 @@ for (const envKey of ["RESEND_API_KEY", "CONTACT_RECEIVER_EMAIL", "CONTACT_FROM_
   }
 }
 
+for (const envKey of ["ADMIN_USERNAME", "ADMIN_PASSWORD_HASH", "ADMIN_SESSION_SECRET", "ESTIMATE_ERP_URL", "TAX_ERP_URL"]) {
+  if (!envExample.includes(`${envKey}=`)) {
+    failures.push(`.env.example is missing the admin key: ${envKey}`);
+  }
+}
+
 const forbiddenNavigationApis = [
   "history.back(",
   "history.go(",
@@ -86,6 +103,53 @@ requireFile("public/sitemap.xml", "public/sitemap.xml이 필요합니다.");
 requireFile("api/contact.js", "Vercel 문의 접수 API가 필요합니다.");
 requireFile("DOCS/CONTACT_SYSTEM.md", "문의 시스템 운영 문서가 필요합니다.");
 requireFile("DOCS/CONTACT_SYSTEM_ROADMAP.md", "문의 시스템 확장 로드맵 문서가 필요합니다.");
+
+for (const api of forbiddenNavigationApis) {
+  if (adminScript.includes(api)) {
+    failures.push(`Admin navigation must not depend on browser history: ${api}`);
+  }
+}
+
+requireAdminMatch(/<html\s+lang="ko"/, "admin.html must declare Korean language.");
+requireAdminMatch(/name="robots"\s+content="noindex, nofollow, noarchive"/, "Admin page must not be indexed.");
+requireAdminMatch(/data-login-form/, "Admin login form is required.");
+requireAdminMatch(/data-module-view="estimate"/, "Estimate ERP module is required.");
+requireAdminMatch(/data-module-view="tax"/, "Tax ERP module is required.");
+
+if (/href=["']\/admin\/?["']/.test(html)) {
+  failures.push("The public homepage must not expose a direct admin link.");
+}
+
+for (const securityToken of ["HttpOnly", "Secure", "SameSite=Strict"]) {
+  if (!adminAuth.includes(securityToken)) {
+    failures.push(`Admin session cookie is missing ${securityToken}.`);
+  }
+}
+
+if (!robots.includes("Disallow: /admin")) {
+  failures.push("robots.txt must disallow the admin workspace.");
+}
+
+const adminRewrite = vercelConfig.rewrites?.some(
+  (rewrite) => rewrite.source === "/admin" && rewrite.destination === "/admin.html"
+);
+if (!adminRewrite) {
+  failures.push("vercel.json must rewrite /admin to /admin.html.");
+}
+
+for (const adminFile of [
+  "admin.html",
+  "admin.css",
+  "admin.js",
+  "lib/admin-auth.js",
+  "api/admin/login.js",
+  "api/admin/session.js",
+  "api/admin/logout.js",
+  "api/admin/overview.js",
+  "DOCS/ADMIN_WORKSPACE.md"
+]) {
+  requireFile(adminFile, `Admin workspace file is required: ${adminFile}`);
+}
 
 const forbiddenDocs = [
   "assets/docs/sn-company-profile-2026.pdf",

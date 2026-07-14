@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SN 업무포털 | 주식회사 에스앤</title>
+    <meta name="description" content="주식회사 에스앤 내부 업무포털" />
+    <meta name="robots" content="noindex, nofollow, noarchive" />
+    <meta name="theme-color" content="#10242b" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="stylesheet" href="./admin.css" />
+    <script type="module" src="./admin.js"></script>
+  </head>
+  <body data-auth-state="loading">
+    <a class="skip-link" href="#admin-main">본문으로 바로가기</a>
+
+    <section class="loading-view" aria-live="polite">
+      <div class="loading-mark">
+        <img src="./assets/company/sn-logo-mark-small.png" alt="" width="64" height="64" decoding="async" />
+      </div>
+      <strong>SN 업무포털</strong>
+      <span>보안 세션을 확인하고 있습니다.</span>
+      <span class="loading-line" aria-hidden="true"></span>
+    </section>
+
+    <main class="login-view" aria-labelledby="login-title">
+      <section class="login-panel">
+        <a class="login-brand" href="/" aria-label="주식회사 에스앤 홈페이지">
+          <img src="./assets/company/sn-logo-mark-small.png" alt="" width="58" height="58" decoding="async" />
+          <span><strong>주식회사 에스앤</strong><small>SN WORKSPACE</small></span>
+        </a>
+        <div class="login-copy">
+          <span class="eyebrow"><i data-lucide="shield-check"></i> INTERNAL ACCESS</span>
+          <h1 id="login-title">업무포털 로그인</h1>
+          <p>회사 업무자료를 보호하기 위해 승인된 계정으로만 접속할 수 있습니다.</p>
+        </div>
+        <form class="login-form" data-login-form novalidate>
+          <label>
+            <span>아이디</span>
+            <span class="input-wrap"><i data-lucide="user-round"></i><input name="username" type="text" autocomplete="username" required /></span>
+          </label>
+          <label>
+            <span>비밀번호</span>
+            <span class="input-wrap">
+              <i data-lucide="lock-keyhole"></i>
+              <input name="password" type="password" autocomplete="current-password" minlength="10" required />
+              <button class="password-toggle" type="button" data-password-toggle aria-label="비밀번호 보기"><i data-lucide="eye"></i></button>
+            </span>
+          </label>
+          <p class="form-message" data-login-message role="alert"></p>
+          <button class="primary-button login-button" type="submit">
+            <span>로그인</span><i data-lucide="arrow-right"></i>
+          </button>
+        </form>
+        <div class="login-security"><i data-lucide="shield-check"></i><span>8시간 보안 세션 · 외부 검색 비노출</span></div>
+      </section>
+      <aside class="login-aside" aria-hidden="true">
+        <div class="aside-grid"></div>
+        <div class="aside-content">
+          <span>ONE COMPANY · ONE VIEW</span>
+          <strong>견적부터 세무까지<br />한 화면에서.</strong>
+          <div class="aside-modules">
+            <span><i data-lucide="file-spreadsheet"></i> 견적 ERP</span>
+            <span><i data-lucide="receipt-text"></i> 세무 ERP</span>
+            <span><i data-lucide="folder-lock"></i> 사내 자료</span>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <main class="setup-view" aria-labelledby="setup-title">
+      <section class="setup-card">
+        <span class="setup-icon"><i data-lucide="shield-alert"></i></span>
+        <p class="eyebrow">ADMIN SETUP REQUIRED</p>
+        <h1 id="setup-title">관리자 보안 설정이 필요합니다.</h1>
+        <p>관리자 계정과 세션 키가 등록되기 전에는 업무포털이 열리지 않습니다.</p>
+        <div class="setup-keys" aria-label="필요한 환경변수">
+          <code>ADMIN_USERNAME</code>
+          <code>ADMIN_PASSWORD_HASH</code>
+          <code>ADMIN_SESSION_SECRET</code>
+        </div>
+        <a class="secondary-button" href="/">공개 홈페이지로 이동</a>
+      </section>
+    </main>
+
+    <div class="portal-shell">
+      <header class="portal-header">
+        <div class="portal-brand">
+          <button class="icon-button menu-button" type="button" data-menu-toggle aria-label="메뉴 열기"><i data-lucide="menu"></i></button>
+          <img src="./assets/company/sn-logo-mark-small.png" alt="" width="42" height="42" decoding="async" />
+          <span><strong>SN 업무포털</strong><small>주식회사 에스앤</small></span>
+        </div>
+        <div class="header-actions">
+          <span class="internal-badge"><i data-lucide="lock-keyhole"></i> 내부 전용</span>
+          <button class="icon-button" type="button" data-refresh title="새로고침" aria-label="데이터 새로고침"><i data-lucide="refresh-cw"></i></button>
+          <button class="icon-button" type="button" data-logout title="로그아웃" aria-label="로그아웃"><i data-lucide="log-out"></i></button>
+        </div>
+      </header>
+
+      <aside class="portal-sidebar" data-sidebar>
+        <nav aria-label="관리자 메뉴">
+          <p class="nav-label">WORKSPACE</p>
+          <button class="portal-nav is-active" type="button" data-module="dashboard"><i data-lucide="layout-dashboard"></i><span>통합 현황</span></button>
+          <button class="portal-nav" type="button" data-module="estimate"><i data-lucide="file-spreadsheet"></i><span>견적 관리</span><small data-nav-status="estimate">연결 전</small></button>
+          <button class="portal-nav" type="button" data-module="tax"><i data-lucide="receipt-text"></i><span>세무·회계</span><small data-nav-status="tax">연결 전</small></button>
+          <button class="portal-nav" type="button" data-module="clients"><i data-lucide="building-2"></i><span>거래처</span></button>
+          <button class="portal-nav" type="button" data-module="tasks"><i data-lucide="calendar-check-2"></i><span>일정·할 일</span></button>
+          <button class="portal-nav" type="button" data-module="documents"><i data-lucide="folder-lock"></i><span>사내 자료</span></button>
+          <p class="nav-label nav-label-settings">SYSTEM</p>
+          <button class="portal-nav" type="button" data-module="settings"><i data-lucide="settings"></i><span>연동 설정</span></button>
+        </nav>
+        <div class="sidebar-foot">
+          <span class="user-avatar"><i data-lucide="user-round"></i></span>
+          <span><strong data-user-name>관리자</strong><small>Administrator</small></span>
+        </div>
+      </aside>
+
+      <main class="portal-main" id="admin-main" tabindex="-1">
+        <div class="portal-content">
+          <section class="module-view is-active" data-module-view="dashboard" aria-labelledby="dashboard-title">
+            <div class="page-heading">
+              <div><p class="eyebrow">BUSINESS OVERVIEW</p><h1 id="dashboard-title">통합 현황</h1><p data-today-label></p></div>
+              <button class="secondary-button" type="button" data-open-settings><i data-lucide="plug-zap"></i> ERP 연결 관리</button>
+            </div>
+
+            <div class="system-notice" data-system-notice>
+              <i data-lucide="circle-alert"></i>
+              <div><strong>현재는 관리자 포털 1차 구축 단계입니다.</strong><span>실제 견적·세무 수치는 각 ERP가 연결된 뒤 자동으로 표시됩니다.</span></div>
+              <button type="button" data-open-settings>연결 상태 보기 <i data-lucide="chevron-right"></i></button>
+            </div>
+
+            <div class="summary-grid">
+              <article class="summary-card">
+                <span class="summary-icon tone-teal"><i data-lucide="inbox"></i></span>
+                <div><p>견적 문의 접수</p><strong data-summary="inquiries">연동 후 표시</strong><small data-summary-note="inquiries">문의 저장소 연결 필요</small></div>
+              </article>
+              <article class="summary-card">
+                <span class="summary-icon tone-blue"><i data-lucide="clipboard-list"></i></span>
+                <div><p>진행 견적</p><strong data-summary="estimates">연동 후 표시</strong><small data-summary-note="estimates">견적 ERP 연결 필요</small></div>
+              </article>
+              <article class="summary-card">
+                <span class="summary-icon tone-violet"><i data-lucide="landmark"></i></span>
+                <div><p>세무 일정</p><strong data-summary="taxSchedule">연동 후 표시</strong><small data-summary-note="taxSchedule">세무 ERP 연결 필요</small></div>
+              </article>
+              <article class="summary-card">
+                <span class="summary-icon tone-amber"><i data-lucide="list-checks"></i></span>
+                <div><p>미확인 업무</p><strong data-summary="tasks">연동 후 표시</strong><small data-summary-note="tasks">업무 저장소 연결 필요</small></div>
+              </article>
+            </div>
+
+            <div class="dashboard-grid">
+              <section class="work-panel estimate-panel">
+                <div class="panel-heading"><div><span class="panel-icon"><i data-lucide="file-spreadsheet"></i></span><span><strong>최근 견적 현황</strong><small>견적 요청과 진행 상태</small></span></div><button type="button" data-go-module="estimate">전체 보기 <i data-lucide="chevron-right"></i></button></div>
+                <div class="table-wrap">
+                  <table>
+                    <thead><tr><th>접수일</th><th>거래처</th><th>공사·제품</th><th>상태</th></tr></thead>
+                    <tbody><tr class="empty-row"><td colspan="4"><i data-lucide="database-zap"></i><strong>견적 데이터 연결 전</strong><span>견적 ERP 또는 문의 저장소를 연결하면 최근 내역이 표시됩니다.</span></td></tr></tbody>
+                  </table>
+                </div>
+              </section>
+
+              <section class="work-panel tax-panel">
+                <div class="panel-heading"><div><span class="panel-icon"><i data-lucide="receipt-text"></i></span><span><strong>세무·회계 현황</strong><small>신고 일정과 회계 업무</small></span></div><button type="button" data-go-module="tax">전체 보기 <i data-lucide="chevron-right"></i></button></div>
+                <ul class="check-list">
+                  <li><span class="check-symbol"><i data-lucide="calendar-days"></i></span><div><strong>신고 일정</strong><small>세무 ERP 연결 후 표시</small></div><span class="status-pill is-pending" data-integration-pill="tax">연결 전</span></li>
+                  <li><span class="check-symbol"><i data-lucide="circle-dollar-sign"></i></span><div><strong>매입·매출 집계</strong><small>회계 데이터 연결 후 표시</small></div><span class="status-pill is-muted">대기</span></li>
+                  <li><span class="check-symbol"><i data-lucide="file-check-2"></i></span><div><strong>증빙 확인</strong><small>자료 저장소 연결 후 표시</small></div><span class="status-pill is-muted">대기</span></li>
+                </ul>
+              </section>
+            </div>
+
+            <section class="integration-strip">
+              <div class="integration-copy"><span class="panel-icon"><i data-lucide="workflow"></i></span><span><strong>업무 시스템 연결 상태</strong><small>외부 ERP는 새 창으로 안전하게 연결됩니다.</small></span></div>
+              <div class="integration-list">
+                <button type="button" data-integration="estimate"><span><i data-lucide="file-spreadsheet"></i><strong>견적 ERP</strong></span><span class="status-pill is-pending" data-integration-pill="estimate">연결 전</span></button>
+                <button type="button" data-integration="tax"><span><i data-lucide="receipt-text"></i><strong>세무 ERP</strong></span><span class="status-pill is-pending" data-integration-pill="tax">연결 전</span></button>
+              </div>
+            </section>
+          </section>
+
+          <section class="module-view" data-module-view="estimate" aria-labelledby="estimate-title">
+            <div class="page-heading"><div><p class="eyebrow">ESTIMATE ERP</p><h1 id="estimate-title">견적 관리</h1><p>견적 문의, 작성, 제출, 수주 상태를 한곳에서 관리합니다.</p></div><button class="primary-button" type="button" data-integration="estimate"><i data-lucide="plug-zap"></i><span data-integration-action="estimate">ERP 연결 준비</span></button></div>
+            <section class="module-status-card"><span class="module-status-icon"><i data-lucide="file-spreadsheet"></i></span><div><p>견적 시스템 상태</p><strong data-integration-title="estimate">연결 전</strong><small data-integration-copy="estimate">사용 중인 견적 ERP 주소 또는 API 정보가 필요합니다.</small></div><span class="status-pill is-pending" data-integration-pill="estimate">연결 전</span></section>
+            <section class="work-panel full-panel">
+              <div class="panel-heading"><div><span><strong>견적 목록</strong><small>거래처별 견적 진행 현황</small></span></div><div class="table-actions"><button class="search-button" type="button" disabled><i data-lucide="search"></i> 검색</button><button class="secondary-button" type="button" disabled><i data-lucide="plus"></i> 새 견적</button></div></div>
+              <div class="large-empty"><span><i data-lucide="database-zap"></i></span><strong>연결할 견적 ERP를 선택해 주세요.</strong><p>ERP 연결 전에는 실제 견적 자료를 저장하거나 표시하지 않습니다.</p><button class="secondary-button" type="button" data-integration="estimate">연결 정보 등록</button></div>
+            </section>
+          </section>
+
+          <section class="module-view" data-module-view="tax" aria-labelledby="tax-title">
+            <div class="page-heading"><div><p class="eyebrow">TAX & ACCOUNTING</p><h1 id="tax-title">세무·회계</h1><p>세무 신고 일정과 회계자료 확인 창구를 통합합니다.</p></div><button class="primary-button" type="button" data-integration="tax"><i data-lucide="plug-zap"></i><span data-integration-action="tax">ERP 연결 준비</span></button></div>
+            <section class="module-status-card"><span class="module-status-icon tone-violet"><i data-lucide="receipt-text"></i></span><div><p>세무·회계 시스템 상태</p><strong data-integration-title="tax">연결 전</strong><small data-integration-copy="tax">사용 중인 회계·세무 ERP 주소 또는 API 정보가 필요합니다.</small></div><span class="status-pill is-pending" data-integration-pill="tax">연결 전</span></section>
+            <div class="three-column-grid">
+              <section class="work-panel compact-panel"><span class="panel-icon"><i data-lucide="calendar-days"></i></span><strong>신고 일정</strong><p>부가세, 원천세, 법인세 일정을 ERP와 연결합니다.</p><small>연결 후 표시</small></section>
+              <section class="work-panel compact-panel"><span class="panel-icon"><i data-lucide="circle-dollar-sign"></i></span><strong>매입·매출</strong><p>기간별 집계와 확인 항목을 한눈에 표시합니다.</p><small>연결 후 표시</small></section>
+              <section class="work-panel compact-panel"><span class="panel-icon"><i data-lucide="file-check-2"></i></span><strong>증빙 자료</strong><p>세금계산서와 제출자료 확인 경로를 연결합니다.</p><small>연결 후 표시</small></section>
+            </div>
+          </section>
+
+          <section class="module-view" data-module-view="clients" aria-labelledby="clients-title">
+            <div class="page-heading"><div><p class="eyebrow">CLIENTS</p><h1 id="clients-title">거래처</h1><p>견적 ERP의 거래처 정보를 연결해 확인합니다.</p></div></div>
+            <div class="large-empty standalone-empty"><span><i data-lucide="building-2"></i></span><strong>거래처 데이터 연결 전</strong><p>견적 ERP 연결 후 거래처별 견적과 담당자 정보를 표시할 수 있습니다.</p><button class="secondary-button" type="button" data-integration="estimate">견적 ERP 연결</button></div>
+          </section>
+
+          <section class="module-view" data-module-view="tasks" aria-labelledby="tasks-title">
+            <div class="page-heading"><div><p class="eyebrow">TASKS</p><h1 id="tasks-title">일정·할 일</h1><p>견적 제출과 세무 마감 일정을 한 달력으로 모읍니다.</p></div></div>
+            <div class="large-empty standalone-empty"><span><i data-lucide="calendar-check-2"></i></span><strong>통합 일정 연결 전</strong><p>견적·세무 ERP가 연결되면 주요 마감 일정을 이곳에서 확인할 수 있습니다.</p><button class="secondary-button" type="button" data-open-settings>연결 상태 확인</button></div>
+          </section>
+
+          <section class="module-view" data-module-view="documents" aria-labelledby="documents-title">
+            <div class="page-heading"><div><p class="eyebrow">DOCUMENTS</p><h1 id="documents-title">사내 자료</h1><p>민감자료는 권한이 확인된 저장소만 연결합니다.</p></div></div>
+            <div class="large-empty standalone-empty"><span><i data-lucide="folder-lock"></i></span><strong>사내 문서 저장소 연결 전</strong><p>세무자료와 상세 회사자료는 공개 홈페이지와 분리된 전용 저장소가 필요합니다.</p><button class="secondary-button" type="button" data-open-settings>저장소 연결 준비</button></div>
+          </section>
+
+          <section class="module-view" data-module-view="settings" aria-labelledby="settings-title">
+            <div class="page-heading"><div><p class="eyebrow">INTEGRATIONS</p><h1 id="settings-title">연동 설정</h1><p>회사에서 사용하는 시스템을 안전한 주소로 연결합니다.</p></div></div>
+            <div class="settings-grid">
+              <section class="setting-card">
+                <div><span class="setting-icon"><i data-lucide="file-spreadsheet"></i></span><span><strong>견적 ERP</strong><small>견적·거래처·수주 관리</small></span></div>
+                <span class="status-pill is-pending" data-integration-pill="estimate">연결 전</span>
+                <p data-integration-copy="estimate">사용 중인 견적 ERP 주소 또는 API 정보가 필요합니다.</p>
+                <button class="secondary-button" type="button" data-integration="estimate">연결 정보 확인</button>
+              </section>
+              <section class="setting-card">
+                <div><span class="setting-icon tone-violet"><i data-lucide="receipt-text"></i></span><span><strong>세무·회계 ERP</strong><small>신고·회계·증빙 관리</small></span></div>
+                <span class="status-pill is-pending" data-integration-pill="tax">연결 전</span>
+                <p data-integration-copy="tax">사용 중인 회계·세무 ERP 주소 또는 API 정보가 필요합니다.</p>
+                <button class="secondary-button" type="button" data-integration="tax">연결 정보 확인</button>
+              </section>
+              <section class="setting-card security-setting">
+                <div><span class="setting-icon tone-teal"><i data-lucide="shield-check"></i></span><span><strong>관리자 보안</strong><small>서명 쿠키 기반 로그인</small></span></div>
+                <span class="status-pill is-connected">적용됨</span>
+                <p>관리자 세션은 브라우저 JavaScript에서 읽을 수 없으며 8시간 후 만료됩니다.</p>
+                <small class="session-expiry" data-session-expiry></small>
+              </section>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <dialog class="integration-dialog" data-integration-dialog>
+      <button class="dialog-close" type="button" data-dialog-close aria-label="닫기"><i data-lucide="x"></i></button>
+      <span class="dialog-icon"><i data-dialog-icon data-lucide="plug-zap"></i></span>
+      <p class="eyebrow">SYSTEM INTEGRATION</p>
+      <h2 data-dialog-title>ERP 연결 준비</h2>
+      <p data-dialog-copy>사용 중인 ERP 정보를 확인해 주세요.</p>
+      <dl class="connection-requirements">
+        <div><dt>필요 정보</dt><dd data-dialog-requirement>서비스 이름, 접속 주소, API 제공 여부</dd></div>
+        <div><dt>현재 상태</dt><dd data-dialog-status>연결 전</dd></div>
+        <div><dt>보안 원칙</dt><dd>비밀번호와 세무자료는 홈페이지 코드에 저장하지 않습니다.</dd></div>
+      </dl>
+      <div class="dialog-actions">
+        <button class="secondary-button" type="button" data-dialog-close>닫기</button>
+        <a class="primary-button" data-dialog-open href="#" target="_blank" rel="noopener noreferrer" hidden>ERP 열기 <i data-lucide="external-link"></i></a>
+      </div>
+    </dialog>
+
+    <div class="toast" data-toast role="status" aria-live="polite"></div>
+  </body>
+</html>

@@ -1,4 +1,7 @@
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /admin.html
+Disallow: /api/admin/
 
 Sitemap: https://snplus.ai.kr/sitemap.xml

@@ -1,15 +1,19 @@
 {
   "name": "sn-home",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
+    "admin:hash": "node scripts/hash-admin-password.mjs",
     "lint": "node scripts/lint-static-site.mjs",
     "build": "vite build && node scripts/copy-linked-static-assets.mjs",
     "preview": "vite preview --host 127.0.0.1"
   },
   "devDependencies": {
     "vite": "^7.0.0"
+  },
+  "dependencies": {
+    "lucide": "^1.24.0"
   }
 }
