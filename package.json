@@ -1,10 +1,11 @@
 {
   "name": "sn-home",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
+    "admin:configure": "node scripts/configure-admin-vercel.mjs",
     "admin:hash": "node scripts/hash-admin-password.mjs",
     "lint": "node scripts/lint-static-site.mjs",
     "build": "vite build && node scripts/copy-linked-static-assets.mjs",
@@ -14,6 +15,7 @@
     "vite": "^7.0.0"
   },
   "dependencies": {
+    "@vercel/blob": "^2.3.0",
     "lucide": "^1.24.0"
   }
 }

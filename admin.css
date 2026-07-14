@@ -1193,6 +1193,180 @@ th {
   font-size: 0.72rem;
 }
 
+.template-quick-bar {
+  display: grid;
+  min-height: 86px;
+  margin-bottom: 14px;
+  padding: 16px 18px;
+  grid-template-columns: 46px 1fr auto;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid #cddfdc;
+  border-radius: 7px;
+  background: #f7fbfa;
+}
+
+.template-quick-bar > div {
+  min-width: 0;
+}
+
+.template-quick-bar strong {
+  font-size: 0.9rem;
+}
+
+.template-quick-bar p {
+  margin: 5px 0 0;
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+}
+
+.template-file-icon {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  border-radius: 6px;
+  color: var(--teal);
+  background: var(--teal-pale);
+}
+
+.template-file-icon.tone-violet {
+  color: var(--violet);
+  background: var(--violet-pale);
+}
+
+.template-grid,
+.document-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.template-card {
+  display: grid;
+  min-height: 360px;
+  padding: 22px;
+  grid-template-rows: auto 1fr auto auto;
+  gap: 20px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #fff;
+  box-shadow: 0 9px 24px rgba(16, 43, 70, 0.05);
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.template-card:hover {
+  border-color: #b5cfcb;
+  box-shadow: 0 14px 30px rgba(16, 43, 70, 0.09);
+  transform: translateY(-2px);
+}
+
+.template-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.template-format {
+  padding: 5px 7px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--ink-soft);
+  background: #f7f9fa;
+  font-size: 0.64rem;
+  font-weight: 800;
+}
+
+.template-category {
+  margin: 0 0 8px;
+  color: var(--teal);
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.template-card h2 {
+  margin: 0;
+  font-size: 1.22rem;
+}
+
+.template-card > div > p:last-child {
+  margin: 10px 0 0;
+  color: var(--ink-soft);
+  font-size: 0.76rem;
+  line-height: 1.7;
+}
+
+.template-card dl {
+  margin: 0;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.template-card dl div {
+  display: grid;
+  padding: 4px 0;
+  grid-template-columns: 80px 1fr;
+  gap: 12px;
+}
+
+.template-card dt,
+.template-card dd {
+  font-size: 0.7rem;
+}
+
+.template-card dt {
+  color: var(--ink-soft);
+}
+
+.template-card dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-weight: 700;
+}
+
+.template-card > .primary-button {
+  width: 100%;
+}
+
+.template-security-note {
+  display: flex;
+  margin-top: 14px;
+  padding: 16px 18px;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #d8e4e1;
+  border-radius: 7px;
+  color: #35615b;
+  background: #f5faf8;
+}
+
+.template-security-note p {
+  display: flex;
+  min-width: 0;
+  margin: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.template-security-note strong {
+  font-size: 0.74rem;
+}
+
+.template-security-note span {
+  color: var(--ink-soft);
+  font-size: 0.7rem;
+}
+
+.document-actions .compact-panel {
+  min-height: 300px;
+}
+
+.document-actions .compact-panel > button {
+  align-self: flex-start;
+}
+
 .full-panel {
   min-height: 430px;
 }
@@ -1448,6 +1622,8 @@ button:disabled {
   .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .dashboard-grid { grid-template-columns: 1fr; }
   .three-column-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .template-grid,
+  .document-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .settings-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .security-setting { grid-column: 1 / -1; }
   .login-panel { width: 58%; min-width: 520px; }
@@ -1483,7 +1659,11 @@ button:disabled {
   .summary-grid { grid-template-columns: 1fr; }
   .summary-card { min-height: 100px; }
   .three-column-grid,
-  .settings-grid { grid-template-columns: 1fr; }
+  .settings-grid,
+  .template-grid,
+  .document-actions { grid-template-columns: 1fr; }
+  .template-quick-bar { grid-template-columns: 42px 1fr; }
+  .template-quick-bar > a { grid-column: 1 / -1; width: 100%; }
   .security-setting { grid-column: auto; }
   .integration-list { flex-direction: column; }
   .integration-list button { width: 100%; }

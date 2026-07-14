@@ -106,6 +106,7 @@
           <button class="portal-nav" type="button" data-module="tax"><i data-lucide="receipt-text"></i><span>세무·회계</span><small data-nav-status="tax">연결 전</small></button>
           <button class="portal-nav" type="button" data-module="clients"><i data-lucide="building-2"></i><span>거래처</span></button>
           <button class="portal-nav" type="button" data-module="tasks"><i data-lucide="calendar-check-2"></i><span>일정·할 일</span></button>
+          <button class="portal-nav" type="button" data-module="templates"><i data-lucide="files"></i><span>업무 서식</span></button>
           <button class="portal-nav" type="button" data-module="documents"><i data-lucide="folder-lock"></i><span>사내 자료</span></button>
           <p class="nav-label nav-label-settings">SYSTEM</p>
           <button class="portal-nav" type="button" data-module="settings"><i data-lucide="settings"></i><span>연동 설정</span></button>
@@ -182,6 +183,11 @@
           <section class="module-view" data-module-view="estimate" aria-labelledby="estimate-title">
             <div class="page-heading"><div><p class="eyebrow">ESTIMATE ERP</p><h1 id="estimate-title">견적 관리</h1><p>견적 문의, 작성, 제출, 수주 상태를 한곳에서 관리합니다.</p></div><button class="primary-button" type="button" data-integration="estimate"><i data-lucide="plug-zap"></i><span data-integration-action="estimate">ERP 연결 준비</span></button></div>
             <section class="module-status-card"><span class="module-status-icon"><i data-lucide="file-spreadsheet"></i></span><div><p>견적 시스템 상태</p><strong data-integration-title="estimate">연결 전</strong><small data-integration-copy="estimate">사용 중인 견적 ERP 주소 또는 API 정보가 필요합니다.</small></div><span class="status-pill is-pending" data-integration-pill="estimate">연결 전</span></section>
+            <section class="template-quick-bar">
+              <span class="template-file-icon"><i data-lucide="file-spreadsheet"></i></span>
+              <div><strong>에스앤 견적서 양식</strong><p>ERP 연결 전에도 기존 엑셀 견적서를 바로 내려받아 작성할 수 있습니다.</p></div>
+              <a class="secondary-button" href="/api/admin/template?file=estimate"><i data-lucide="download"></i> 견적서 내려받기</a>
+            </section>
             <section class="work-panel full-panel">
               <div class="panel-heading"><div><span><strong>견적 목록</strong><small>거래처별 견적 진행 현황</small></span></div><div class="table-actions"><button class="search-button" type="button" disabled><i data-lucide="search"></i> 검색</button><button class="secondary-button" type="button" disabled><i data-lucide="plus"></i> 새 견적</button></div></div>
               <div class="large-empty"><span><i data-lucide="database-zap"></i></span><strong>연결할 견적 ERP를 선택해 주세요.</strong><p>ERP 연결 전에는 실제 견적 자료를 저장하거나 표시하지 않습니다.</p><button class="secondary-button" type="button" data-integration="estimate">연결 정보 등록</button></div>
@@ -208,9 +214,31 @@
             <div class="large-empty standalone-empty"><span><i data-lucide="calendar-check-2"></i></span><strong>통합 일정 연결 전</strong><p>견적·세무 ERP가 연결되면 주요 마감 일정을 이곳에서 확인할 수 있습니다.</p><button class="secondary-button" type="button" data-open-settings>연결 상태 확인</button></div>
           </section>
 
+          <section class="module-view" data-module-view="templates" aria-labelledby="templates-title">
+            <div class="page-heading"><div><p class="eyebrow">WORK TEMPLATES</p><h1 id="templates-title">업무 서식</h1><p>회사에서 사용하는 원본 엑셀 양식을 관리자만 내려받을 수 있습니다.</p></div></div>
+            <div class="template-grid">
+              <article class="template-card">
+                <div class="template-card-head"><span class="template-file-icon"><i data-lucide="file-spreadsheet"></i></span><span class="template-format">XLS</span></div>
+                <div><p class="template-category">견적 관리</p><h2>견적서 양식</h2><p>거래처 제출용 견적을 작성하는 기존 에스앤 엑셀 원본입니다.</p></div>
+                <dl><div><dt>원본 파일</dt><dd>z0.견적서양식.xls</dd></div><div><dt>파일 크기</dt><dd>3.84 MB</dd></div></dl>
+                <a class="primary-button" href="/api/admin/template?file=estimate"><i data-lucide="download"></i> 견적서 내려받기</a>
+              </article>
+              <article class="template-card">
+                <div class="template-card-head"><span class="template-file-icon tone-violet"><i data-lucide="file-text"></i></span><span class="template-format">XLS</span></div>
+                <div><p class="template-category">거래 문서</p><h2>거래명세서 양식</h2><p>납품·거래 내역을 정리하는 기존 에스앤 엑셀 원본입니다.</p></div>
+                <dl><div><dt>원본 파일</dt><dd>0.거래명세서 양식.xls</dd></div><div><dt>파일 크기</dt><dd>106.5 KB</dd></div></dl>
+                <a class="primary-button" href="/api/admin/template?file=transaction"><i data-lucide="download"></i> 거래명세서 내려받기</a>
+              </article>
+            </div>
+            <div class="template-security-note"><i data-lucide="shield-check"></i><p><strong>관리자 전용 다운로드</strong><span>서식 파일은 공개 홈페이지에 표시되지 않으며 로그인 세션이 확인된 경우에만 전송됩니다.</span></p></div>
+          </section>
+
           <section class="module-view" data-module-view="documents" aria-labelledby="documents-title">
             <div class="page-heading"><div><p class="eyebrow">DOCUMENTS</p><h1 id="documents-title">사내 자료</h1><p>민감자료는 권한이 확인된 저장소만 연결합니다.</p></div></div>
-            <div class="large-empty standalone-empty"><span><i data-lucide="folder-lock"></i></span><strong>사내 문서 저장소 연결 전</strong><p>세무자료와 상세 회사자료는 공개 홈페이지와 분리된 전용 저장소가 필요합니다.</p><button class="secondary-button" type="button" data-open-settings>저장소 연결 준비</button></div>
+            <div class="document-actions">
+              <section class="work-panel compact-panel"><span class="panel-icon"><i data-lucide="files"></i></span><strong>업무 서식 2종</strong><p>견적서와 거래명세서 원본 양식이 등록되어 있습니다.</p><button class="secondary-button" type="button" data-go-module="templates">서식 확인</button></section>
+              <section class="work-panel compact-panel"><span class="panel-icon"><i data-lucide="folder-lock"></i></span><strong>민감 문서 저장소</strong><p>세무자료와 상세 회사자료는 별도 보안 저장소 연결이 필요합니다.</p><button class="secondary-button" type="button" data-open-settings>저장소 연결 준비</button></section>
+            </div>
           </section>
 
           <section class="module-view" data-module-view="settings" aria-labelledby="settings-title">

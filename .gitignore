@@ -12,3 +12,5 @@ dist
 Thumbs.db
 *.log
 
+.env*
+private/admin-templates/

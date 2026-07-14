@@ -9,10 +9,13 @@ import {
   ClipboardList,
   createIcons,
   DatabaseZap,
+  Download,
   ExternalLink,
   Eye,
   FileCheck2,
   FileSpreadsheet,
+  FileText,
+  Files,
   FolderLock,
   Inbox,
   Landmark,
@@ -44,10 +47,13 @@ const iconSet = {
   CircleDollarSign,
   ClipboardList,
   DatabaseZap,
+  Download,
   ExternalLink,
   Eye,
   FileCheck2,
   FileSpreadsheet,
+  FileText,
+  Files,
   FolderLock,
   Inbox,
   Landmark,
@@ -268,10 +274,12 @@ async function loadOverview({ notify = false } = {}) {
 }
 
 async function initialize() {
-  const isLocalPreview = import.meta.env.DEV && new URLSearchParams(window.location.search).has("ui-preview");
+  const previewParams = new URLSearchParams(window.location.search);
+  const isLocalPreview = import.meta.env.DEV && previewParams.has("ui-preview");
   if (isLocalPreview) {
     applyOverview(previewOverview);
     setAuthState("authenticated");
+    showModule(previewParams.get("module") || "dashboard");
     return;
   }
 

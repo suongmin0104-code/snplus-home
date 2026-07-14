@@ -9,6 +9,7 @@ const script = readFileSync(join(root, "script.js"), "utf8");
 const adminHtml = readFileSync(join(root, "admin.html"), "utf8");
 const adminScript = readFileSync(join(root, "admin.js"), "utf8");
 const adminAuth = readFileSync(join(root, "lib", "admin-auth.js"), "utf8");
+const adminTemplateApi = readFileSync(join(root, "api", "admin", "template.js"), "utf8");
 const envExample = readFileSync(join(root, ".env.example"), "utf8");
 const robots = readFileSync(join(root, "public", "robots.txt"), "utf8");
 const vercelConfig = JSON.parse(readFileSync(join(root, "vercel.json"), "utf8"));
@@ -71,7 +72,7 @@ for (const envKey of ["RESEND_API_KEY", "CONTACT_RECEIVER_EMAIL", "CONTACT_FROM_
   }
 }
 
-for (const envKey of ["ADMIN_USERNAME", "ADMIN_PASSWORD_HASH", "ADMIN_SESSION_SECRET", "ESTIMATE_ERP_URL", "TAX_ERP_URL"]) {
+for (const envKey of ["ADMIN_USERNAME", "ADMIN_PASSWORD_HASH", "ADMIN_SESSION_SECRET", "BLOB_READ_WRITE_TOKEN", "ESTIMATE_ERP_URL", "TAX_ERP_URL"]) {
   if (!envExample.includes(`${envKey}=`)) {
     failures.push(`.env.example is missing the admin key: ${envKey}`);
   }
@@ -115,6 +116,9 @@ requireAdminMatch(/name="robots"\s+content="noindex, nofollow, noarchive"/, "Adm
 requireAdminMatch(/data-login-form/, "Admin login form is required.");
 requireAdminMatch(/data-module-view="estimate"/, "Estimate ERP module is required.");
 requireAdminMatch(/data-module-view="tax"/, "Tax ERP module is required.");
+requireAdminMatch(/data-module-view="templates"/, "Admin work-template module is required.");
+requireAdminMatch(/\/api\/admin\/template\?file=estimate/, "Estimate template download link is required.");
+requireAdminMatch(/\/api\/admin\/template\?file=transaction/, "Transaction template download link is required.");
 
 if (/href=["']\/admin\/?["']/.test(html)) {
   failures.push("The public homepage must not expose a direct admin link.");
@@ -137,6 +141,10 @@ if (!adminRewrite) {
   failures.push("vercel.json must rewrite /admin to /admin.html.");
 }
 
+if (!adminTemplateApi.includes("@vercel/blob") || !adminTemplateApi.includes('access: "private"')) {
+  failures.push("Admin templates must be served from private Vercel Blob storage.");
+}
+
 for (const adminFile of [
   "admin.html",
   "admin.css",
@@ -146,9 +154,20 @@ for (const adminFile of [
   "api/admin/session.js",
   "api/admin/logout.js",
   "api/admin/overview.js",
+  "api/admin/template.js",
+  "scripts/configure-admin-vercel.mjs",
   "DOCS/ADMIN_WORKSPACE.md"
 ]) {
   requireFile(adminFile, `Admin workspace file is required: ${adminFile}`);
+}
+
+for (const privateTemplate of [
+  "private/admin-templates/estimate-template.xls",
+  "private/admin-templates/transaction-statement-template.xls"
+]) {
+  if (existsSync(join(root, privateTemplate)) && !readFileSync(join(root, ".gitignore"), "utf8").includes("private/admin-templates/")) {
+    failures.push(`Private template must not be committed to the public repository: ${privateTemplate}`);
+  }
 }
 
 const forbiddenDocs = [
