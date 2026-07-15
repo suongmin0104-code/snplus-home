@@ -7,6 +7,7 @@ import {
   verifySessionToken
 } from "../lib/admin-auth.js";
 import {
+  ADMIN_PERMISSION_IDS,
   hashAdminSecret,
   normalizePhoneId,
   passwordMeetsPolicy,
@@ -32,5 +33,9 @@ const owner = createRootOwner({
 });
 assert.equal(owner.role, "owner");
 assert.equal(hasAdminPermission(owner, "users.manage"), true);
+for (const permission of ["worklog", "production", "inventory", "estimate", "tax", "clients", "documents"]) {
+  assert.equal(ADMIN_PERMISSION_IDS.includes(permission), true);
+  assert.equal(hasAdminPermission(owner, permission), true);
+}
 
 console.log("Admin authentication helper checks passed.");

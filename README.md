@@ -11,6 +11,9 @@
 - `assets/`: 이미지, 카탈로그 이미지, 공개 PDF
 - `public/`: robots, sitemap
 - `DOCS/`: 배포 및 운영 문서
+- `admin.html`: 직원별 권한이 적용된 통합 업무포털
+- `admin-operations.js`: 견적·생산·재고 업무 화면
+- `api/admin/operations.js`: 비공개 운영 데이터 API
 
 ## 공개 자료
 
@@ -43,6 +46,19 @@ http://127.0.0.1:4173/
 
 ```bash
 npm run lint
+```
+
+## 내부 업무포털
+
+운영 주소 `https://snplus.ai.kr/admin`에서 현장 관리, 생산 관리, 재고 관리, 견적 관리, 문서 작성과 사내자료를 함께 사용합니다. 운영 데이터와 사진은 공개 정적 파일이 아니라 Vercel Private Blob에 저장되며, 직원별 권한을 서버에서도 확인합니다.
+
+로컬 화면만 확인할 때는 개발 서버에서 다음 주소를 사용합니다.
+
+```text
+http://127.0.0.1:5173/admin.html?ui-preview=1
+http://127.0.0.1:5173/admin.html?ui-preview=1&module=production
+http://127.0.0.1:5173/admin.html?ui-preview=1&module=inventory
+http://127.0.0.1:5173/admin.html?ui-preview=1&module=estimate
 ```
 
 ## 견적 문의 시스템

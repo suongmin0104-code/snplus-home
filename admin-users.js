@@ -141,7 +141,7 @@ export function setupUserManagement({ fetchJson, showToast, refreshIcons, onUnau
     form.querySelectorAll('input[name="permissions"]').forEach((checkbox) => {
       checkbox.checked = editing
         ? (user.permissions || []).includes(checkbox.value)
-        : ["estimate", "worklog", "documents"].includes(checkbox.value);
+        : ["worklog", "production", "inventory", "estimate", "documents"].includes(checkbox.value);
     });
     dialog.querySelector("[data-user-dialog-title]").textContent = editing ? "직원 권한 수정" : "직원 등록";
     dialog.querySelector("[data-user-submit] span").textContent = editing ? "변경 저장" : "등록코드 발급";
@@ -290,15 +290,17 @@ export function setupUserManagement({ fetchJson, showToast, refreshIcons, onUnau
     },
     enablePreview() {
       state.permissions = [
+        { id: "worklog", label: "현장 관리" },
+        { id: "production", label: "생산 관리" },
+        { id: "inventory", label: "재고 관리" },
         { id: "estimate", label: "견적 관리·문서 작성" },
         { id: "tax", label: "세무·회계" },
         { id: "clients", label: "거래처" },
-        { id: "worklog", label: "일정·현장 업무일지" },
         { id: "documents", label: "업무 서식·사내 자료" }
       ];
       state.users = [
         { id: "01000000000", phone: "01000000000", phoneFormatted: "010-0000-0000", name: "총책임자", title: "총책임자", role: "owner", status: "active", permissions: state.permissions.map((item) => item.id), protected: true, lastLoginAt: new Date().toISOString() },
-        { id: "01011112222", phone: "01011112222", phoneFormatted: "010-1111-2222", name: "권한 직원", title: "이사", role: "staff", status: "active", permissions: ["estimate", "clients", "worklog", "documents"], lastLoginAt: new Date(Date.now() - 3600000).toISOString() },
+        { id: "01011112222", phone: "01011112222", phoneFormatted: "010-1111-2222", name: "권한 직원", title: "이사", role: "staff", status: "active", permissions: ["worklog", "production", "inventory", "estimate", "clients", "documents"], lastLoginAt: new Date(Date.now() - 3600000).toISOString() },
         { id: "01033334444", phone: "01033334444", phoneFormatted: "010-3333-4444", name: "신규 직원", title: "사원", role: "staff", status: "pending", permissions: ["worklog"], lastLoginAt: null }
       ];
       state.loaded = true;

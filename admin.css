@@ -708,7 +708,12 @@ body[data-auth-mode="activate"] .login-panel {
 
 .portal-sidebar nav {
   display: grid;
+  min-height: 0;
+  padding-right: 2px;
   gap: 4px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #31515b transparent;
 }
 
 .nav-label {
@@ -720,6 +725,10 @@ body[data-auth-mode="activate"] .login-panel {
 
 .nav-label-settings {
   margin-top: 18px;
+}
+
+.nav-label-group {
+  margin-top: 14px;
 }
 
 .portal-nav {
@@ -993,6 +1002,12 @@ body[data-auth-mode="activate"] .login-panel {
   margin-bottom: 18px;
   grid-template-columns: minmax(0, 1.65fr) minmax(320px, 0.85fr);
   gap: 14px;
+}
+
+.dashboard-grid > *,
+.work-panel,
+.table-wrap {
+  min-width: 0;
 }
 
 .work-panel {

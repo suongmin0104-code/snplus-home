@@ -2,6 +2,7 @@ import {
   ArrowRight,
   Building2,
   Ban,
+  Boxes,
   CalendarPlus,
   CalendarCheck2,
   CalendarDays,
@@ -19,8 +20,10 @@ import {
   Download,
   ExternalLink,
   Eye,
+  Factory,
   FilePlus2,
   FileCheck2,
+  FileDown,
   FileSpreadsheet,
   FileText,
   Files,
@@ -30,9 +33,16 @@ import {
   LayoutDashboard,
   ListChecks,
   LoaderCircle,
+  HardHat,
   LockKeyhole,
+  LockKeyholeOpen,
   LogOut,
+  MapPin,
   Menu,
+  MessageCircle,
+  Package,
+  PackageMinus,
+  PackagePlus,
   Plus,
   PlugZap,
   Printer,
@@ -45,9 +55,11 @@ import {
   ShieldCheck,
   SquarePen,
   Trash2,
+  Truck,
   UserCheck,
   UserPlus,
   UserRound,
+  Users,
   UsersRound,
   KeyRound,
   Pencil,
@@ -55,12 +67,14 @@ import {
   X
 } from "lucide";
 import { setupDocumentEditor } from "./admin-document.js";
+import { setupOperations } from "./admin-operations.js";
 import { setupUserManagement } from "./admin-users.js";
 import { setupWorklog } from "./admin-worklog.js";
 
 const iconSet = {
   ArrowRight,
   Ban,
+  Boxes,
   Building2,
   CalendarPlus,
   CalendarCheck2,
@@ -78,8 +92,10 @@ const iconSet = {
   Download,
   ExternalLink,
   Eye,
+  Factory,
   FilePlus2,
   FileCheck2,
+  FileDown,
   FileSpreadsheet,
   FileText,
   Files,
@@ -89,9 +105,16 @@ const iconSet = {
   LayoutDashboard,
   ListChecks,
   LoaderCircle,
+  HardHat,
   LockKeyhole,
+  LockKeyholeOpen,
   LogOut,
+  MapPin,
   Menu,
+  MessageCircle,
+  Package,
+  PackageMinus,
+  PackagePlus,
   Plus,
   PlugZap,
   Printer,
@@ -104,9 +127,11 @@ const iconSet = {
   ShieldCheck,
   SquarePen,
   Trash2,
+  Truck,
   UserCheck,
   UserPlus,
   UserRound,
+  Users,
   UsersRound,
   KeyRound,
   Pencil,
@@ -137,15 +162,18 @@ const previewOverview = {
     title: "총책임자",
     role: "owner",
     status: "active",
-    permissions: ["estimate", "tax", "clients", "worklog", "documents"]
+    permissions: ["worklog", "production", "inventory", "estimate", "tax", "clients", "documents"]
   },
   company: { name: "주식회사 에스앤", phone: "031-852-2918", fax: "031-852-2919" },
   summary: {
-    inquiries: { value: null, label: "문의 저장소 연결 필요" },
-    estimates: { value: null, label: "견적 ERP 연결 필요" },
-    taxSchedule: { value: null, label: "세무 ERP 연결 필요" },
-    tasks: { value: "2건", label: "오늘 1건 · 현장 업무일지" }
+    tasks: { value: "2건", label: "오늘 1건 · 현장 업무일지" },
+    production: { value: "1건", label: "오늘 1건 · 출고완료 0건" },
+    inventory: { value: "1종", label: "전체 수량 24" },
+    estimates: { value: "1건", label: "전체 1건 · 완료 0건" }
   },
+  recentEstimates: [
+    { date: new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" }).format(new Date()), clientName: "거래처 예시", title: "디자인난간 제작·설치", status: "estimating" }
+  ],
   integrations: {
     estimate: { name: "견적 ERP", connected: false, status: "연결 전", url: null },
     tax: { name: "세무·회계 ERP", connected: false, status: "연결 전", url: null }
@@ -161,6 +189,7 @@ const state = {
 };
 
 let worklog;
+let operations;
 let userManagement;
 
 const body = document.body;
@@ -186,6 +215,8 @@ refreshIcons();
 
 const modulePermissions = {
   dashboard: "",
+  production: "production",
+  inventory: "inventory",
   estimate: "estimate",
   tax: "tax",
   clients: "clients",
@@ -318,6 +349,15 @@ function applyOverview(overview) {
     });
   }
 
+  const recentEstimateBody = document.querySelector("[data-recent-estimates]");
+  if (recentEstimateBody) {
+    const entries = Array.isArray(overview.recentEstimates) ? overview.recentEstimates : [];
+    recentEstimateBody.innerHTML = entries.length
+      ? entries.map((entry) => `<tr><td>${String(entry.date || "").replaceAll("-", ".")}</td><td>${escapeTableText(entry.clientName || "미지정")}</td><td>${escapeTableText(entry.title || "")}</td><td><span class="status-pill ${entry.status === "completed" ? "is-connected" : "is-pending"}">${entry.status === "completed" ? "견적완료" : "견적중"}</span></td></tr>`).join("")
+      : '<tr class="empty-row"><td colspan="4"><i data-lucide="database-zap"></i><strong>등록된 견적 일정이 없습니다.</strong><span>견적 관리에서 첫 일정을 등록해 주세요.</span></td></tr>';
+    refreshIcons();
+  }
+
   for (const [key, integration] of Object.entries(overview.integrations ?? {})) {
     document.querySelectorAll(`[data-integration-pill="${key}"]`).forEach((element) => setPill(element, integration));
     document.querySelectorAll(`[data-nav-status="${key}"]`).forEach((element) => {
@@ -345,6 +385,15 @@ function applyOverview(overview) {
   });
 }
 
+function escapeTableText(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 function showModule(moduleName) {
   const requested = document.querySelector(`[data-module-view="${moduleName}"]`) ? moduleName : "dashboard";
   if (!canUseModule(requested)) {
@@ -364,6 +413,7 @@ function showModule(moduleName) {
   document.querySelector("#admin-main")?.focus({ preventScroll: true });
   window.scrollTo({ top: 0, behavior: "smooth" });
   if (requested === "tasks") worklog?.activate();
+  if (["estimate", "production", "inventory"].includes(requested)) operations?.activate(requested);
   if (requested === "users") userManagement?.activate();
 }
 
@@ -376,6 +426,20 @@ worklog = setupWorklog({
     showToast("보안 세션이 만료되었습니다.");
   },
   refreshOverview: () => loadOverview()
+});
+operations = setupOperations({
+  fetchJson,
+  showToast,
+  refreshIcons,
+  onUnauthorized: (error) => {
+    if (error?.status === 401) {
+      setAuthState("login");
+      showToast("보안 세션이 만료되었습니다.");
+    } else {
+      showModule("dashboard");
+      showToast("이 업무를 사용할 권한이 없습니다.");
+    }
+  }
 });
 userManagement = setupUserManagement({
   fetchJson,
@@ -429,6 +493,7 @@ async function initialize() {
     applyOverview(previewOverview);
     setAuthState("authenticated");
     worklog.enablePreview();
+    operations.enablePreview();
     userManagement.enablePreview();
     if (previewParams.get("module") === "document-editor") {
       documentEditor.open(previewParams.get("doc") || "estimate");
@@ -609,6 +674,7 @@ document.querySelector("[data-refresh]")?.addEventListener("click", async (event
   try {
     await loadOverview({ notify: true });
     if (state.currentModule === "tasks") await worklog.reload();
+    if (["estimate", "production", "inventory"].includes(state.currentModule)) await operations.reload(state.currentModule);
   } catch (error) {
     if (error.status === 401) {
       setAuthState("login");
@@ -630,6 +696,7 @@ document.querySelector("[data-logout]")?.addEventListener("click", async () => {
   state.overview = previewOverview;
   state.user = previewOverview.user;
   worklog.reset();
+  operations.reset();
   userManagement.reset();
   setAuthState("login");
   setAuthMode("login");
