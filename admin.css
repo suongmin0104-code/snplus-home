@@ -1412,6 +1412,35 @@ th {
   gap: 8px;
 }
 
+.kakao-share-button {
+  display: inline-flex;
+  min-height: 40px;
+  padding: 0 14px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid #e7cf00;
+  border-radius: 6px;
+  color: #191919;
+  background: #fee500;
+  box-shadow: 0 5px 14px rgba(78, 68, 0, 0.14);
+  font-size: 0.76rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.kakao-share-button:hover {
+  background: #f4dc00;
+  transform: translateY(-1px);
+}
+
+.kakao-share-button:disabled,
+.document-toolbar-actions button:disabled {
+  opacity: 0.62;
+  cursor: wait;
+  transform: none;
+}
+
 .document-local-notice {
   display: flex;
   min-height: 46px;
@@ -1476,6 +1505,83 @@ th {
   color: #111;
   background: #f4f8fb;
   outline: none;
+}
+
+body[data-export-document="true"] .document-sheet {
+  box-shadow: none;
+}
+
+body[data-export-document="true"] .document-sheet .no-print,
+body[data-export-document="true"] .doc-items-table .col-action,
+body[data-export-document="true"] .doc-items-table th:last-child,
+body[data-export-document="true"] .doc-items-table td:last-child {
+  display: none !important;
+}
+
+body[data-export-document="true"] .document-sheet input,
+body[data-export-document="true"] .document-sheet select,
+body[data-export-document="true"] .document-sheet textarea {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  appearance: none;
+}
+
+body[data-export-document="true"] .document-sheet input::placeholder,
+body[data-export-document="true"] .document-sheet textarea::placeholder {
+  color: transparent;
+}
+
+body[data-export-document="true"] .document-sheet input[type="date"]::-webkit-calendar-picker-indicator {
+  display: none;
+}
+
+body[data-export-document="true"] .document-sheet [data-pdf-value] {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  overflow: hidden;
+  color: #111;
+  background: transparent;
+}
+
+body[data-export-document="true"] .doc-recipient-fields [data-pdf-value] {
+  height: 8mm;
+  padding: 0 2mm;
+  font-size: 9pt;
+}
+
+body[data-export-document="true"] .doc-items-table [data-pdf-value] {
+  height: 7.5mm;
+  padding: 0 1.2mm;
+  font-size: 8pt;
+}
+
+body[data-export-document="true"] .doc-items-table .doc-item-unit,
+body[data-export-document="true"] .doc-items-table .doc-item-quantity {
+  justify-content: center;
+}
+
+body[data-export-document="true"] .doc-items-table .doc-item-price {
+  justify-content: flex-end;
+}
+
+body[data-export-document="true"] .doc-notes [data-pdf-value] {
+  display: block;
+  min-height: 22mm;
+  padding: 1.5mm;
+  white-space: pre-wrap;
+  font-size: 8pt;
+  line-height: 1.55;
+}
+
+body[data-export-document="true"] .doc-manager-fields [data-pdf-value] {
+  height: 7mm;
+  padding: 0 1mm;
+  font-size: 7pt;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .document-sheet input:hover,
@@ -1846,6 +1952,7 @@ th {
   height: 7mm;
   padding: 0 1mm;
   font-size: 7pt;
+  line-height: 7mm;
 }
 
 .printable-doc-footer > p {

@@ -77,6 +77,90 @@ function formatNumber(value) {
   return new Intl.NumberFormat("ko-KR", { maximumFractionDigits: 2 }).format(value || 0);
 }
 
+function sanitizeFilename(value) {
+  const cleaned = String(value || "SN_문서")
+    .replace(/[\\/:*?"<>|]/g, "-")
+    .replace(/\s+/g, " ")
+    .trim();
+  return (cleaned || "SN_문서").slice(0, 120);
+}
+
+function waitForPaint() {
+  return new Promise((resolve) => {
+    window.requestAnimationFrame(() => window.requestAnimationFrame(resolve));
+  });
+}
+
+function downloadFile(file) {
+  const url = URL.createObjectURL(file);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = file.name;
+  document.body.append(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+
+function replaceFormFieldsForPdf(clonedDocument) {
+  clonedDocument
+    .querySelectorAll(".document-sheet input, .document-sheet select, .document-sheet textarea")
+    .forEach((field) => {
+      if (field.closest(".no-print")) return;
+      const output = clonedDocument.createElement(field.tagName === "TEXTAREA" ? "div" : "span");
+      output.dataset.pdfValue = "";
+      output.className = field.className;
+      output.textContent = field.tagName === "SELECT"
+        ? field.options[field.selectedIndex]?.textContent || ""
+        : field.value || "";
+      field.replaceWith(output);
+    });
+}
+
+async function createPdfFile(sheet, filename) {
+  const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+    import("html2canvas"),
+    import("jspdf")
+  ]);
+
+  document.body.dataset.exportDocument = "true";
+  try {
+    await document.fonts?.ready;
+    await waitForPaint();
+    const canvas = await html2canvas(sheet, {
+      backgroundColor: "#ffffff",
+      logging: false,
+      onclone: replaceFormFieldsForPdf,
+      scale: 2,
+      useCORS: true,
+      windowWidth: sheet.scrollWidth,
+      windowHeight: sheet.scrollHeight
+    });
+
+    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4", compress: true });
+    const pageWidth = 210;
+    const pageHeight = 297;
+    const imageHeight = (canvas.height * pageWidth) / canvas.width;
+    const image = canvas.toDataURL("image/jpeg", 0.96);
+    let offset = 0;
+
+    pdf.addImage(image, "JPEG", 0, offset, pageWidth, imageHeight, undefined, "FAST");
+    for (let remaining = imageHeight - pageHeight; remaining > 0.5; remaining -= pageHeight) {
+      offset -= pageHeight;
+      pdf.addPage();
+      pdf.addImage(image, "JPEG", 0, offset, pageWidth, imageHeight, undefined, "FAST");
+    }
+
+    const blob = pdf.output("blob");
+    return new File([blob], `${sanitizeFilename(filename)}.pdf`, {
+      type: "application/pdf",
+      lastModified: Date.now()
+    });
+  } finally {
+    delete document.body.dataset.exportDocument;
+  }
+}
+
 function koreanNumber(value) {
   const amount = Math.max(0, Math.round(Number(value) || 0));
   if (!amount) return "영";
@@ -131,6 +215,8 @@ export function setupDocumentEditor({ showModule, showToast }) {
   const saveStatus = document.querySelector("[data-doc-save-status]");
   let currentType = "estimate";
   let saveTimer = null;
+  const downloadButton = document.querySelector("[data-doc-download]");
+  const shareButton = document.querySelector("[data-doc-share]");
 
   function setField(name, value) {
     const field = form.querySelector(`[data-doc-field="${name}"]`);
@@ -263,6 +349,31 @@ export function setupDocumentEditor({ showModule, showToast }) {
     form.querySelector("[data-doc-amount-number]").textContent = `₩ ${formatNumber(total)}`;
   }
 
+  function setPdfActionsBusy(activeButton, busy, busyLabel = "PDF 생성 중") {
+    [downloadButton, shareButton].forEach((button) => {
+      if (!button) return;
+      const label = button.querySelector("span");
+      if (label && !button.dataset.idleLabel) button.dataset.idleLabel = label.textContent;
+      button.disabled = busy;
+      button.setAttribute("aria-busy", busy ? "true" : "false");
+      if (label) label.textContent = busy && button === activeButton ? busyLabel : button.dataset.idleLabel;
+    });
+  }
+
+  async function makeCurrentPdf() {
+    document.activeElement?.blur();
+    form.querySelectorAll('[data-item-field="unitPrice"]').forEach((input) => {
+      if (input.value.trim()) input.value = formatNumber(parseNumber(input.value));
+    });
+    calculate();
+    saveDraft();
+    const data = collectDocument();
+    const name = [documentMeta[currentType].title, data.client || data.project || data.date]
+      .filter(Boolean)
+      .join("_");
+    return createPdfFile(form, name);
+  }
+
   function applyDocument(data) {
     setField("date", data.date);
     setField("client", data.client);
@@ -363,23 +474,52 @@ export function setupDocumentEditor({ showModule, showToast }) {
     showToast("새 문서를 준비했습니다.");
   });
 
-  document.querySelector("[data-doc-print]")?.addEventListener("click", () => {
-    document.activeElement?.blur();
-    form.querySelectorAll('[data-item-field="unitPrice"]').forEach((input) => {
-      if (input.value.trim()) input.value = formatNumber(parseNumber(input.value));
-    });
-    calculate();
-    saveDraft();
-    const data = collectDocument();
-    const name = [documentMeta[currentType].title, data.client || data.project || data.date].filter(Boolean).join("_");
-    document.body.dataset.printDocument = "true";
-    document.title = name.replace(/[\\/:*?"<>|]/g, "-");
-    window.requestAnimationFrame(() => window.print());
+  downloadButton?.addEventListener("click", async () => {
+    setPdfActionsBusy(downloadButton, true);
+    try {
+      const file = await makeCurrentPdf();
+      downloadFile(file);
+      showToast(`${file.name} 파일을 저장했습니다.`);
+    } catch (error) {
+      console.error("PDF download failed", error);
+      showToast("PDF 파일을 만들지 못했습니다. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setPdfActionsBusy(downloadButton, false);
+    }
   });
 
-  window.addEventListener("afterprint", () => {
-    delete document.body.dataset.printDocument;
-    document.title = "SN 업무포털 | 주식회사 에스앤";
+  shareButton?.addEventListener("click", async () => {
+    setPdfActionsBusy(shareButton, true, "공유 파일 생성 중");
+    try {
+      const file = await makeCurrentPdf();
+      const shareData = {
+        files: [file],
+        title: file.name.replace(/\.pdf$/i, ""),
+        text: `${documentMeta[currentType].title} PDF 파일입니다.`
+      };
+      const canShareFile = typeof navigator.share === "function"
+        && (typeof navigator.canShare !== "function" || navigator.canShare({ files: [file] }));
+
+      if (!canShareFile) {
+        downloadFile(file);
+        showToast("PDF를 저장했습니다. 카카오톡 채팅방에서 파일 첨부로 보내 주세요.");
+        return;
+      }
+
+      try {
+        await navigator.share(shareData);
+        showToast("공유를 완료했습니다.");
+      } catch (error) {
+        if (error?.name === "AbortError") return;
+        downloadFile(file);
+        showToast("공유창을 열 수 없어 PDF를 저장했습니다. 카카오톡에서 첨부해 주세요.");
+      }
+    } catch (error) {
+      console.error("PDF share failed", error);
+      showToast("공유할 PDF 파일을 만들지 못했습니다. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setPdfActionsBusy(shareButton, false);
+    }
   });
 
   Object.entries(company).forEach(([key, value]) => {
