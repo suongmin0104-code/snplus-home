@@ -22,9 +22,9 @@ const documentMeta = Object.freeze({
   transaction: {
     title: "거래명세서",
     dateLabel: "납품일",
-    managerName: "백명욱",
+    managerName: "박정환",
     managerTitle: "이사",
-    managerPhone: "010-7100-6221",
+    managerPhone: "010-4888-1504",
     notes: ["거래 및 납품 내역을 확인해 주시기 바랍니다."]
   }
 });
