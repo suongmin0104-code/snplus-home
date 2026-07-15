@@ -12,6 +12,7 @@ import {
   Download,
   ExternalLink,
   Eye,
+  FilePlus2,
   FileCheck2,
   FileSpreadsheet,
   FileText,
@@ -26,16 +27,20 @@ import {
   Menu,
   Plus,
   PlugZap,
+  Printer,
   ReceiptText,
   RefreshCw,
+  Save,
   Search,
   Settings,
   ShieldAlert,
   ShieldCheck,
+  SquarePen,
   UserRound,
   Workflow,
   X
 } from "lucide";
+import { setupDocumentEditor } from "./admin-document.js";
 
 const iconSet = {
   ArrowRight,
@@ -50,6 +55,7 @@ const iconSet = {
   Download,
   ExternalLink,
   Eye,
+  FilePlus2,
   FileCheck2,
   FileSpreadsheet,
   FileText,
@@ -64,12 +70,15 @@ const iconSet = {
   Menu,
   Plus,
   PlugZap,
+  Printer,
   ReceiptText,
   RefreshCw,
+  Save,
   Search,
   Settings,
   ShieldAlert,
   ShieldCheck,
+  SquarePen,
   UserRound,
   Workflow,
   X
@@ -243,6 +252,8 @@ function showModule(moduleName) {
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
+const documentEditor = setupDocumentEditor({ showModule, showToast });
+
 function openIntegrationDialog(key) {
   const meta = integrationMeta[key];
   const integration = state.overview.integrations?.[key];
@@ -279,7 +290,11 @@ async function initialize() {
   if (isLocalPreview) {
     applyOverview(previewOverview);
     setAuthState("authenticated");
-    showModule(previewParams.get("module") || "dashboard");
+    if (previewParams.get("module") === "document-editor") {
+      documentEditor.open(previewParams.get("doc") || "estimate");
+    } else {
+      showModule(previewParams.get("module") || "dashboard");
+    }
     return;
   }
 
@@ -358,6 +373,10 @@ document.querySelectorAll("[data-module]").forEach((button) => {
 
 document.querySelectorAll("[data-go-module]").forEach((button) => {
   button.addEventListener("click", () => showModule(button.dataset.goModule));
+});
+
+document.querySelectorAll("[data-create-document]").forEach((button) => {
+  button.addEventListener("click", () => documentEditor.open(button.dataset.createDocument));
 });
 
 document.querySelectorAll("[data-open-settings]").forEach((button) => {

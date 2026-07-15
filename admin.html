@@ -106,6 +106,7 @@
           <button class="portal-nav" type="button" data-module="tax"><i data-lucide="receipt-text"></i><span>세무·회계</span><small data-nav-status="tax">연결 전</small></button>
           <button class="portal-nav" type="button" data-module="clients"><i data-lucide="building-2"></i><span>거래처</span></button>
           <button class="portal-nav" type="button" data-module="tasks"><i data-lucide="calendar-check-2"></i><span>일정·할 일</span></button>
+          <button class="portal-nav" type="button" data-module="document-editor"><i data-lucide="square-pen"></i><span>문서 작성</span></button>
           <button class="portal-nav" type="button" data-module="templates"><i data-lucide="files"></i><span>업무 서식</span></button>
           <button class="portal-nav" type="button" data-module="documents"><i data-lucide="folder-lock"></i><span>사내 자료</span></button>
           <p class="nav-label nav-label-settings">SYSTEM</p>
@@ -185,11 +186,11 @@
             <section class="module-status-card"><span class="module-status-icon"><i data-lucide="file-spreadsheet"></i></span><div><p>견적 시스템 상태</p><strong data-integration-title="estimate">연결 전</strong><small data-integration-copy="estimate">사용 중인 견적 ERP 주소 또는 API 정보가 필요합니다.</small></div><span class="status-pill is-pending" data-integration-pill="estimate">연결 전</span></section>
             <section class="template-quick-bar">
               <span class="template-file-icon"><i data-lucide="file-spreadsheet"></i></span>
-              <div><strong>에스앤 견적서 양식</strong><p>ERP 연결 전에도 기존 엑셀 견적서를 바로 내려받아 작성할 수 있습니다.</p></div>
-              <a class="secondary-button" href="/api/admin/template?file=estimate"><i data-lucide="download"></i> 견적서 내려받기</a>
+              <div><strong>에스앤 견적서 바로 작성</strong><p>웹 양식을 열어 금액을 자동 계산하고 PDF로 저장할 수 있습니다.</p></div>
+              <div class="template-quick-actions"><button class="primary-button" type="button" data-create-document="estimate"><i data-lucide="square-pen"></i> 견적서 작성</button><a class="secondary-button" href="/api/admin/template?file=estimate"><i data-lucide="download"></i> 원본 XLS</a></div>
             </section>
             <section class="work-panel full-panel">
-              <div class="panel-heading"><div><span><strong>견적 목록</strong><small>거래처별 견적 진행 현황</small></span></div><div class="table-actions"><button class="search-button" type="button" disabled><i data-lucide="search"></i> 검색</button><button class="secondary-button" type="button" disabled><i data-lucide="plus"></i> 새 견적</button></div></div>
+              <div class="panel-heading"><div><span><strong>견적 목록</strong><small>거래처별 견적 진행 현황</small></span></div><div class="table-actions"><button class="search-button" type="button" disabled><i data-lucide="search"></i> 검색</button><button class="secondary-button" type="button" data-create-document="estimate"><i data-lucide="plus"></i> 새 견적</button></div></div>
               <div class="large-empty"><span><i data-lucide="database-zap"></i></span><strong>연결할 견적 ERP를 선택해 주세요.</strong><p>ERP 연결 전에는 실제 견적 자료를 저장하거나 표시하지 않습니다.</p><button class="secondary-button" type="button" data-integration="estimate">연결 정보 등록</button></div>
             </section>
           </section>
@@ -215,22 +216,92 @@
           </section>
 
           <section class="module-view" data-module-view="templates" aria-labelledby="templates-title">
-            <div class="page-heading"><div><p class="eyebrow">WORK TEMPLATES</p><h1 id="templates-title">업무 서식</h1><p>회사에서 사용하는 원본 엑셀 양식을 관리자만 내려받을 수 있습니다.</p></div></div>
+            <div class="page-heading"><div><p class="eyebrow">WORK TEMPLATES</p><h1 id="templates-title">업무 서식</h1><p>웹에서 바로 작성해 PDF로 저장하거나 원본 엑셀 양식을 내려받을 수 있습니다.</p></div></div>
             <div class="template-grid">
               <article class="template-card">
-                <div class="template-card-head"><span class="template-file-icon"><i data-lucide="file-spreadsheet"></i></span><span class="template-format">XLS</span></div>
-                <div><p class="template-category">견적 관리</p><h2>견적서 양식</h2><p>거래처 제출용 견적을 작성하는 기존 에스앤 엑셀 원본입니다.</p></div>
-                <dl><div><dt>원본 파일</dt><dd>z0.견적서양식.xls</dd></div><div><dt>파일 크기</dt><dd>3.84 MB</dd></div></dl>
-                <a class="primary-button" href="/api/admin/template?file=estimate"><i data-lucide="download"></i> 견적서 내려받기</a>
+                <div class="template-card-head"><span class="template-file-icon"><i data-lucide="file-spreadsheet"></i></span><span class="template-format">WEB + XLS</span></div>
+                <div><p class="template-category">견적 관리</p><h2>견적서</h2><p>거래처, 공사명, 품목과 단가를 입력하면 합계와 부가세를 자동 계산합니다.</p></div>
+                <dl><div><dt>빠른 작성</dt><dd>자동 계산 · PDF 저장</dd></div><div><dt>원본 파일</dt><dd>z0.견적서양식.xls</dd></div></dl>
+                <div class="template-card-actions"><button class="primary-button" type="button" data-create-document="estimate"><i data-lucide="square-pen"></i> 바로 작성</button><a class="secondary-button" href="/api/admin/template?file=estimate"><i data-lucide="download"></i> 원본 XLS</a></div>
               </article>
               <article class="template-card">
-                <div class="template-card-head"><span class="template-file-icon tone-violet"><i data-lucide="file-text"></i></span><span class="template-format">XLS</span></div>
-                <div><p class="template-category">거래 문서</p><h2>거래명세서 양식</h2><p>납품·거래 내역을 정리하는 기존 에스앤 엑셀 원본입니다.</p></div>
-                <dl><div><dt>원본 파일</dt><dd>0.거래명세서 양식.xls</dd></div><div><dt>파일 크기</dt><dd>106.5 KB</dd></div></dl>
-                <a class="primary-button" href="/api/admin/template?file=transaction"><i data-lucide="download"></i> 거래명세서 내려받기</a>
+                <div class="template-card-head"><span class="template-file-icon tone-violet"><i data-lucide="file-text"></i></span><span class="template-format">WEB + XLS</span></div>
+                <div><p class="template-category">거래 문서</p><h2>거래명세서</h2><p>납품일과 거래 품목을 입력해 합계를 확인하고 바로 PDF로 저장합니다.</p></div>
+                <dl><div><dt>빠른 작성</dt><dd>자동 계산 · PDF 저장</dd></div><div><dt>원본 파일</dt><dd>0.거래명세서 양식.xls</dd></div></dl>
+                <div class="template-card-actions"><button class="primary-button" type="button" data-create-document="transaction"><i data-lucide="square-pen"></i> 바로 작성</button><a class="secondary-button" href="/api/admin/template?file=transaction"><i data-lucide="download"></i> 원본 XLS</a></div>
               </article>
             </div>
-            <div class="template-security-note"><i data-lucide="shield-check"></i><p><strong>관리자 전용 다운로드</strong><span>서식 파일은 공개 홈페이지에 표시되지 않으며 로그인 세션이 확인된 경우에만 전송됩니다.</span></p></div>
+            <div class="template-security-note"><i data-lucide="shield-check"></i><p><strong>관리자 전용 문서 작성</strong><span>작성 중인 내용은 현재 브라우저에만 임시저장되며 원본 엑셀은 로그인 세션이 확인된 경우에만 전송됩니다.</span></p></div>
+          </section>
+
+          <section class="module-view document-editor-view" data-module-view="document-editor" aria-labelledby="document-editor-title">
+            <div class="document-editor-toolbar no-print">
+              <div class="document-editor-heading"><p class="eyebrow">DOCUMENT STUDIO</p><h1 id="document-editor-title"><span data-doc-type-label>견적서</span> 작성</h1><p>금액을 자동 계산하고 PDF 저장 화면을 바로 엽니다.</p></div>
+              <div class="document-type-switch" role="group" aria-label="문서 종류">
+                <button type="button" data-doc-type-button="estimate" aria-pressed="true">견적서</button>
+                <button type="button" data-doc-type-button="transaction" aria-pressed="false">거래명세서</button>
+              </div>
+              <div class="document-toolbar-actions">
+                <button class="secondary-button" type="button" data-doc-reset><i data-lucide="file-plus-2"></i> 새 문서</button>
+                <button class="secondary-button" type="button" data-doc-save><i data-lucide="save"></i> 임시저장</button>
+                <button class="primary-button" type="button" data-doc-print><i data-lucide="printer"></i> PDF 저장 / 인쇄</button>
+              </div>
+            </div>
+
+            <div class="document-local-notice no-print"><i data-lucide="shield-check"></i><span data-doc-save-status>새 문서 · 입력하면 자동 임시저장됩니다.</span><button type="button" data-doc-add-row><i data-lucide="plus"></i> 품목 행 추가</button></div>
+
+            <div class="document-workspace">
+              <form class="document-sheet" data-document-form data-document-type="estimate" autocomplete="off">
+                <header class="printable-doc-header">
+                  <div class="doc-title-block"><span>SN DOCUMENT</span><h2 data-doc-type-label>견적서</h2></div>
+                  <div class="doc-head-grid">
+                    <div class="doc-recipient-fields">
+                      <label><span data-doc-date-label>견적일</span><input type="date" data-doc-field="date" /></label>
+                      <label><span>거래처</span><input type="text" data-doc-field="client" placeholder="거래처명 또는 수신처" /></label>
+                      <label><span>공사명</span><input type="text" data-doc-field="project" placeholder="공사명 또는 납품 건명" /></label>
+                    </div>
+                    <div class="doc-company-block">
+                      <div class="doc-company-brand"><img src="./assets/company/sn-logo-mark-small.png" alt="" width="58" height="58" /><span><small>도로 시설물 전문기업</small><strong data-doc-company="name">주식회사 에스앤</strong></span></div>
+                      <dl>
+                        <div><dt>본사·공장</dt><dd data-doc-company="headOffice"></dd></div>
+                        <div><dt>지사</dt><dd data-doc-company="branch"></dd></div>
+                        <div><dt>TEL / FAX</dt><dd><span data-doc-company="phone"></span> / <span data-doc-company="fax"></span></dd></div>
+                        <div><dt>E-mail</dt><dd data-doc-company="email"></dd></div>
+                      </dl>
+                    </div>
+                  </div>
+                </header>
+
+                <div class="doc-amount-banner"><strong data-doc-amount-words>금 영원정</strong><span data-doc-amount-number>₩ 0</span><label class="no-print"><span>부가세</span><select data-doc-field="vatMode"><option value="separate">별도 10%</option><option value="included">포함</option><option value="exempt">면세</option></select></label></div>
+
+                <div class="doc-table-scroll">
+                  <table class="doc-items-table">
+                    <colgroup><col class="col-no" /><col class="col-item" /><col class="col-spec" /><col class="col-unit" /><col class="col-quantity" /><col class="col-price" /><col class="col-amount" /><col class="col-note" /><col class="col-action no-print" /></colgroup>
+                    <thead><tr><th>NO</th><th>품명</th><th>규격</th><th>단위</th><th>수량</th><th>단가</th><th>금액</th><th>비고</th><th class="no-print" aria-label="행 작업"></th></tr></thead>
+                    <tbody data-document-items></tbody>
+                  </table>
+                </div>
+
+                <div class="doc-summary-section">
+                  <label class="doc-notes"><span>특기사항</span><textarea data-doc-field="notes" rows="4" placeholder="결제조건, 유효기간, 현장조건 등을 입력하세요."></textarea></label>
+                  <dl class="doc-totals">
+                    <div><dt>공급가액</dt><dd data-doc-subtotal>0원</dd></div>
+                    <div><dt>부가세</dt><dd data-doc-vat>0원</dd></div>
+                    <div class="doc-grand-total"><dt>합계금액</dt><dd data-doc-total>0원</dd></div>
+                  </dl>
+                </div>
+
+                <footer class="printable-doc-footer">
+                  <div class="doc-manager-fields">
+                    <label><span>담당자</span><input type="text" data-doc-field="managerName" /></label>
+                    <label><span>직급</span><input type="text" data-doc-field="managerTitle" /></label>
+                    <label><span>연락처</span><input type="tel" data-doc-field="managerPhone" /></label>
+                    <label><span>문서번호</span><input type="text" data-doc-field="documentNumber" /></label>
+                  </div>
+                  <p>주식회사 에스앤은 정성과 신의를 바탕으로 책임 있는 결과를 약속드립니다.</p>
+                </footer>
+              </form>
+            </div>
           </section>
 
           <section class="module-view" data-module-view="documents" aria-labelledby="documents-title">
