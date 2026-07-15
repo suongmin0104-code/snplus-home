@@ -117,17 +117,13 @@ function replaceFormFieldsForPdf(clonedDocument) {
     });
 }
 
-async function createPdfFile(sheet, filename) {
-  const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
-    import("html2canvas"),
-    import("jspdf")
-  ]);
-
+async function renderDocumentCanvas(sheet) {
+  const { default: html2canvas } = await import("html2canvas");
   document.body.dataset.exportDocument = "true";
   try {
     await document.fonts?.ready;
     await waitForPaint();
-    const canvas = await html2canvas(sheet, {
+    return html2canvas(sheet, {
       backgroundColor: "#ffffff",
       logging: false,
       onclone: replaceFormFieldsForPdf,
@@ -136,29 +132,45 @@ async function createPdfFile(sheet, filename) {
       windowWidth: sheet.scrollWidth,
       windowHeight: sheet.scrollHeight
     });
-
-    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4", compress: true });
-    const pageWidth = 210;
-    const pageHeight = 297;
-    const imageHeight = (canvas.height * pageWidth) / canvas.width;
-    const image = canvas.toDataURL("image/jpeg", 0.96);
-    let offset = 0;
-
-    pdf.addImage(image, "JPEG", 0, offset, pageWidth, imageHeight, undefined, "FAST");
-    for (let remaining = imageHeight - pageHeight; remaining > 0.5; remaining -= pageHeight) {
-      offset -= pageHeight;
-      pdf.addPage();
-      pdf.addImage(image, "JPEG", 0, offset, pageWidth, imageHeight, undefined, "FAST");
-    }
-
-    const blob = pdf.output("blob");
-    return new File([blob], `${sanitizeFilename(filename)}.pdf`, {
-      type: "application/pdf",
-      lastModified: Date.now()
-    });
   } finally {
     delete document.body.dataset.exportDocument;
   }
+}
+
+function createPngBlob(sheet) {
+  return renderDocumentCanvas(sheet).then((canvas) => new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) resolve(blob);
+      else reject(new Error("PNG clipboard image could not be created."));
+    }, "image/png");
+  }));
+}
+
+async function createPdfFile(sheet, filename) {
+  const [canvas, { jsPDF }] = await Promise.all([
+    renderDocumentCanvas(sheet),
+    import("jspdf")
+  ]);
+
+  const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4", compress: true });
+  const pageWidth = 210;
+  const pageHeight = 297;
+  const imageHeight = (canvas.height * pageWidth) / canvas.width;
+  const image = canvas.toDataURL("image/jpeg", 0.96);
+  let offset = 0;
+
+  pdf.addImage(image, "JPEG", 0, offset, pageWidth, imageHeight, undefined, "FAST");
+  for (let remaining = imageHeight - pageHeight; remaining > 0.5; remaining -= pageHeight) {
+    offset -= pageHeight;
+    pdf.addPage();
+    pdf.addImage(image, "JPEG", 0, offset, pageWidth, imageHeight, undefined, "FAST");
+  }
+
+  const blob = pdf.output("blob");
+  return new File([blob], `${sanitizeFilename(filename)}.pdf`, {
+    type: "application/pdf",
+    lastModified: Date.now()
+  });
 }
 
 function koreanNumber(value) {
@@ -217,6 +229,19 @@ export function setupDocumentEditor({ showModule, showToast }) {
   let saveTimer = null;
   const downloadButton = document.querySelector("[data-doc-download]");
   const shareButton = document.querySelector("[data-doc-share]");
+  const isMobileDevice = navigator.userAgentData?.mobile
+    ?? /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const canCopyForKakao = !isMobileDevice
+    && window.isSecureContext
+    && typeof ClipboardItem === "function"
+    && typeof navigator.clipboard?.write === "function"
+    && (typeof ClipboardItem.supports !== "function" || ClipboardItem.supports("image/png"));
+
+  if (canCopyForKakao && shareButton) {
+    const label = shareButton.querySelector("span");
+    if (label) label.textContent = "카톡에 붙여넣기";
+    shareButton.title = "문서를 복사한 뒤 카카오톡 채팅창에서 Ctrl+V를 누르세요.";
+  }
 
   function setField(name, value) {
     const field = form.querySelector(`[data-doc-field="${name}"]`);
@@ -360,7 +385,7 @@ export function setupDocumentEditor({ showModule, showToast }) {
     });
   }
 
-  async function makeCurrentPdf() {
+  function prepareCurrentDocument() {
     document.activeElement?.blur();
     form.querySelectorAll('[data-item-field="unitPrice"]').forEach((input) => {
       if (input.value.trim()) input.value = formatNumber(parseNumber(input.value));
@@ -371,7 +396,20 @@ export function setupDocumentEditor({ showModule, showToast }) {
     const name = [documentMeta[currentType].title, data.client || data.project || data.date]
       .filter(Boolean)
       .join("_");
+    return { data, name };
+  }
+
+  async function makeCurrentPdf() {
+    const { name } = prepareCurrentDocument();
     return createPdfFile(form, name);
+  }
+
+  function copyCurrentDocumentForKakao() {
+    prepareCurrentDocument();
+    const imagePromise = createPngBlob(form);
+    return navigator.clipboard.write([
+      new ClipboardItem({ "image/png": imagePromise }, { presentationStyle: "attachment" })
+    ]);
   }
 
   function applyDocument(data) {
@@ -489,8 +527,15 @@ export function setupDocumentEditor({ showModule, showToast }) {
   });
 
   shareButton?.addEventListener("click", async () => {
-    setPdfActionsBusy(shareButton, true, "공유 파일 생성 중");
+    setPdfActionsBusy(shareButton, true, canCopyForKakao ? "문서 복사 중" : "공유 파일 생성 중");
     try {
+      if (canCopyForKakao) {
+        await copyCurrentDocumentForKakao();
+        if (saveStatus) saveStatus.textContent = "카톡용 문서 복사 완료 · 카카오톡 채팅창에서 Ctrl+V를 누르세요.";
+        showToast("문서를 복사했습니다. 카카오톡 채팅창에서 Ctrl+V를 누르세요.");
+        return;
+      }
+
       const file = await makeCurrentPdf();
       const shareData = {
         files: [file],
