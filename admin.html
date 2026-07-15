@@ -211,8 +211,47 @@
           </section>
 
           <section class="module-view" data-module-view="tasks" aria-labelledby="tasks-title">
-            <div class="page-heading"><div><p class="eyebrow">TASKS</p><h1 id="tasks-title">일정·할 일</h1><p>견적 제출과 세무 마감 일정을 한 달력으로 모읍니다.</p></div></div>
-            <div class="large-empty standalone-empty"><span><i data-lucide="calendar-check-2"></i></span><strong>통합 일정 연결 전</strong><p>견적·세무 ERP가 연결되면 주요 마감 일정을 이곳에서 확인할 수 있습니다.</p><button class="secondary-button" type="button" data-open-settings>연결 상태 확인</button></div>
+            <div class="page-heading worklog-page-heading">
+              <div><p class="eyebrow">FIELD WORK LOG</p><h1 id="tasks-title">일정·현장 업무일지</h1><p>PC와 휴대폰에서 현장 작업과 사진을 함께 기록합니다.</p></div>
+              <button class="primary-button" type="button" data-worklog-new><i data-lucide="calendar-plus"></i> 새 일정</button>
+            </div>
+
+            <div class="worklog-summary" aria-label="업무일지 요약">
+              <article><span class="tone-blue"><i data-lucide="calendar-days"></i></span><div><small>오늘 일정</small><strong data-worklog-stat="today">0건</strong></div></article>
+              <article><span class="tone-amber"><i data-lucide="clock-3"></i></span><div><small>미완료</small><strong data-worklog-stat="active">0건</strong></div></article>
+              <article><span class="tone-red"><i data-lucide="circle-alert"></i></span><div><small>기한 경과</small><strong data-worklog-stat="overdue">0건</strong></div></article>
+              <article><span class="tone-teal"><i data-lucide="circle-check-big"></i></span><div><small>완료</small><strong data-worklog-stat="completed">0건</strong></div></article>
+            </div>
+
+            <div class="worklog-layout">
+              <section class="worklog-calendar-panel" aria-labelledby="worklog-month-label">
+                <header class="worklog-calendar-head">
+                  <div>
+                    <button class="icon-button" type="button" data-worklog-month="prev" aria-label="이전 달"><i data-lucide="chevron-left"></i></button>
+                    <h2 id="worklog-month-label" data-worklog-month-label></h2>
+                    <button class="icon-button" type="button" data-worklog-month="next" aria-label="다음 달"><i data-lucide="chevron-right"></i></button>
+                  </div>
+                  <button class="secondary-button compact-button" type="button" data-worklog-today>오늘</button>
+                </header>
+                <div class="worklog-weekdays" aria-hidden="true"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
+                <div class="worklog-calendar-grid" data-worklog-calendar role="grid" aria-label="월간 업무 달력"></div>
+              </section>
+
+              <section class="worklog-agenda-panel" aria-labelledby="worklog-selected-label">
+                <header>
+                  <div><p class="eyebrow">DAILY LOG</p><h2 id="worklog-selected-label" data-worklog-selected-label></h2></div>
+                  <button class="icon-button" type="button" data-worklog-new aria-label="선택한 날짜에 일정 추가" title="일정 추가"><i data-lucide="plus"></i></button>
+                </header>
+                <div class="worklog-filter" role="group" aria-label="상태 필터">
+                  <button type="button" data-worklog-filter="all" class="is-active">전체</button>
+                  <button type="button" data-worklog-filter="open">진행</button>
+                  <button type="button" data-worklog-filter="completed">완료</button>
+                </div>
+                <div class="worklog-agenda-list" data-worklog-list aria-live="polite">
+                  <div class="worklog-loading"><i data-lucide="loader-circle"></i><span>업무일지를 불러오는 중입니다.</span></div>
+                </div>
+              </section>
+            </div>
           </section>
 
           <section class="module-view" data-module-view="templates" aria-labelledby="templates-title">
@@ -338,6 +377,41 @@
         </div>
       </main>
     </div>
+
+    <dialog class="worklog-dialog" data-worklog-dialog>
+      <form data-worklog-form autocomplete="off">
+        <header class="worklog-dialog-head">
+          <div><p class="eyebrow">FIELD WORK LOG</p><h2 data-worklog-dialog-title>새 일정</h2></div>
+          <button class="icon-button" type="button" data-worklog-close aria-label="닫기"><i data-lucide="x"></i></button>
+        </header>
+
+        <div class="worklog-form-body">
+          <input type="hidden" name="id" />
+          <label class="worklog-field span-2"><span>일정·작업 제목 <b>*</b></span><input type="text" name="title" maxlength="120" required placeholder="예: 화성 현장 디자인난간 설치" /></label>
+          <label class="worklog-field"><span>날짜 <b>*</b></span><input type="date" name="date" required /></label>
+          <label class="worklog-field"><span>상태</span><select name="status"><option value="planned">예정</option><option value="progress">진행 중</option><option value="completed">완료</option></select></label>
+          <label class="worklog-field"><span>시작 시간</span><input type="time" name="startTime" /></label>
+          <label class="worklog-field"><span>종료 시간</span><input type="time" name="endTime" /></label>
+          <label class="worklog-field"><span>업무 구분</span><select name="category"><option value="field">현장 작업</option><option value="delivery">납품·설치</option><option value="inspection">점검·하자</option><option value="office">견적·사무</option><option value="other">기타</option></select></label>
+          <label class="worklog-field"><span>현장·장소</span><input type="text" name="site" maxlength="160" placeholder="현장명 또는 주소" /></label>
+          <label class="worklog-field span-2"><span>참여자</span><input type="text" name="workers" maxlength="200" placeholder="작업자 또는 협력업체" /></label>
+          <label class="worklog-field span-2"><span>작업내용</span><textarea name="description" rows="5" maxlength="5000" placeholder="진행한 작업, 확인사항, 다음 할 일을 기록하세요."></textarea></label>
+
+          <section class="worklog-photo-field span-2">
+            <div class="worklog-photo-heading"><span><strong>현장사진</strong><small>최대 6장 · 자동 용량 최적화</small></span><label class="secondary-button" for="worklog-photo-input"><i data-lucide="camera"></i> 촬영·사진 선택</label></div>
+            <input id="worklog-photo-input" type="file" data-worklog-photo-input accept="image/*" capture="environment" multiple hidden />
+            <div class="worklog-photo-grid" data-worklog-photo-grid></div>
+          </section>
+        </div>
+
+        <footer class="worklog-dialog-actions">
+          <button class="danger-button" type="button" data-worklog-delete hidden><i data-lucide="trash-2"></i> 삭제</button>
+          <span></span>
+          <button class="secondary-button" type="button" data-worklog-close>취소</button>
+          <button class="primary-button" type="submit" data-worklog-submit><i data-lucide="save"></i><span>저장</span></button>
+        </footer>
+      </form>
+    </dialog>
 
     <dialog class="integration-dialog" data-integration-dialog>
       <button class="dialog-close" type="button" data-dialog-close aria-label="닫기"><i data-lucide="x"></i></button>

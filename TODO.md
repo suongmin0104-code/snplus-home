@@ -10,6 +10,10 @@
 - [x] 견적서·거래명세서 원본 양식 관리자 전용 등록
 - [x] 견적서·거래명세서 웹 바로 작성 및 PDF 출력
 - [x] 품목별 금액·부가세·합계 자동 계산과 브라우저 임시저장
+- [x] 월간 일정·현장 업무일지와 상태별 관리
+- [x] 휴대폰 카메라 촬영·사진 자동 압축·비공개 업로드
+- [x] PC·휴대폰 공용 일정 저장소와 휴대폰 캘린더 파일 추가
+- [ ] Google Calendar 또는 Microsoft 365 양방향 자동 동기화 검토
 - [ ] 실제 사용 중인 견적 ERP 서비스 확정
 - [ ] 실제 사용 중인 세무·회계 ERP 서비스 확정
 - [ ] ERP API 제공 범위와 계정 권한 확인
@@ -29,7 +33,7 @@
 - [x] GitHub 원격 저장소 URL 생성 및 연결
 - [x] GitHub push
 - [x] Vercel 배포 준비
-- [ ] Vercel 실제 배포 URL 접속 확인
+- [x] Vercel 실제 배포 URL 접속 확인
 - [ ] 모바일 실기기 화면 확인
 - [x] 모든 이미지 표시 로컬 preview 확인
 - [x] 메뉴 링크 로컬 검사
@@ -44,17 +48,17 @@
 ## 도메인 구매 후 작업
 
 - [x] 실제 도메인 구매: `snplus.ai.kr`
-- [ ] Vercel Domains에 도메인 추가
+- [x] Vercel Domains에 도메인 추가
 - [ ] DNS A Record 설정
 - [ ] DNS CNAME 설정
 - [x] `index.html`의 사이트 URL을 `https://snplus.ai.kr`로 변경
 - [x] `public/robots.txt`의 Sitemap URL을 `https://snplus.ai.kr`로 변경
 - [x] `public/sitemap.xml`의 URL을 `https://snplus.ai.kr`로 변경
 - [x] 배포용 Build 생성
-- [ ] Vercel 재배포
-- [ ] HTTPS 접속 확인
+- [x] Vercel 재배포
+- [x] HTTPS 접속 확인
 - [ ] www 접속 확인
-- [ ] 루트 도메인 접속 확인
+- [x] 루트 도메인 접속 확인
 
 ## 검색 등록
 

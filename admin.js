@@ -1,12 +1,17 @@
 import {
   ArrowRight,
   Building2,
+  CalendarPlus,
   CalendarCheck2,
   CalendarDays,
+  Camera,
+  ChevronLeft,
   ChevronRight,
   CircleAlert,
+  CircleCheckBig,
   CircleDollarSign,
   ClipboardList,
+  Clock3,
   createIcons,
   DatabaseZap,
   Download,
@@ -22,6 +27,7 @@ import {
   Landmark,
   LayoutDashboard,
   ListChecks,
+  LoaderCircle,
   LockKeyhole,
   LogOut,
   Menu,
@@ -36,21 +42,28 @@ import {
   ShieldAlert,
   ShieldCheck,
   SquarePen,
+  Trash2,
   UserRound,
   Workflow,
   X
 } from "lucide";
 import { setupDocumentEditor } from "./admin-document.js";
+import { setupWorklog } from "./admin-worklog.js";
 
 const iconSet = {
   ArrowRight,
   Building2,
+  CalendarPlus,
   CalendarCheck2,
   CalendarDays,
+  Camera,
+  ChevronLeft,
   ChevronRight,
   CircleAlert,
+  CircleCheckBig,
   CircleDollarSign,
   ClipboardList,
+  Clock3,
   DatabaseZap,
   Download,
   ExternalLink,
@@ -65,6 +78,7 @@ const iconSet = {
   Landmark,
   LayoutDashboard,
   ListChecks,
+  LoaderCircle,
   LockKeyhole,
   LogOut,
   Menu,
@@ -79,6 +93,7 @@ const iconSet = {
   ShieldAlert,
   ShieldCheck,
   SquarePen,
+  Trash2,
   UserRound,
   Workflow,
   X
@@ -106,7 +121,7 @@ const previewOverview = {
     inquiries: { value: null, label: "문의 저장소 연결 필요" },
     estimates: { value: null, label: "견적 ERP 연결 필요" },
     taxSchedule: { value: null, label: "세무 ERP 연결 필요" },
-    tasks: { value: null, label: "업무 저장소 연결 필요" }
+    tasks: { value: "2건", label: "오늘 1건 · 현장 업무일지" }
   },
   integrations: {
     estimate: { name: "견적 ERP", connected: false, status: "연결 전", url: null },
@@ -120,6 +135,8 @@ const state = {
   currentModule: "dashboard",
   toastTimer: null
 };
+
+let worklog;
 
 const body = document.body;
 const loginForm = document.querySelector("[data-login-form]");
@@ -250,9 +267,19 @@ function showModule(moduleName) {
   sidebar?.classList.remove("is-open");
   document.querySelector("#admin-main")?.focus({ preventScroll: true });
   window.scrollTo({ top: 0, behavior: "smooth" });
+  if (requested === "tasks") worklog?.activate();
 }
 
 const documentEditor = setupDocumentEditor({ showModule, showToast });
+worklog = setupWorklog({
+  fetchJson,
+  showToast,
+  onUnauthorized: () => {
+    setAuthState("login");
+    showToast("보안 세션이 만료되었습니다.");
+  },
+  refreshOverview: () => loadOverview()
+});
 
 function openIntegrationDialog(key) {
   const meta = integrationMeta[key];
@@ -290,6 +317,7 @@ async function initialize() {
   if (isLocalPreview) {
     applyOverview(previewOverview);
     setAuthState("authenticated");
+    worklog.enablePreview();
     if (previewParams.get("module") === "document-editor") {
       documentEditor.open(previewParams.get("doc") || "estimate");
     } else {
@@ -404,6 +432,7 @@ document.querySelector("[data-refresh]")?.addEventListener("click", async (event
   button.classList.add("is-spinning");
   try {
     await loadOverview({ notify: true });
+    if (state.currentModule === "tasks") await worklog.reload();
   } catch (error) {
     if (error.status === 401) {
       setAuthState("login");
@@ -423,6 +452,7 @@ document.querySelector("[data-logout]")?.addEventListener("click", async () => {
     // The local state is cleared even if the network request fails.
   }
   state.overview = previewOverview;
+  worklog.reset();
   setAuthState("login");
   showModule("dashboard");
 });

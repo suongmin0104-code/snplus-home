@@ -8,8 +8,11 @@ const html = readFileSync(indexPath, "utf8");
 const script = readFileSync(join(root, "script.js"), "utf8");
 const adminHtml = readFileSync(join(root, "admin.html"), "utf8");
 const adminScript = readFileSync(join(root, "admin.js"), "utf8");
+const adminWorklogScript = readFileSync(join(root, "admin-worklog.js"), "utf8");
 const adminAuth = readFileSync(join(root, "lib", "admin-auth.js"), "utf8");
 const adminTemplateApi = readFileSync(join(root, "api", "admin", "template.js"), "utf8");
+const adminWorklogApi = readFileSync(join(root, "api", "admin", "worklog.js"), "utf8");
+const adminWorklogPhotoApi = readFileSync(join(root, "api", "admin", "worklog-photo.js"), "utf8");
 const envExample = readFileSync(join(root, ".env.example"), "utf8");
 const robots = readFileSync(join(root, "public", "robots.txt"), "utf8");
 const vercelConfig = JSON.parse(readFileSync(join(root, "vercel.json"), "utf8"));
@@ -109,6 +112,9 @@ for (const api of forbiddenNavigationApis) {
   if (adminScript.includes(api)) {
     failures.push(`Admin navigation must not depend on browser history: ${api}`);
   }
+  if (adminWorklogScript.includes(api)) {
+    failures.push(`Admin worklog navigation must not depend on browser history: ${api}`);
+  }
 }
 
 requireAdminMatch(/<html\s+lang="ko"/, "admin.html must declare Korean language.");
@@ -117,6 +123,9 @@ requireAdminMatch(/data-login-form/, "Admin login form is required.");
 requireAdminMatch(/data-module-view="estimate"/, "Estimate ERP module is required.");
 requireAdminMatch(/data-module-view="tax"/, "Tax ERP module is required.");
 requireAdminMatch(/data-module-view="templates"/, "Admin work-template module is required.");
+requireAdminMatch(/data-module-view="tasks"/, "Admin field worklog module is required.");
+requireAdminMatch(/data-worklog-calendar/, "Admin monthly worklog calendar is required.");
+requireAdminMatch(/capture="environment"/, "Admin worklog must support the mobile rear camera.");
 requireAdminMatch(/\/api\/admin\/template\?file=estimate/, "Estimate template download link is required.");
 requireAdminMatch(/\/api\/admin\/template\?file=transaction/, "Transaction template download link is required.");
 
@@ -141,20 +150,41 @@ if (!adminRewrite) {
   failures.push("vercel.json must rewrite /admin to /admin.html.");
 }
 
+const adminCspAllowsLocalPhotoPreview = vercelConfig.headers?.some(
+  (entry) => (entry.source === "/admin" || entry.source === "/admin.html") && entry.headers?.some(
+    (header) => header.key === "Content-Security-Policy" && header.value.includes("img-src 'self' data: blob:")
+  )
+);
+if (!adminCspAllowsLocalPhotoPreview) {
+  failures.push("Admin CSP must allow local blob image previews for mobile camera uploads.");
+}
+
 if (!adminTemplateApi.includes("@vercel/blob") || !adminTemplateApi.includes('access: "private"')) {
   failures.push("Admin templates must be served from private Vercel Blob storage.");
+}
+
+if (!adminWorklogApi.includes("requireAdmin") || !adminWorklogPhotoApi.includes("requireAdmin")) {
+  failures.push("Admin worklog APIs must require an authenticated admin session.");
+}
+
+if (!adminWorklogPhotoApi.includes("@vercel/blob") || !adminWorklogPhotoApi.includes('access: "private"')) {
+  failures.push("Admin worklog photos must be stored in private Vercel Blob storage.");
 }
 
 for (const adminFile of [
   "admin.html",
   "admin.css",
   "admin.js",
+  "admin-worklog.js",
   "lib/admin-auth.js",
+  "lib/worklog-store.js",
   "api/admin/login.js",
   "api/admin/session.js",
   "api/admin/logout.js",
   "api/admin/overview.js",
   "api/admin/template.js",
+  "api/admin/worklog.js",
+  "api/admin/worklog-photo.js",
   "scripts/configure-admin-vercel.mjs",
   "DOCS/ADMIN_WORKSPACE.md"
 ]) {
