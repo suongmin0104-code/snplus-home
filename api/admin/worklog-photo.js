@@ -64,7 +64,7 @@ function safeFileName(value) {
 }
 
 export default async function handler(req, res) {
-  const auth = requireAdmin(req, res);
+  const auth = await requireAdmin(req, res, "worklog");
   if (!auth) return;
 
   const path = String(req.query?.path ?? "").trim();

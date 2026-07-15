@@ -1,6 +1,7 @@
 import {
   ArrowRight,
   Building2,
+  Ban,
   CalendarPlus,
   CalendarCheck2,
   CalendarDays,
@@ -13,6 +14,7 @@ import {
   ClipboardList,
   Clock3,
   createIcons,
+  Copy,
   DatabaseZap,
   Download,
   ExternalLink,
@@ -43,15 +45,22 @@ import {
   ShieldCheck,
   SquarePen,
   Trash2,
+  UserCheck,
+  UserPlus,
   UserRound,
+  UsersRound,
+  KeyRound,
+  Pencil,
   Workflow,
   X
 } from "lucide";
 import { setupDocumentEditor } from "./admin-document.js";
+import { setupUserManagement } from "./admin-users.js";
 import { setupWorklog } from "./admin-worklog.js";
 
 const iconSet = {
   ArrowRight,
+  Ban,
   Building2,
   CalendarPlus,
   CalendarCheck2,
@@ -64,6 +73,7 @@ const iconSet = {
   CircleDollarSign,
   ClipboardList,
   Clock3,
+  Copy,
   DatabaseZap,
   Download,
   ExternalLink,
@@ -94,7 +104,12 @@ const iconSet = {
   ShieldCheck,
   SquarePen,
   Trash2,
+  UserCheck,
+  UserPlus,
   UserRound,
+  UsersRound,
+  KeyRound,
+  Pencil,
   Workflow,
   X
 };
@@ -115,7 +130,15 @@ const integrationMeta = {
 const previewOverview = {
   ok: true,
   generatedAt: new Date().toISOString(),
-  user: { name: "미리보기" },
+  user: {
+    id: "01000000000",
+    phone: "01000000000",
+    name: "총책임자",
+    title: "총책임자",
+    role: "owner",
+    status: "active",
+    permissions: ["estimate", "tax", "clients", "worklog", "documents"]
+  },
   company: { name: "주식회사 에스앤", phone: "031-852-2918", fax: "031-852-2919" },
   summary: {
     inquiries: { value: null, label: "문의 저장소 연결 필요" },
@@ -132,30 +155,92 @@ const previewOverview = {
 
 const state = {
   overview: previewOverview,
+  user: previewOverview.user,
   currentModule: "dashboard",
   toastTimer: null
 };
 
 let worklog;
+let userManagement;
 
 const body = document.body;
 const loginForm = document.querySelector("[data-login-form]");
 const loginMessage = document.querySelector("[data-login-message]");
-const passwordToggle = document.querySelector("[data-password-toggle]");
+const activationForm = document.querySelector("[data-activation-form]");
+const activationMessage = document.querySelector("[data-activation-message]");
 const sidebar = document.querySelector("[data-sidebar]");
 const dialog = document.querySelector("[data-integration-dialog]");
 const toast = document.querySelector("[data-toast]");
 
-createIcons({
-  icons: iconSet,
-  attrs: {
-    "aria-hidden": "true",
-    "stroke-width": 2
-  }
-});
+function refreshIcons() {
+  createIcons({
+    icons: iconSet,
+    attrs: {
+      "aria-hidden": "true",
+      "stroke-width": 2
+    }
+  });
+}
+
+refreshIcons();
+
+const modulePermissions = {
+  dashboard: "",
+  estimate: "estimate",
+  tax: "tax",
+  clients: "clients",
+  tasks: "worklog",
+  "document-editor": "estimate",
+  templates: "documents",
+  documents: "documents",
+  users: "owner",
+  settings: "owner"
+};
 
 function setAuthState(value) {
   body.dataset.authState = value;
+}
+
+function canUsePermission(permission) {
+  if (!permission) return true;
+  if (state.user?.role === "owner") return true;
+  if (permission === "owner") return false;
+  return Array.isArray(state.user?.permissions) && state.user.permissions.includes(permission);
+}
+
+function canUseModule(moduleName) {
+  return canUsePermission(modulePermissions[moduleName] ?? "");
+}
+
+function setAccessHidden(element, hidden) {
+  if (!element) return;
+  if (hidden) element.dataset.accessHidden = "true";
+  else delete element.dataset.accessHidden;
+}
+
+function applyAccessControls() {
+  document.querySelectorAll("[data-module]").forEach((element) => {
+    setAccessHidden(element, !canUseModule(element.dataset.module));
+  });
+  document.querySelectorAll("[data-module-view]").forEach((element) => {
+    setAccessHidden(element, !canUseModule(element.dataset.moduleView));
+  });
+  document.querySelectorAll("[data-go-module]").forEach((element) => {
+    setAccessHidden(element, !canUseModule(element.dataset.goModule));
+  });
+  document.querySelectorAll("[data-open-settings], [data-owner-only]").forEach((element) => {
+    setAccessHidden(element, state.user?.role !== "owner");
+  });
+  document.querySelectorAll("[data-integration]").forEach((element) => {
+    setAccessHidden(element, !canUsePermission(element.dataset.integration));
+  });
+  document.querySelectorAll("[data-create-document]").forEach((element) => {
+    setAccessHidden(element, !canUsePermission("estimate"));
+  });
+  document.querySelectorAll('a[href^="/api/admin/template"]').forEach((element) => {
+    setAccessHidden(element, !canUsePermission("documents"));
+  });
+  if (!canUseModule(state.currentModule)) showModule("dashboard");
 }
 
 async function fetchJson(url, options = {}) {
@@ -208,9 +293,16 @@ function setPill(element, integration) {
 
 function applyOverview(overview) {
   state.overview = overview;
+  state.user = overview.user || state.user;
   document.querySelectorAll("[data-user-name]").forEach((element) => {
-    element.textContent = overview.user?.name || "관리자";
+    element.textContent = state.user?.name || "관리자";
   });
+  document.querySelectorAll("[data-user-role]").forEach((element) => {
+    element.textContent = state.user?.role === "owner"
+      ? "총책임자 · 모든 권한"
+      : `${state.user?.title || "직원"} · 승인된 업무만`;
+  });
+  applyAccessControls();
 
   const today = new Date();
   document.querySelectorAll("[data-today-label]").forEach((element) => {
@@ -255,6 +347,10 @@ function applyOverview(overview) {
 
 function showModule(moduleName) {
   const requested = document.querySelector(`[data-module-view="${moduleName}"]`) ? moduleName : "dashboard";
+  if (!canUseModule(requested)) {
+    showToast("이 업무를 사용할 권한이 없습니다. 총책임자에게 문의해 주세요.");
+    return;
+  }
   state.currentModule = requested;
   document.querySelectorAll("[data-module-view]").forEach((view) => {
     view.classList.toggle("is-active", view.dataset.moduleView === requested);
@@ -268,6 +364,7 @@ function showModule(moduleName) {
   document.querySelector("#admin-main")?.focus({ preventScroll: true });
   window.scrollTo({ top: 0, behavior: "smooth" });
   if (requested === "tasks") worklog?.activate();
+  if (requested === "users") userManagement?.activate();
 }
 
 const documentEditor = setupDocumentEditor({ showModule, showToast });
@@ -279,6 +376,20 @@ worklog = setupWorklog({
     showToast("보안 세션이 만료되었습니다.");
   },
   refreshOverview: () => loadOverview()
+});
+userManagement = setupUserManagement({
+  fetchJson,
+  showToast,
+  refreshIcons,
+  onUnauthorized: (error) => {
+    if (error?.status === 401) {
+      setAuthState("login");
+      showToast("보안 세션이 만료되었습니다.");
+    } else {
+      showModule("dashboard");
+      showToast("직원·권한 관리는 총책임자만 사용할 수 있습니다.");
+    }
+  }
 });
 
 function openIntegrationDialog(key) {
@@ -318,6 +429,7 @@ async function initialize() {
     applyOverview(previewOverview);
     setAuthState("authenticated");
     worklog.enablePreview();
+    userManagement.enablePreview();
     if (previewParams.get("module") === "document-editor") {
       documentEditor.open(previewParams.get("doc") || "estimate");
     } else {
@@ -352,6 +464,21 @@ async function initialize() {
   }
 }
 
+function setAuthMode(mode) {
+  const requested = mode === "activate" ? "activate" : "login";
+  body.dataset.authMode = requested;
+  document.querySelectorAll("[data-auth-mode]").forEach((button) => {
+    const active = button.dataset.authMode === requested;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-selected", active ? "true" : "false");
+  });
+  document.querySelectorAll("[data-auth-panel]").forEach((panel) => {
+    panel.hidden = panel.dataset.authPanel !== requested;
+  });
+  loginMessage.textContent = "";
+  activationMessage.textContent = "";
+}
+
 loginForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
   loginMessage.textContent = "";
@@ -377,6 +504,12 @@ loginForm?.addEventListener("submit", async (event) => {
   } catch (error) {
     if (error.status === 503 && error.payload?.configured === false) {
       setAuthState("setup");
+    } else if (error.payload?.activationRequired) {
+      const phone = payload.username.replace(/\D/g, "");
+      setAuthMode("activate");
+      activationForm.elements.username.value = phone;
+      activationMessage.textContent = error.message;
+      activationForm.elements.activationCode.focus();
     } else {
       loginMessage.textContent = error.message || "로그인하지 못했습니다.";
     }
@@ -386,13 +519,56 @@ loginForm?.addEventListener("submit", async (event) => {
   }
 });
 
-passwordToggle?.addEventListener("click", () => {
-  const input = loginForm?.querySelector("input[name='password']");
-  if (!input) return;
-  const reveal = input.type === "password";
-  input.type = reveal ? "text" : "password";
-  passwordToggle.setAttribute("aria-label", reveal ? "비밀번호 숨기기" : "비밀번호 보기");
-  passwordToggle.classList.toggle("is-visible", reveal);
+activationForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  activationMessage.textContent = "";
+  const submitButton = activationForm.querySelector("button[type='submit']");
+  const formData = new FormData(activationForm);
+  const payload = {
+    username: String(formData.get("username") ?? "").replace(/\D/g, ""),
+    activationCode: String(formData.get("activationCode") ?? "").trim().toUpperCase(),
+    password: String(formData.get("password") ?? ""),
+    passwordConfirm: String(formData.get("passwordConfirm") ?? "")
+  };
+  const passwordValid = payload.password.length >= 10
+    && /[A-Za-z가-힣]/.test(payload.password)
+    && /\d/.test(payload.password);
+  if (!payload.username || payload.activationCode.length !== 10 || !passwordValid || payload.password !== payload.passwordConfirm) {
+    activationMessage.textContent = "전화번호, 등록코드와 비밀번호 확인란을 확인해 주세요.";
+    return;
+  }
+
+  submitButton.disabled = true;
+  submitButton.querySelector("span").textContent = "등록 중";
+  try {
+    await fetchJson("/api/admin/activate", { method: "POST", body: JSON.stringify(payload) });
+    activationForm.reset();
+    await loadOverview();
+    setAuthState("authenticated");
+    showModule("dashboard");
+    showToast("비밀번호 등록이 완료되었습니다.");
+  } catch (error) {
+    activationMessage.textContent = error.message || "비밀번호를 등록하지 못했습니다.";
+  } finally {
+    submitButton.disabled = false;
+    submitButton.querySelector("span").textContent = "비밀번호 만들고 시작";
+  }
+});
+
+document.querySelectorAll("[data-auth-mode]").forEach((button) => {
+  button.addEventListener("click", () => setAuthMode(button.dataset.authMode));
+});
+
+document.querySelectorAll("[data-password-toggle]").forEach((button) => {
+  button.addEventListener("click", () => {
+    const form = button.dataset.passwordToggle === "activate" ? activationForm : loginForm;
+    const inputs = form?.querySelectorAll('input[name="password"], input[name="passwordConfirm"]');
+    if (!inputs?.length) return;
+    const reveal = inputs[0].type === "password";
+    inputs.forEach((input) => { input.type = reveal ? "text" : "password"; });
+    button.setAttribute("aria-label", reveal ? "비밀번호 숨기기" : "비밀번호 보기");
+    button.classList.toggle("is-visible", reveal);
+  });
 });
 
 document.querySelectorAll("[data-module]").forEach((button) => {
@@ -452,8 +628,11 @@ document.querySelector("[data-logout]")?.addEventListener("click", async () => {
     // The local state is cleared even if the network request fails.
   }
   state.overview = previewOverview;
+  state.user = previewOverview.user;
   worklog.reset();
+  userManagement.reset();
   setAuthState("login");
+  setAuthMode("login");
   showModule("dashboard");
 });
 

@@ -28,7 +28,7 @@ export default async function handler(req, res) {
     return sendJson(res, 405, { ok: false, message: "Method Not Allowed" });
   }
 
-  const auth = requireAdmin(req, res);
+  const auth = await requireAdmin(req, res, "documents");
   if (!auth) return;
 
   const key = String(req.query?.file ?? "").trim();

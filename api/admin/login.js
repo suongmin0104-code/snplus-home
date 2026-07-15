@@ -8,6 +8,12 @@ import {
   usernamesMatch,
   verifyPassword
 } from "../../lib/admin-auth.js";
+import {
+  normalizePhoneId,
+  publicAdminUser,
+  readAdminUser,
+  recordAdminUserLogin
+} from "../../lib/admin-user-store.js";
 
 const attempts = new Map();
 const WINDOW_MS = 15 * 60 * 1000;
@@ -62,10 +68,33 @@ export default async function handler(req, res) {
 
   try {
     const body = await readJsonBody(req);
-    const username = typeof body.username === "string" ? body.username : "";
+    const usernameInput = typeof body.username === "string" ? body.username : "";
+    const username = normalizePhoneId(usernameInput) || usernameInput.trim();
     const password = typeof body.password === "string" ? body.password : "";
-    const validPassword = verifyPassword(password, config.passwordHash);
-    const validUsername = usernamesMatch(username, config.username);
+    const isRootOwner = usernamesMatch(username, config.username);
+    const employee = isRootOwner ? null : await readAdminUser(username);
+
+    if (employee?.status === "pending") {
+      return sendJson(res, 403, {
+        ok: false,
+        configured: true,
+        activationRequired: true,
+        message: "최초 비밀번호 등록이 필요합니다. 등록코드를 준비해 주세요."
+      });
+    }
+
+    if (employee?.status === "disabled") {
+      recordFailure(clientKey);
+      return sendJson(res, 403, {
+        ok: false,
+        configured: true,
+        message: "사용이 중지된 계정입니다. 총책임자에게 문의해 주세요."
+      });
+    }
+
+    const storedHash = isRootOwner ? config.passwordHash : employee?.passwordHash;
+    const validPassword = verifyPassword(password, storedHash);
+    const validUsername = isRootOwner || Boolean(employee?.status === "active");
 
     if (!validUsername || !validPassword) {
       recordFailure(clientKey);
@@ -77,12 +106,20 @@ export default async function handler(req, res) {
     }
 
     attempts.delete(clientKey);
-    const token = createSessionToken(config.username, config.sessionSecret);
+    const token = createSessionToken(username, config.sessionSecret);
     setSessionCookie(res, token);
+    if (employee) {
+      recordAdminUserLogin(username).catch((error) => {
+        console.error("ADMIN_LOGIN_RECORD_FAILED", error?.message ?? error);
+      });
+    }
+    const user = isRootOwner
+      ? { id: config.username, phone: config.username, name: "총책임자", title: "총책임자", role: "owner", status: "active", permissions: [] }
+      : publicAdminUser(employee);
     return sendJson(res, 200, {
       ok: true,
       authenticated: true,
-      user: { name: config.username }
+      user
     });
   } catch {
     return sendJson(res, 400, {

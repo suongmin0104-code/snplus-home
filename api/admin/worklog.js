@@ -10,7 +10,7 @@ function errorMessage(error) {
 }
 
 export default async function handler(req, res) {
-  const auth = requireAdmin(req, res);
+  const auth = await requireAdmin(req, res, "worklog");
   if (!auth) return;
 
   try {
@@ -21,7 +21,7 @@ export default async function handler(req, res) {
 
     if (req.method === "POST") {
       const payload = await readJsonBody(req);
-      const entry = await saveWorklog(payload);
+      const entry = await saveWorklog(payload, auth.user.id);
       return sendJson(res, 200, { ok: true, entry });
     }
 

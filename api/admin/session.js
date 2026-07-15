@@ -2,10 +2,11 @@ import {
   getAdminConfig,
   getSessionFromRequest,
   isAdminConfigured,
+  resolveSessionUser,
   sendJson
 } from "../../lib/admin-auth.js";
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== "GET") {
     res.setHeader("Allow", "GET");
     return sendJson(res, 405, { ok: false, message: "Method Not Allowed" });
@@ -22,12 +23,18 @@ export default function handler(req, res) {
   }
 
   const session = getSessionFromRequest(req, config.sessionSecret);
-  const authenticated = Boolean(session && session.sub === config.username);
+  let user = null;
+  try {
+    user = await resolveSessionUser(session, config);
+  } catch (error) {
+    console.error("ADMIN_SESSION_LOOKUP_FAILED", error?.message ?? error);
+  }
+  const authenticated = Boolean(session && user);
   return sendJson(res, 200, {
     ok: true,
     configured: true,
     authenticated,
-    user: authenticated ? { name: config.username } : null,
+    user: authenticated ? user : null,
     expiresAt: authenticated ? new Date(session.exp * 1000).toISOString() : null
   });
 }

@@ -35,23 +35,52 @@
           <h1 id="login-title">업무포털 로그인</h1>
           <p>회사 업무자료를 보호하기 위해 승인된 계정으로만 접속할 수 있습니다.</p>
         </div>
-        <form class="login-form" data-login-form novalidate>
+        <div class="login-mode-tabs" role="tablist" aria-label="로그인 방식">
+          <button class="is-active" type="button" role="tab" aria-selected="true" data-auth-mode="login">로그인</button>
+          <button type="button" role="tab" aria-selected="false" data-auth-mode="activate">첫 비밀번호 만들기</button>
+        </div>
+        <form class="login-form" data-login-form data-auth-panel="login" novalidate>
           <label>
-            <span>아이디</span>
-            <span class="input-wrap"><i data-lucide="user-round"></i><input name="username" type="text" autocomplete="username" required /></span>
+            <span>아이디 <small>등록된 휴대전화 번호</small></span>
+            <span class="input-wrap"><i data-lucide="user-round"></i><input name="username" type="tel" inputmode="numeric" autocomplete="username" placeholder="01012345678" required /></span>
           </label>
           <label>
             <span>비밀번호</span>
             <span class="input-wrap">
               <i data-lucide="lock-keyhole"></i>
               <input name="password" type="password" autocomplete="current-password" minlength="10" required />
-              <button class="password-toggle" type="button" data-password-toggle aria-label="비밀번호 보기"><i data-lucide="eye"></i></button>
+              <button class="password-toggle" type="button" data-password-toggle="login" aria-label="비밀번호 보기"><i data-lucide="eye"></i></button>
             </span>
           </label>
           <p class="form-message" data-login-message role="alert"></p>
           <button class="primary-button login-button" type="submit">
             <span>로그인</span><i data-lucide="arrow-right"></i>
           </button>
+        </form>
+        <form class="login-form activation-form" data-activation-form data-auth-panel="activate" novalidate hidden>
+          <p class="activation-help"><i data-lucide="key-round"></i><span>총책임자가 발급한 등록코드로 본인 비밀번호를 처음 한 번 만듭니다.</span></p>
+          <label>
+            <span>직원 전화번호</span>
+            <span class="input-wrap"><i data-lucide="user-round"></i><input name="username" type="tel" inputmode="numeric" autocomplete="username" placeholder="01012345678" required /></span>
+          </label>
+          <label>
+            <span>최초 등록코드</span>
+            <span class="input-wrap"><i data-lucide="key-round"></i><input name="activationCode" type="text" inputmode="text" autocomplete="one-time-code" maxlength="10" placeholder="10자리 등록코드" required /></span>
+          </label>
+          <label>
+            <span>새 비밀번호 <small>10자 이상 · 문자와 숫자 포함</small></span>
+            <span class="input-wrap">
+              <i data-lucide="lock-keyhole"></i>
+              <input name="password" type="password" autocomplete="new-password" minlength="10" required />
+              <button class="password-toggle" type="button" data-password-toggle="activate" aria-label="비밀번호 보기"><i data-lucide="eye"></i></button>
+            </span>
+          </label>
+          <label>
+            <span>새 비밀번호 확인</span>
+            <span class="input-wrap"><i data-lucide="shield-check"></i><input name="passwordConfirm" type="password" autocomplete="new-password" minlength="10" required /></span>
+          </label>
+          <p class="form-message" data-activation-message role="alert"></p>
+          <button class="primary-button login-button" type="submit"><span>비밀번호 만들고 시작</span><i data-lucide="arrow-right"></i></button>
         </form>
         <div class="login-security"><i data-lucide="shield-check"></i><span>8시간 보안 세션 · 외부 검색 비노출</span></div>
       </section>
@@ -110,11 +139,12 @@
           <button class="portal-nav" type="button" data-module="templates"><i data-lucide="files"></i><span>업무 서식</span></button>
           <button class="portal-nav" type="button" data-module="documents"><i data-lucide="folder-lock"></i><span>사내 자료</span></button>
           <p class="nav-label nav-label-settings">SYSTEM</p>
+          <button class="portal-nav" type="button" data-module="users" data-owner-only><i data-lucide="users-round"></i><span>직원·권한</span></button>
           <button class="portal-nav" type="button" data-module="settings"><i data-lucide="settings"></i><span>연동 설정</span></button>
         </nav>
         <div class="sidebar-foot">
           <span class="user-avatar"><i data-lucide="user-round"></i></span>
-          <span><strong data-user-name>관리자</strong><small>Administrator</small></span>
+          <span><strong data-user-name>관리자</strong><small data-user-role>Administrator</small></span>
         </div>
       </aside>
 
@@ -352,6 +382,28 @@
             </div>
           </section>
 
+          <section class="module-view" data-module-view="users" aria-labelledby="users-title" data-owner-only>
+            <div class="page-heading">
+              <div><p class="eyebrow">TEAM ACCESS</p><h1 id="users-title">직원·권한 관리</h1><p>직원 전화번호를 등록하고 담당 업무에 필요한 권한만 부여합니다.</p></div>
+              <button class="primary-button" type="button" data-user-new><i data-lucide="user-plus"></i> 직원 등록</button>
+            </div>
+            <div class="access-principle">
+              <span><i data-lucide="shield-check"></i></span>
+              <div><strong>비밀번호는 직원 본인만 만듭니다.</strong><p>총책임자는 전화번호와 권한만 등록하고, 한 번 표시되는 등록코드를 직원에게 전달합니다.</p></div>
+            </div>
+            <div class="employee-summary" aria-label="직원 계정 요약">
+              <article><small>전체 계정</small><strong data-user-stat="total">1명</strong></article>
+              <article><small>사용 중</small><strong data-user-stat="active">1명</strong></article>
+              <article><small>등록 대기</small><strong data-user-stat="pending">0명</strong></article>
+              <article><small>사용 중지</small><strong data-user-stat="disabled">0명</strong></article>
+            </div>
+            <section class="employee-panel" aria-labelledby="employee-list-title">
+              <header><div><h2 id="employee-list-title">계정 목록</h2><p>퇴사자는 사용 중지하면 기존 세션도 다음 요청부터 차단됩니다.</p></div><button class="secondary-button compact-button" type="button" data-user-refresh><i data-lucide="refresh-cw"></i> 새로고침</button></header>
+              <div class="employee-list-head" aria-hidden="true"><span>직원</span><span>아이디</span><span>업무 권한</span><span>상태</span><span>관리</span></div>
+              <div class="employee-list" data-user-list aria-live="polite"><div class="employee-loading"><i data-lucide="loader-circle"></i><span>직원 계정을 불러오는 중입니다.</span></div></div>
+            </section>
+          </section>
+
           <section class="module-view" data-module-view="settings" aria-labelledby="settings-title">
             <div class="page-heading"><div><p class="eyebrow">INTEGRATIONS</p><h1 id="settings-title">연동 설정</h1><p>회사에서 사용하는 시스템을 안전한 주소로 연결합니다.</p></div></div>
             <div class="settings-grid">
@@ -412,6 +464,39 @@
           <button class="primary-button" type="submit" data-worklog-submit><i data-lucide="save"></i><span>저장</span></button>
         </footer>
       </form>
+    </dialog>
+
+    <dialog class="user-dialog" data-user-dialog>
+      <form data-user-form autocomplete="off">
+        <header class="user-dialog-head"><div><p class="eyebrow">TEAM ACCESS</p><h2 data-user-dialog-title>직원 등록</h2></div><button class="icon-button" type="button" data-user-dialog-close aria-label="닫기"><i data-lucide="x"></i></button></header>
+        <div class="user-form-body">
+          <input type="hidden" name="id" />
+          <label class="user-field"><span>이름 <b>*</b></span><input type="text" name="name" maxlength="60" required placeholder="직원 이름" /></label>
+          <label class="user-field"><span>직급</span><input type="text" name="title" maxlength="40" placeholder="예: 이사, 과장, 사원" /></label>
+          <label class="user-field span-2"><span>전화번호 아이디 <b>*</b></span><input type="tel" name="phone" inputmode="numeric" maxlength="13" required placeholder="010-1234-5678" /><small>하이픈은 있어도 됩니다. 로그인할 때는 숫자만 입력해도 됩니다.</small></label>
+          <fieldset class="permission-field span-2"><legend>사용 권한</legend>
+            <label><input type="checkbox" name="permissions" value="estimate" checked /><span><i data-lucide="file-spreadsheet"></i><strong>견적 관리·문서 작성</strong></span></label>
+            <label><input type="checkbox" name="permissions" value="tax" /><span><i data-lucide="receipt-text"></i><strong>세무·회계</strong></span></label>
+            <label><input type="checkbox" name="permissions" value="clients" /><span><i data-lucide="building-2"></i><strong>거래처</strong></span></label>
+            <label><input type="checkbox" name="permissions" value="worklog" checked /><span><i data-lucide="calendar-check-2"></i><strong>일정·현장 업무일지</strong></span></label>
+            <label><input type="checkbox" name="permissions" value="documents" checked /><span><i data-lucide="folder-lock"></i><strong>업무 서식·사내 자료</strong></span></label>
+          </fieldset>
+          <p class="form-message span-2" data-user-form-message role="alert"></p>
+        </div>
+        <footer class="user-dialog-actions"><button class="secondary-button" type="button" data-user-dialog-close>취소</button><button class="primary-button" type="submit" data-user-submit><i data-lucide="save"></i><span>등록코드 발급</span></button></footer>
+      </form>
+    </dialog>
+
+    <dialog class="activation-code-dialog" data-activation-code-dialog>
+      <div class="activation-code-content">
+        <span class="activation-code-icon"><i data-lucide="key-round"></i></span>
+        <p class="eyebrow">ONE-TIME REGISTRATION CODE</p>
+        <h2>직원 등록코드가 발급되었습니다.</h2>
+        <p><strong data-activation-user-name>직원</strong>에게 아래 전화번호와 등록코드를 전달해 주세요. 코드는 이 화면을 닫으면 다시 볼 수 없습니다.</p>
+        <dl><div><dt>아이디</dt><dd data-activation-user-phone></dd></div><div><dt>등록코드</dt><dd><code data-activation-code></code></dd></div></dl>
+        <small data-activation-expiry></small>
+        <div class="activation-code-actions"><button class="secondary-button" type="button" data-activation-code-close>닫기</button><button class="primary-button" type="button" data-activation-code-copy><i data-lucide="copy"></i> 아이디·코드 복사</button></div>
+      </div>
     </dialog>
 
     <dialog class="integration-dialog" data-integration-dialog>
