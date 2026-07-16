@@ -187,7 +187,7 @@
               </article>
               <article class="summary-card">
                 <span class="summary-icon tone-blue"><i data-lucide="factory"></i></span>
-                <div><p>생산 출고 대기</p><strong data-summary="production">확인 중</strong><small data-summary-note="production">생산일보</small></div>
+                <div><p>생산중 작업</p><strong data-summary="production">확인 중</strong><small data-summary-note="production">생산일보</small></div>
               </article>
               <article class="summary-card">
                 <span class="summary-icon tone-violet"><i data-lucide="boxes"></i></span>
@@ -230,15 +230,15 @@
           </section>
 
           <section class="module-view" data-module-view="production" aria-labelledby="production-title">
-            <div class="page-heading operation-page-heading"><div><p class="eyebrow">PRODUCTION DAILY LOG</p><h1 id="production-title">생산 관리</h1><p>공장 생산 작업을 도면번호와 출고 여부 중심으로 기록합니다.</p></div><button class="primary-button" type="button" data-operation-new="production"><i data-lucide="plus"></i> 생산일보 등록</button></div>
+            <div class="page-heading operation-page-heading"><div><p class="eyebrow">PRODUCTION DAILY LOG</p><h1 id="production-title">생산 관리</h1><p>공장 생산 작업과 생산완료 여부를 간단하게 기록합니다.</p></div><button class="primary-button" type="button" data-operation-new="production"><i data-lucide="plus"></i> 생산일보 등록</button></div>
             <div class="operation-summary" aria-label="생산 현황">
               <article><span class="tone-blue"><i data-lucide="factory"></i></span><div><small>전체 작업</small><strong data-production-stat="total">0건</strong></div></article>
               <article><span class="tone-teal"><i data-lucide="calendar-days"></i></span><div><small>오늘 작업</small><strong data-production-stat="today">0건</strong></div></article>
-              <article><span class="tone-amber"><i data-lucide="clock-3"></i></span><div><small>출고 대기</small><strong data-production-stat="waiting">0건</strong></div></article>
-              <article><span class="tone-violet"><i data-lucide="truck"></i></span><div><small>출고 완료</small><strong data-production-stat="shipped">0건</strong></div></article>
+              <article><span class="tone-amber"><i data-lucide="clock-3"></i></span><div><small>생산중</small><strong data-production-stat="waiting">0건</strong></div></article>
+              <article><span class="tone-violet"><i data-lucide="circle-check-big"></i></span><div><small>생산완료</small><strong data-production-stat="shipped">0건</strong></div></article>
             </div>
             <section class="operation-panel">
-              <header class="operation-panel-head"><div><h2>공장 생산 작업일보</h2><p>작업일, 도면번호, 작업자, 공정과 출고 상태를 관리합니다.</p></div><div class="operation-filter" role="group" aria-label="생산 상태 필터"><button class="is-active" type="button" data-production-filter="all">전체</button><button type="button" data-production-filter="waiting">출고 대기</button><button type="button" data-production-filter="shipped">출고 완료</button></div></header>
+              <header class="operation-panel-head"><div><h2>공장 생산 작업일보</h2><p>작업일, 도면번호, 작업자와 생산완료 상태를 관리합니다.</p></div><div class="operation-filter" role="group" aria-label="생산 상태 필터"><button class="is-active" type="button" data-production-filter="all">전체</button><button type="button" data-production-filter="waiting">생산중</button><button type="button" data-production-filter="shipped">생산완료</button></div></header>
               <div class="operation-list" data-production-list aria-live="polite"><div class="operation-empty"><i data-lucide="factory"></i><strong>등록된 생산일보가 없습니다.</strong><span>첫 생산 작업을 등록해 주세요.</span></div></div>
             </section>
           </section>
@@ -562,11 +562,9 @@
           <label class="operation-field span-2"><span>생산 작업명 <b>*</b></span><input type="text" name="title" maxlength="140" required placeholder="예: 디자인난간 제작" /></label>
           <label class="operation-field"><span>작업일 <b>*</b></span><input type="date" name="date" required /></label>
           <label class="operation-field"><span>도면번호</span><input type="text" name="drawingNumber" maxlength="100" placeholder="도면 또는 발주번호" /></label>
-          <label class="operation-field"><span>작업 공정</span><select name="process"><option value="cutting">절단</option><option value="welding">용접</option><option value="bending">절곡</option><option value="assembly">조립</option><option value="inspection">검수</option><option value="coating">도금·도장</option><option value="packing">포장</option><option value="other">기타</option></select></label>
-          <label class="operation-field"><span>작업자</span><input type="text" name="workers" maxlength="160" placeholder="작업자 또는 생산팀" /></label>
-          <label class="operation-field"><span>생산수량</span><span class="operation-quantity"><input type="number" name="quantity" min="0" step="0.001" value="0" /><input type="text" name="unit" maxlength="20" value="개" aria-label="생산수량 단위" /></span></label>
-          <label class="operation-field operation-check-field"><input type="checkbox" name="shipped" /><span><strong>출고 완료</strong><small>체크하면 출고 완료 시각이 기록됩니다.</small></span></label>
-          <label class="operation-field span-2"><span>작업내용</span><textarea name="memo" rows="4" maxlength="3000" placeholder="생산내용, 특이사항, 다음 공정을 기록하세요."></textarea></label>
+          <label class="operation-field span-2"><span>작업자</span><input type="text" name="workers" maxlength="160" placeholder="작업자 또는 생산팀" /></label>
+          <label class="operation-field operation-check-field span-2"><input type="checkbox" name="shipped" /><span><strong>생산완료</strong><small>체크하면 생산완료 시각이 기록됩니다.</small></span></label>
+          <label class="operation-field span-2"><span>작업내용 및 기타사항</span><textarea name="memo" rows="4" maxlength="3000" placeholder="작업내용, 특이사항, 기타 전달사항을 기록하세요."></textarea></label>
         </div>
         <footer class="operation-dialog-actions"><button class="danger-button" type="button" data-production-delete hidden><i data-lucide="trash-2"></i> 삭제</button><span></span><button class="secondary-button" type="button" data-production-close>취소</button><button class="primary-button" type="submit" data-production-submit><i data-lucide="save"></i><span>저장</span></button></footer>
       </form>

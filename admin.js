@@ -169,7 +169,7 @@ const previewOverview = {
   company: { name: "주식회사 에스앤", phone: "031-852-2918", fax: "031-852-2919" },
   summary: {
     tasks: { value: "2건", label: "오늘 1건 · 현장 업무일지" },
-    production: { value: "1건", label: "오늘 1건 · 출고완료 0건" },
+    production: { value: "1건", label: "오늘 1건 · 생산완료 0건" },
     inventory: { value: "1종", label: "전체 수량 24" },
     estimates: { value: "1건", label: "전체 1건 · 완료 0건" }
   },

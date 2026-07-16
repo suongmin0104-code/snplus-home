@@ -84,7 +84,7 @@ export default async function handler(req, res) {
     if (canProduction) {
       const entries = await listProduction();
       const summary = summarizeProduction(entries);
-      productionSummary = { value: `${summary.waiting}건`, label: `오늘 ${summary.today}건 · 출고완료 ${summary.shipped}건` };
+      productionSummary = { value: `${summary.waiting}건`, label: `오늘 ${summary.today}건 · 생산완료 ${summary.shipped}건` };
     }
   } catch (error) {
     console.error("ADMIN_OVERVIEW_PRODUCTION_FAILED", error?.message ?? error);

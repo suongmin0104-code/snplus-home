@@ -1,14 +1,3 @@
-const PROCESS_LABELS = Object.freeze({
-  cutting: "절단",
-  welding: "용접",
-  bending: "절곡",
-  assembly: "조립",
-  inspection: "검수",
-  coating: "도금·도장",
-  packing: "포장",
-  other: "기타"
-});
-
 const ESTIMATE_STATUS_LABELS = Object.freeze({ estimating: "견적중", completed: "견적완료" });
 const MAX_UPLOAD_BYTES = 1.8 * 1024 * 1024;
 
@@ -84,7 +73,7 @@ function previewData() {
       { id: "preview-estimate-a", date: today, title: "디자인난간 제작·설치", clientName: "거래처 예시", contactName: "담당자", contactPhone: "", status: "estimating", memo: "", updatedAt: new Date().toISOString() }
     ],
     production: [
-      { id: "preview-production-a", date: today, title: "난간 프레임 제작", drawingNumber: "SN-EXAMPLE-01", workers: "생산팀", process: "welding", quantity: 12, unit: "경간", shipped: false, memo: "", updatedAt: new Date().toISOString() }
+      { id: "preview-production-a", date: today, title: "난간 프레임 제작", drawingNumber: "SN-EXAMPLE-01", workers: "생산팀", shipped: false, memo: "용접 상태와 치수를 확인했습니다.", updatedAt: new Date().toISOString() }
     ],
     inventory: [
       { id: "preview-inventory-a", name: "볼라드 완제품", spec: "예시 규격", quantity: 24, unit: "개", location: "공장 A구역", photo: null, memo: "", updatedAt: new Date().toISOString() }
@@ -239,7 +228,7 @@ export function setupOperations({ fetchJson, showToast, refreshIcons, onUnauthor
   function productionEntryMarkup(entry) {
     const drawing = entry.drawingNumber ? `<span><i data-lucide="file-text"></i>${escapeHtml(entry.drawingNumber)}</span>` : "";
     const workers = entry.workers ? `<span><i data-lucide="users"></i>${escapeHtml(entry.workers)}</span>` : "";
-    return `<article class="production-entry"><div class="production-date"><strong>${escapeHtml(entry.date.slice(5).replace("-", "."))}</strong><small>${entry.shipped ? "출고완료" : "생산중"}</small></div><div class="production-copy"><div><span class="operation-status ${entry.shipped ? "is-completed" : "is-estimating"}">${entry.shipped ? "출고 완료" : "출고 대기"}</span><strong>${escapeHtml(entry.title)}</strong></div><p>${drawing}${workers}<span><i data-lucide="factory"></i>${escapeHtml(PROCESS_LABELS[entry.process] || "기타")}</span><span>${number(entry.quantity)} ${escapeHtml(entry.unit)}</span></p>${entry.memo ? `<small>${escapeHtml(entry.memo)}</small>` : ""}</div><button class="operation-edit" type="button" data-production-edit="${escapeHtml(entry.id)}" aria-label="생산일보 수정"><i data-lucide="pencil"></i></button></article>`;
+    return `<article class="production-entry"><div class="production-date"><strong>${escapeHtml(entry.date.slice(5).replace("-", "."))}</strong><small>${entry.shipped ? "생산완료" : "생산중"}</small></div><div class="production-copy"><div><span class="operation-status ${entry.shipped ? "is-completed" : "is-estimating"}">${entry.shipped ? "생산완료" : "생산중"}</span><strong>${escapeHtml(entry.title)}</strong></div><p>${drawing}${workers}</p>${entry.memo ? `<small>${escapeHtml(entry.memo)}</small>` : ""}</div><button class="operation-edit" type="button" data-production-edit="${escapeHtml(entry.id)}" aria-label="생산일보 수정"><i data-lucide="pencil"></i></button></article>`;
   }
 
   function renderProduction(summary = null) {
@@ -274,7 +263,7 @@ export function setupOperations({ fetchJson, showToast, refreshIcons, onUnauthor
 
   function openProduction(entry = null) {
     productionForm.reset();
-    const values = entry || { id: newId("production"), date: todayKey(), process: "cutting", quantity: 0, unit: "개", shipped: false };
+    const values = entry || { id: newId("production"), date: todayKey(), shipped: false };
     Object.entries(values).forEach(([key, value]) => {
       const field = productionForm.elements.namedItem(key);
       if (!field || typeof value === "object") return;
@@ -526,7 +515,7 @@ export function setupOperations({ fetchJson, showToast, refreshIcons, onUnauthor
     if (!productionForm.reportValidity() || state.preview) return;
     setButtonBusy(productionSubmit, true, "저장 중");
     try {
-      await fetchJson("/api/admin/operations", { method: "POST", body: JSON.stringify({ type: "production", id: formValue(productionForm, "id"), title: formValue(productionForm, "title"), date: formValue(productionForm, "date"), drawingNumber: formValue(productionForm, "drawingNumber"), process: formValue(productionForm, "process"), workers: formValue(productionForm, "workers"), quantity: Number(formValue(productionForm, "quantity") || 0), unit: formValue(productionForm, "unit"), shipped: productionForm.elements.namedItem("shipped").checked, memo: formValue(productionForm, "memo") }) });
+      await fetchJson("/api/admin/operations", { method: "POST", body: JSON.stringify({ type: "production", id: formValue(productionForm, "id"), title: formValue(productionForm, "title"), date: formValue(productionForm, "date"), drawingNumber: formValue(productionForm, "drawingNumber"), workers: formValue(productionForm, "workers"), shipped: productionForm.elements.namedItem("shipped").checked, memo: formValue(productionForm, "memo") }) });
       closeProduction();
       await loadProduction();
       showToast("생산일보를 저장했습니다.");
