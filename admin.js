@@ -171,10 +171,10 @@ const previewOverview = {
     tasks: { value: "2건", label: "오늘 1건 · 현장 업무일지" },
     production: { value: "1건", label: "오늘 1건 · 생산완료 0건" },
     inventory: { value: "1종", label: "전체 수량 24" },
-    estimates: { value: "1건", label: "전체 1건 · 완료 0건" }
+    estimates: { value: "1건", label: "오늘 1건 · 이번 달 1건" }
   },
   recentEstimates: [
-    { date: new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" }).format(new Date()), clientName: "거래처 예시", title: "디자인난간 제작·설치", status: "estimating" }
+    { date: new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" }).format(new Date()), clientName: "거래처 예시", title: "디자인난간 제작·설치" }
   ],
   integrations: {
     estimate: { name: "견적 ERP", connected: false, status: "연결 전", url: null },
@@ -436,8 +436,8 @@ function applyOverview(overview) {
   if (recentEstimateBody) {
     const entries = Array.isArray(overview.recentEstimates) ? overview.recentEstimates : [];
     recentEstimateBody.innerHTML = entries.length
-      ? entries.map((entry) => `<tr><td>${String(entry.date || "").replaceAll("-", ".")}</td><td>${escapeTableText(entry.clientName || "미지정")}</td><td>${escapeTableText(entry.title || "")}</td><td><span class="status-pill ${entry.status === "completed" ? "is-connected" : "is-pending"}">${entry.status === "completed" ? "견적완료" : "견적중"}</span></td></tr>`).join("")
-      : '<tr class="empty-row"><td colspan="4"><i data-lucide="database-zap"></i><strong>등록된 견적 일정이 없습니다.</strong><span>견적 관리에서 첫 일정을 등록해 주세요.</span></td></tr>';
+      ? entries.map((entry) => `<tr><td>${String(entry.date || "").replaceAll("-", ".")}</td><td>${escapeTableText(entry.clientName || "미지정")}</td><td>${escapeTableText(entry.title || "")}</td></tr>`).join("")
+      : '<tr class="empty-row"><td colspan="3"><i data-lucide="database-zap"></i><strong>등록된 견적 일정이 없습니다.</strong><span>견적 관리에서 첫 일정을 등록해 주세요.</span></td></tr>';
     refreshIcons();
   }
 

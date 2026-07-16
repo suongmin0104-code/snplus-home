@@ -195,17 +195,17 @@
               </article>
               <article class="summary-card">
                 <span class="summary-icon tone-amber"><i data-lucide="file-spreadsheet"></i></span>
-                <div><p>진행 견적</p><strong data-summary="estimates">확인 중</strong><small data-summary-note="estimates">견적 일정</small></div>
+                <div><p>견적 일정</p><strong data-summary="estimates">확인 중</strong><small data-summary-note="estimates">등록 일정</small></div>
               </article>
             </div>
 
             <div class="dashboard-grid">
               <section class="work-panel estimate-panel">
-                <div class="panel-heading"><div><span class="panel-icon"><i data-lucide="file-spreadsheet"></i></span><span><strong>최근 견적 현황</strong><small>견적 요청과 진행 상태</small></span></div><button type="button" data-go-module="estimate">전체 보기 <i data-lucide="chevron-right"></i></button></div>
+                <div class="panel-heading"><div><span class="panel-icon"><i data-lucide="file-spreadsheet"></i></span><span><strong>최근 견적 일정</strong><small>최근 등록한 견적 요청</small></span></div><button type="button" data-go-module="estimate">전체 보기 <i data-lucide="chevron-right"></i></button></div>
                 <div class="table-wrap">
                   <table>
-                    <thead><tr><th>접수일</th><th>거래처</th><th>공사·제품</th><th>상태</th></tr></thead>
-                    <tbody data-recent-estimates><tr class="empty-row"><td colspan="4"><i data-lucide="database-zap"></i><strong>견적 일정을 확인하고 있습니다.</strong><span>견적 관리에 등록한 최근 내역이 표시됩니다.</span></td></tr></tbody>
+                    <thead><tr><th>접수일</th><th>거래처</th><th>공사·제품</th></tr></thead>
+                    <tbody data-recent-estimates><tr class="empty-row"><td colspan="3"><i data-lucide="database-zap"></i><strong>견적 일정을 확인하고 있습니다.</strong><span>견적 관리에 등록한 최근 내역이 표시됩니다.</span></td></tr></tbody>
                   </table>
                 </div>
               </section>
@@ -264,11 +264,11 @@
           </section>
 
           <section class="module-view" data-module-view="estimate" aria-labelledby="estimate-title">
-            <div class="page-heading operation-page-heading"><div><p class="eyebrow">ESTIMATE CALENDAR</p><h1 id="estimate-title">견적 관리</h1><p>날짜별 견적 일정과 견적중·견적완료 상태를 관리합니다.</p></div><button class="primary-button" type="button" data-operation-new="estimate"><i data-lucide="calendar-plus"></i> 견적 일정 등록</button></div>
+            <div class="page-heading operation-page-heading"><div><p class="eyebrow">ESTIMATE CALENDAR</p><h1 id="estimate-title">견적 관리</h1><p>날짜별 견적 요청과 담당 정보를 간단하게 기록합니다.</p></div><button class="primary-button" type="button" data-operation-new="estimate"><i data-lucide="calendar-plus"></i> 견적 일정 등록</button></div>
             <div class="operation-summary operation-summary-three" aria-label="견적 현황">
               <article><span class="tone-blue"><i data-lucide="file-spreadsheet"></i></span><div><small>전체 견적</small><strong data-estimate-stat="total">0건</strong></div></article>
-              <article><span class="tone-amber"><i data-lucide="clock-3"></i></span><div><small>견적중</small><strong data-estimate-stat="estimating">0건</strong></div></article>
-              <article><span class="tone-teal"><i data-lucide="circle-check-big"></i></span><div><small>견적완료</small><strong data-estimate-stat="completed">0건</strong></div></article>
+              <article><span class="tone-amber"><i data-lucide="clock-3"></i></span><div><small>오늘 일정</small><strong data-estimate-stat="today">0건</strong></div></article>
+              <article><span class="tone-teal"><i data-lucide="calendar-days"></i></span><div><small>이번 달</small><strong data-estimate-stat="month">0건</strong></div></article>
             </div>
             <div class="operation-calendar-layout">
               <section class="operation-calendar-panel">
@@ -543,8 +543,7 @@
         <div class="operation-form-body">
           <input type="hidden" name="id" />
           <label class="operation-field span-2"><span>견적명 <b>*</b></span><input type="text" name="title" maxlength="140" required placeholder="예: 화성 디자인난간 제작·설치 견적" /></label>
-          <label class="operation-field"><span>견적일 <b>*</b></span><input type="date" name="date" required /></label>
-          <label class="operation-field"><span>진행상태</span><select name="status"><option value="estimating">견적중</option><option value="completed">견적완료</option></select></label>
+          <label class="operation-field span-2"><span>견적일 <b>*</b></span><input type="date" name="date" required /></label>
           <label class="operation-field span-2"><span>거래처</span><input type="text" name="clientName" maxlength="120" placeholder="회사 또는 발주처" /></label>
           <label class="operation-field"><span>담당자</span><input type="text" name="contactName" maxlength="60" /></label>
           <label class="operation-field"><span>연락처</span><input type="tel" name="contactPhone" maxlength="30" /></label>

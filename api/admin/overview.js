@@ -73,7 +73,7 @@ export default async function handler(req, res) {
     if (canEstimate) {
       const entries = await listEstimates();
       const summary = summarizeEstimates(entries);
-      estimateSummary = { value: `${summary.estimating}건`, label: `전체 ${summary.total}건 · 완료 ${summary.completed}건` };
+      estimateSummary = { value: `${summary.total}건`, label: `오늘 ${summary.today}건 · 이번 달 ${summary.month}건` };
       recentEstimates = [...entries].sort((left, right) => `${right.date}${right.updatedAt}`.localeCompare(`${left.date}${left.updatedAt}`)).slice(0, 5);
     }
   } catch (error) {

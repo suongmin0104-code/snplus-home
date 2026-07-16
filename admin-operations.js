@@ -1,4 +1,3 @@
-const ESTIMATE_STATUS_LABELS = Object.freeze({ estimating: "견적중", completed: "견적완료" });
 const MAX_UPLOAD_BYTES = 1.8 * 1024 * 1024;
 
 function pad(value) {
@@ -70,7 +69,7 @@ function previewData() {
   const today = todayKey();
   return {
     estimates: [
-      { id: "preview-estimate-a", date: today, title: "디자인난간 제작·설치", clientName: "거래처 예시", contactName: "담당자", contactPhone: "", status: "estimating", memo: "", updatedAt: new Date().toISOString() }
+      { id: "preview-estimate-a", date: today, title: "디자인난간 제작·설치", clientName: "거래처 예시", contactName: "담당자", contactPhone: "", memo: "", updatedAt: new Date().toISOString() }
     ],
     production: [
       { id: "preview-production-a", date: today, title: "난간 프레임 제작", drawingNumber: "SN-EXAMPLE-01", workers: "생산팀", shipped: false, memo: "용접 상태와 치수를 확인했습니다.", updatedAt: new Date().toISOString() }
@@ -114,10 +113,11 @@ export function setupOperations({ fetchJson, showToast, refreshIcons, onUnauthor
   }
 
   function updateEstimateStats(summary = null) {
+    const today = todayKey();
     const values = summary || {
       total: state.estimate.entries.length,
-      estimating: state.estimate.entries.filter((entry) => entry.status === "estimating").length,
-      completed: state.estimate.entries.filter((entry) => entry.status === "completed").length
+      today: state.estimate.entries.filter((entry) => entry.date === today).length,
+      month: state.estimate.entries.filter((entry) => entry.date?.startsWith(today.slice(0, 7))).length
     };
     Object.entries(values).forEach(([key, value]) => {
       const output = document.querySelector(`[data-estimate-stat="${key}"]`);
@@ -144,20 +144,18 @@ export function setupOperations({ fetchJson, showToast, refreshIcons, onUnauthor
       date.setDate(start.getDate() + index);
       const key = dateKey(date);
       const entries = estimateCalendarEntries(key);
-      const completed = entries.filter((entry) => entry.status === "completed").length;
       const classes = ["operation-calendar-day"];
       if (date.getMonth() !== month) classes.push("is-outside");
       if (key === todayKey()) classes.push("is-today");
       if (key === state.estimate.selectedDate) classes.push("is-selected");
-      cells.push(`<button class="${classes.join(" ")}" type="button" data-estimate-date="${key}" role="gridcell" aria-label="${key}, 견적 ${entries.length}건"><span>${date.getDate()}</span>${entries.length ? `<small><b>${entries.length}</b>건${completed ? `<em>${completed} 완료</em>` : ""}</small>` : ""}</button>`);
+      cells.push(`<button class="${classes.join(" ")}" type="button" data-estimate-date="${key}" role="gridcell" aria-label="${key}, 견적 ${entries.length}건"><span>${date.getDate()}</span>${entries.length ? `<small><b>${entries.length}</b>건</small>` : ""}</button>`);
     }
     calendar.innerHTML = cells.join("");
   }
 
   function estimateEntryMarkup(entry) {
-    const statusClass = entry.status === "completed" ? "is-completed" : "is-estimating";
     const contact = [entry.contactName, entry.contactPhone].filter(Boolean).join(" · ");
-    return `<article class="operation-entry" data-operation-id="${escapeHtml(entry.id)}"><div class="operation-entry-main"><span class="operation-status ${statusClass}">${ESTIMATE_STATUS_LABELS[entry.status] || "견적중"}</span><div><strong>${escapeHtml(entry.title)}</strong><p>${escapeHtml(entry.clientName || "거래처 미지정")}${contact ? ` · ${escapeHtml(contact)}` : ""}</p>${entry.memo ? `<small>${escapeHtml(entry.memo)}</small>` : ""}</div></div><button class="operation-edit" type="button" data-estimate-edit="${escapeHtml(entry.id)}" aria-label="견적 일정 수정"><i data-lucide="pencil"></i></button></article>`;
+    return `<article class="operation-entry" data-operation-id="${escapeHtml(entry.id)}"><div class="operation-entry-main"><div><strong>${escapeHtml(entry.title)}</strong><p>${escapeHtml(entry.clientName || "거래처 미지정")}${contact ? ` · ${escapeHtml(contact)}` : ""}</p>${entry.memo ? `<small>${escapeHtml(entry.memo)}</small>` : ""}</div></div><button class="operation-edit" type="button" data-estimate-edit="${escapeHtml(entry.id)}" aria-label="견적 일정 수정"><i data-lucide="pencil"></i></button></article>`;
   }
 
   function renderEstimateList() {
@@ -197,7 +195,7 @@ export function setupOperations({ fetchJson, showToast, refreshIcons, onUnauthor
 
   function openEstimate(entry = null) {
     estimateForm.reset();
-    const values = entry || { id: newId("estimate"), date: state.estimate.selectedDate, status: "estimating" };
+    const values = entry || { id: newId("estimate"), date: state.estimate.selectedDate };
     Object.entries(values).forEach(([key, value]) => {
       const field = estimateForm.elements.namedItem(key);
       if (field && typeof value !== "object") field.value = value ?? "";
@@ -478,7 +476,7 @@ export function setupOperations({ fetchJson, showToast, refreshIcons, onUnauthor
     if (!estimateForm.reportValidity() || state.preview) return;
     setButtonBusy(estimateSubmit, true, "저장 중");
     try {
-      await fetchJson("/api/admin/operations", { method: "POST", body: JSON.stringify({ type: "estimate", id: formValue(estimateForm, "id"), title: formValue(estimateForm, "title"), date: formValue(estimateForm, "date"), status: formValue(estimateForm, "status"), clientName: formValue(estimateForm, "clientName"), contactName: formValue(estimateForm, "contactName"), contactPhone: formValue(estimateForm, "contactPhone"), memo: formValue(estimateForm, "memo") }) });
+      await fetchJson("/api/admin/operations", { method: "POST", body: JSON.stringify({ type: "estimate", id: formValue(estimateForm, "id"), title: formValue(estimateForm, "title"), date: formValue(estimateForm, "date"), clientName: formValue(estimateForm, "clientName"), contactName: formValue(estimateForm, "contactName"), contactPhone: formValue(estimateForm, "contactPhone"), memo: formValue(estimateForm, "memo") }) });
       closeEstimate();
       await loadEstimates();
       showToast("견적 일정을 저장했습니다.");
