@@ -431,38 +431,62 @@ export function setupDocumentEditor({ fetchJson, showModule, showToast, onEstima
   function updateSaveButtonLabel(busy = false) {
     if (!saveButton) return;
     const label = saveButton.querySelector("span");
-    if (label) label.textContent = busy ? "저장 중" : (currentType === "estimate" ? "견적관리 저장" : "임시저장");
+    if (label) label.textContent = busy ? "PDF 원본 저장 중" : (currentType === "estimate" ? "견적서 저장" : "임시저장");
     saveButton.disabled = busy;
     saveButton.setAttribute("aria-busy", busy ? "true" : "false");
   }
 
-  async function saveEstimateToManagement({ notify = true } = {}) {
+  async function uploadEstimatePdf(file, estimateId) {
+    const response = await fetch(`/api/admin/operations?type=estimate-pdf&id=${encodeURIComponent(estimateId)}`, {
+      method: "POST",
+      credentials: "same-origin",
+      cache: "no-store",
+      headers: {
+        "Content-Type": "application/pdf",
+        "X-File-Name": encodeURIComponent(file.name)
+      },
+      body: file
+    });
+    const contentType = response.headers.get("content-type") || "";
+    const payload = contentType.includes("application/json") ? await response.json() : {};
+    if (!response.ok) {
+      const error = new Error(payload.message || "견적서 PDF 원본을 저장하지 못했습니다.");
+      error.status = response.status;
+      throw error;
+    }
+    return payload;
+  }
+
+  async function saveEstimateToManagement({ notify = true, prepared = null, pdfFile = null } = {}) {
     if (currentType !== "estimate") {
       saveDraft({ notify });
       return null;
     }
 
-    const data = collectDocument();
+    const preparedDocument = prepared || prepareCurrentDocument();
+    const data = preparedDocument.data;
     if (!data.client.trim() && !data.project.trim()) {
       form.querySelector('[data-doc-field="client"]')?.focus();
       throw new Error("거래처 또는 공사명을 입력해 주세요.");
     }
+    const file = pdfFile || await createPdfFile(form, preparedDocument.name);
     const payload = buildEstimateOperationPayload(data);
     const result = await fetchJson("/api/admin/operations", {
       method: "POST",
       body: JSON.stringify(payload)
     });
     currentEstimateId = result.entry?.id || payload.id;
+    const uploaded = await uploadEstimatePdf(file, currentEstimateId);
     saveDraft();
     const savedAt = new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
-    if (saveStatus) saveStatus.textContent = `견적관리에 저장됨 · ${savedAt}`;
+    if (saveStatus) saveStatus.textContent = `견적관리 달력에 저장됨 · PDF 원본 포함 · ${savedAt}`;
     try {
-      await onEstimateSaved?.(result.entry);
+      await onEstimateSaved?.(uploaded.entry || result.entry);
     } catch (error) {
       console.warn("Estimate list refresh failed after save", error);
     }
-    if (notify) showToast("견적서를 견적관리에 저장했습니다.");
-    return result.entry;
+    if (notify) showToast("견적서와 PDF 원본을 견적관리 달력에 저장했습니다.");
+    return { entry: uploaded.entry || result.entry, file };
   }
 
   function handleEstimateSaveError(error) {
@@ -470,9 +494,9 @@ export function setupDocumentEditor({ fetchJson, showModule, showToast, onEstima
     showToast(error?.message || "견적서를 견적관리에 저장하지 못했습니다.");
   }
 
-  async function saveEstimateBeforeOutput() {
+  async function saveEstimateBeforeOutput(options = {}) {
     try {
-      return await saveEstimateToManagement({ notify: false });
+      return await saveEstimateToManagement({ notify: false, ...options });
     } catch (error) {
       if (error && typeof error === "object") error.isEstimateSaveError = true;
       throw error;
@@ -505,14 +529,18 @@ export function setupDocumentEditor({ fetchJson, showModule, showToast, onEstima
   }
 
   async function makeCurrentPdf() {
-    if (currentType === "estimate") await saveEstimateBeforeOutput();
-    const { name } = prepareCurrentDocument();
-    return createPdfFile(form, name);
+    const prepared = prepareCurrentDocument();
+    const file = await createPdfFile(form, prepared.name);
+    if (currentType === "estimate") await saveEstimateBeforeOutput({ prepared, pdfFile: file });
+    return file;
   }
 
   async function copyCurrentDocumentForKakao() {
-    if (currentType === "estimate") await saveEstimateBeforeOutput();
-    prepareCurrentDocument();
+    const prepared = prepareCurrentDocument();
+    if (currentType === "estimate") {
+      const pdfFile = await createPdfFile(form, prepared.name);
+      await saveEstimateBeforeOutput({ prepared, pdfFile });
+    }
     const imagePromise = createPngBlob(form);
     return navigator.clipboard.write([
       new ClipboardItem({ "image/png": imagePromise }, { presentationStyle: "attachment" })

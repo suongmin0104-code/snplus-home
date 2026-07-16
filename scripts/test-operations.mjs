@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 
 import { buildEstimateOperationPayload, calculateDocumentTotals } from "../admin-document.js";
 import { buildInventoryMovementPayload } from "../admin-operations.js";
-import { calculateInventoryQuantity } from "../lib/operations-store.js";
+import { calculateInventoryQuantity, estimatePdfPath } from "../lib/operations-store.js";
 
 const inboundPayload = buildInventoryMovementPayload({
   itemId: "inventory-test-item",
@@ -69,5 +69,10 @@ assert.equal(estimatePayload.totalAmount, 220000);
 assert.equal(estimatePayload.itemCount, 1);
 assert.equal(estimatePayload.document.estimateId, estimateDocument.estimateId);
 assert.equal(buildEstimateOperationPayload(estimatePayload.document).id, estimateDocument.estimateId);
+assert.equal(
+  estimatePdfPath(estimateDocument.estimateId),
+  `admin-operations/snplus/estimate-pdfs/${estimateDocument.estimateId}.pdf`
+);
+assert.equal(estimatePdfPath("잘못된 견적 ID"), "");
 
 console.log("Operations tests passed.");

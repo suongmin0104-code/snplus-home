@@ -92,6 +92,12 @@ function previewData() {
         totalAmount: 2200000,
         itemCount: 2,
         source: "document-editor",
+        documentFile: {
+          name: "견적서_거래처예시.pdf",
+          contentType: "application/pdf",
+          size: 248000,
+          uploadedAt: new Date().toISOString()
+        },
         document: {
           estimateId: "preview-estimate-a",
           type: "estimate",
@@ -135,6 +141,13 @@ export function setupOperations({ fetchJson, showToast, refreshIcons, onUnauthor
   const estimateForm = document.querySelector("[data-estimate-form]");
   const estimateDelete = document.querySelector("[data-estimate-delete]");
   const estimateSubmit = document.querySelector("[data-estimate-submit]");
+  const estimatePreviewDialog = document.querySelector("[data-estimate-preview-dialog]");
+  const estimatePreviewFrame = document.querySelector("[data-estimate-preview-frame]");
+  const estimatePreviewLoading = document.querySelector("[data-estimate-preview-loading]");
+  const estimatePreviewOpen = document.querySelector("[data-estimate-preview-open]");
+  const estimatePreviewEdit = document.querySelector("[data-estimate-preview-edit]");
+  let estimatePreviewEntry = null;
+  let estimatePreviewObjectUrl = "";
   const productionDialog = document.querySelector("[data-production-dialog]");
   const productionForm = document.querySelector("[data-production-form]");
   const productionDelete = document.querySelector("[data-production-delete]");
@@ -203,9 +216,9 @@ export function setupOperations({ fetchJson, showToast, refreshIcons, onUnauthor
       `품목 ${number(entry.itemCount)}건`
     ].filter(Boolean).join(" · ") : "";
     const documentButton = entry.document
-      ? `<button class="operation-edit is-document" type="button" data-estimate-document="${escapeHtml(entry.id)}" aria-label="저장된 견적서 열기" title="견적서 열기"><i data-lucide="file-text"></i></button>`
+      ? `<button class="operation-document-open" type="button" data-estimate-document="${escapeHtml(entry.id)}"><i data-lucide="eye"></i><span>${entry.documentFile ? "견적서 보기" : "견적서 열기"}</span></button>`
       : "";
-    return `<article class="operation-entry" data-operation-id="${escapeHtml(entry.id)}"><div class="operation-entry-main"><div><strong>${escapeHtml(entry.title)}</strong><p>${escapeHtml(entry.clientName || "거래처 미지정")}${contact ? ` · ${escapeHtml(contact)}` : ""}</p>${documentSummary ? `<small class="operation-document-summary">${escapeHtml(documentSummary)}</small>` : ""}${entry.memo ? `<small>${escapeHtml(entry.memo)}</small>` : ""}</div></div><div class="operation-entry-actions">${documentButton}<button class="operation-edit" type="button" data-estimate-edit="${escapeHtml(entry.id)}" aria-label="견적 일정 수정" title="일정 수정"><i data-lucide="pencil"></i></button></div></article>`;
+    return `<article class="operation-entry" data-operation-id="${escapeHtml(entry.id)}"><div class="operation-entry-main"><div><strong>${escapeHtml(entry.title)}</strong><p>${escapeHtml(entry.clientName || "거래처 미지정")}${contact ? ` · ${escapeHtml(contact)}` : ""}</p>${documentSummary ? `<small class="operation-document-summary">${escapeHtml(documentSummary)}</small>` : ""}${entry.documentFile ? `<small class="operation-file-ready"><i data-lucide="file-check-2"></i>PDF 원본 저장됨</small>` : ""}${entry.memo ? `<small>${escapeHtml(entry.memo)}</small>` : ""}</div></div><div class="operation-entry-actions">${documentButton}<button class="operation-edit" type="button" data-estimate-edit="${escapeHtml(entry.id)}" aria-label="견적 일정 수정" title="일정 수정"><i data-lucide="pencil"></i></button></div></article>`;
   }
 
   function renderEstimateList() {
@@ -259,6 +272,67 @@ export function setupOperations({ fetchJson, showToast, refreshIcons, onUnauthor
   function closeEstimate() {
     estimateDialog.close();
   }
+
+  function closeEstimatePreview() {
+    if (estimatePreviewFrame) estimatePreviewFrame.src = "about:blank";
+    if (estimatePreviewObjectUrl) URL.revokeObjectURL(estimatePreviewObjectUrl);
+    estimatePreviewObjectUrl = "";
+    estimatePreviewEntry = null;
+    estimatePreviewDialog?.close();
+  }
+
+  async function openEstimatePreview(entry) {
+    if (!entry?.document) return;
+    if (!entry.documentFile || !estimatePreviewDialog) {
+      openEstimateDocument?.(entry);
+      return;
+    }
+    estimatePreviewEntry = entry;
+    const pdfUrl = `/api/admin/operations?type=estimate-pdf&id=${encodeURIComponent(entry.id)}&v=${encodeURIComponent(entry.updatedAt || "")}`;
+    const title = document.querySelector("[data-estimate-preview-title]");
+    const meta = document.querySelector("[data-estimate-preview-meta]");
+    if (title) title.textContent = entry.title || "저장된 견적서";
+    if (meta) meta.textContent = [entry.documentNumber, entry.clientName, `합계 ${number(entry.totalAmount)}원`].filter(Boolean).join(" · ");
+    if (estimatePreviewFrame) {
+      estimatePreviewFrame.hidden = true;
+      estimatePreviewFrame.src = "about:blank";
+    }
+    if (estimatePreviewLoading) {
+      estimatePreviewLoading.hidden = false;
+      estimatePreviewLoading.textContent = state.preview
+        ? "운영 환경에서는 저장된 PDF 견적서가 이 화면에 표시됩니다."
+        : "저장된 PDF 견적서를 불러오고 있습니다.";
+    }
+    if (estimatePreviewOpen) estimatePreviewOpen.href = pdfUrl;
+    estimatePreviewDialog.showModal();
+    if (state.preview) return;
+
+    try {
+      const response = await fetch(pdfUrl, { credentials: "same-origin", cache: "no-store" });
+      if (!response.ok) {
+        const contentType = response.headers.get("content-type") || "";
+        const payload = contentType.includes("application/json") ? await response.json() : {};
+        const error = new Error(payload.message || "저장된 견적서 PDF를 불러오지 못했습니다.");
+        error.status = response.status;
+        throw error;
+      }
+      const blob = await response.blob();
+      if (blob.type !== "application/pdf" || !blob.size) throw new Error("저장된 견적서 PDF를 확인해 주세요.");
+      if (estimatePreviewObjectUrl) URL.revokeObjectURL(estimatePreviewObjectUrl);
+      estimatePreviewObjectUrl = URL.createObjectURL(blob);
+      if (estimatePreviewFrame) estimatePreviewFrame.src = estimatePreviewObjectUrl;
+    } catch (error) {
+      if ([401, 403].includes(error?.status)) onUnauthorized?.(error);
+      if (estimatePreviewLoading) estimatePreviewLoading.textContent = error?.message || "견적서를 불러오지 못했습니다.";
+      showToast(error?.message || "저장된 견적서를 불러오지 못했습니다.");
+    }
+  }
+
+  estimatePreviewFrame?.addEventListener("load", () => {
+    if (!estimatePreviewObjectUrl || estimatePreviewFrame.src !== estimatePreviewObjectUrl) return;
+    estimatePreviewFrame.hidden = false;
+    if (estimatePreviewLoading) estimatePreviewLoading.hidden = true;
+  });
 
   function updateProductionStats(summary = null) {
     const values = summary || {
@@ -518,7 +592,7 @@ export function setupOperations({ fetchJson, showToast, refreshIcons, onUnauthor
     const documentButton = event.target.closest("[data-estimate-document]");
     if (documentButton) {
       const entry = state.estimate.entries.find((item) => item.id === documentButton.dataset.estimateDocument);
-      if (entry?.document) openEstimateDocument?.(entry);
+      void openEstimatePreview(entry);
       return;
     }
     const button = event.target.closest("[data-estimate-edit]");
@@ -527,6 +601,13 @@ export function setupOperations({ fetchJson, showToast, refreshIcons, onUnauthor
   document.querySelectorAll('[data-operation-new="estimate"]').forEach((button) => button.addEventListener("click", () => openEstimate()));
   document.querySelectorAll("[data-estimate-close]").forEach((button) => button.addEventListener("click", closeEstimate));
   closeOnBackdrop(estimateDialog, closeEstimate);
+  document.querySelectorAll("[data-estimate-preview-close]").forEach((button) => button.addEventListener("click", closeEstimatePreview));
+  closeOnBackdrop(estimatePreviewDialog, closeEstimatePreview);
+  estimatePreviewEdit?.addEventListener("click", () => {
+    const entry = estimatePreviewEntry;
+    closeEstimatePreview();
+    if (entry?.document) openEstimateDocument?.(entry);
+  });
 
   estimateForm?.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -719,7 +800,7 @@ export function setupOperations({ fetchJson, showToast, refreshIcons, onUnauthor
       state.inventory.items = [];
       state.inventory.movements = [];
       state.inventory.loaded = false;
-      [estimateDialog, productionDialog, inventoryDialog, movementDialog].forEach((dialog) => { if (dialog?.open) dialog.close(); });
+      [estimateDialog, estimatePreviewDialog, productionDialog, inventoryDialog, movementDialog].forEach((dialog) => { if (dialog?.open) dialog.close(); });
       revokePendingPhoto();
     }
   };

@@ -1,4 +1,4 @@
-const CACHE_VERSION = "sn-workspace-shell-v2";
+const CACHE_VERSION = "sn-workspace-shell-v3";
 const OFFLINE_URL = "/offline.html";
 const APP_SHELL = [
   OFFLINE_URL,
@@ -35,6 +35,20 @@ self.addEventListener("fetch", (event) => {
   }
 
   if (!["image", "style", "script", "font"].includes(request.destination)) return;
+  if (["style", "script"].includes(request.destination)) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response.ok && response.type === "basic") {
+            const copy = response.clone();
+            caches.open(CACHE_VERSION).then((cache) => cache.put(request, copy));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
   event.respondWith(
     caches.match(request).then((cached) => {
       const network = fetch(request).then((response) => {
