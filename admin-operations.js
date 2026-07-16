@@ -59,6 +59,16 @@ function formValue(form, name) {
   return String(new FormData(form).get(name) ?? "").trim();
 }
 
+export function buildInventoryMovementPayload({ itemId, movementType, quantity, note }) {
+  return {
+    type: "inventory-movement",
+    itemId: String(itemId ?? "").trim(),
+    movementType: String(movementType ?? "").trim(),
+    quantity: Number(quantity || 0),
+    note: String(note ?? "").trim()
+  };
+}
+
 function closeOnBackdrop(dialog, close) {
   dialog?.addEventListener("click", (event) => {
     if (event.target === dialog) close();
@@ -293,11 +303,12 @@ export function setupOperations({ fetchJson, showToast, refreshIcons, onUnauthor
   }
 
   function updateInventoryStats(summary = null) {
+    const currentMonth = todayKey().slice(0, 7);
     const values = summary || {
       items: state.inventory.items.length,
       totalQuantity: state.inventory.items.reduce((sum, item) => sum + Number(item.quantity || 0), 0),
-      monthIn: state.inventory.movements.filter((item) => item.type === "in").length,
-      monthOut: state.inventory.movements.filter((item) => item.type === "out").length
+      monthIn: state.inventory.movements.filter((item) => item.type === "in" && item.createdAt?.startsWith(currentMonth)).length,
+      monthOut: state.inventory.movements.filter((item) => item.type === "out" && item.createdAt?.startsWith(currentMonth)).length
     };
     Object.entries(values).forEach(([key, value]) => {
       const output = document.querySelector(`[data-inventory-stat="${key}"]`);
@@ -379,7 +390,7 @@ export function setupOperations({ fetchJson, showToast, refreshIcons, onUnauthor
   function openMovement(item, type = "in") {
     movementForm.reset();
     movementForm.elements.namedItem("itemId").value = item.id;
-    movementForm.elements.namedItem("type").value = type;
+    movementForm.elements.namedItem("movementType").value = type;
     movementDialog.querySelector("[data-movement-item-name]").textContent = item.name;
     movementDialog.querySelector("[data-movement-current]").textContent = `현재 ${number(item.quantity)} ${item.unit}`;
     movementDialog.showModal();
@@ -603,9 +614,21 @@ export function setupOperations({ fetchJson, showToast, refreshIcons, onUnauthor
     if (!movementForm.reportValidity() || state.preview) return;
     setButtonBusy(movementSubmit, true, "반영 중");
     try {
-      await fetchJson("/api/admin/operations", { method: "POST", body: JSON.stringify({ type: "inventory-movement", itemId: formValue(movementForm, "itemId"), type: formValue(movementForm, "type"), quantity: Number(formValue(movementForm, "quantity") || 0), note: formValue(movementForm, "note") }) });
+      const payload = await fetchJson("/api/admin/operations", {
+        method: "POST",
+        body: JSON.stringify(buildInventoryMovementPayload({
+          itemId: formValue(movementForm, "itemId"),
+          movementType: formValue(movementForm, "movementType"),
+          quantity: formValue(movementForm, "quantity"),
+          note: formValue(movementForm, "note")
+        }))
+      });
+      state.inventory.items = state.inventory.items.map((item) => item.id === payload.item?.id ? payload.item : item);
+      if (payload.movement) {
+        state.inventory.movements = [payload.movement, ...state.inventory.movements.filter((item) => item.id !== payload.movement.id)];
+      }
       closeMovement();
-      await loadInventory();
+      renderInventory();
       showToast("재고 수량과 입출고 원장을 반영했습니다.");
     } catch (error) { handleError(error, "재고 수량을 변경하지 못했습니다."); }
     finally { setButtonBusy(movementSubmit, false); }

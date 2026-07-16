@@ -1,6 +1,6 @@
 {
   "name": "sn-home",
-  "version": "0.10.3",
+  "version": "0.10.4",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,6 +8,7 @@
     "admin:configure": "node scripts/configure-admin-vercel.mjs",
     "admin:hash": "node scripts/hash-admin-password.mjs",
     "test:admin-auth": "node scripts/test-admin-auth.mjs",
+    "test:operations": "node scripts/test-operations.mjs",
     "lint": "node scripts/lint-static-site.mjs",
     "build": "vite build && node scripts/copy-linked-static-assets.mjs",
     "preview": "vite preview --host 127.0.0.1"

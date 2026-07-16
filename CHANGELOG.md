@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-07-16 - 0.10.4
+
+### Fixed
+
+- 재고 입고·출고 요청의 업무 구분과 입출고 방향이 같은 `type` 필드를 사용하던 충돌 수정
+- 입고·출고 저장 응답의 변경 수량과 원장 기록을 재고 화면에 즉시 반영
+- 입고·출고 수량 계산과 현재 재고보다 많은 출고 차단을 자동 검사에 추가
+
+### Verified
+
+- 입고 10 + 3 = 13, 출고 10 - 4 = 6 계산 확인
+- 요청 업무 구분 `inventory-movement`와 방향 `in/out`이 별도 필드로 전송되는지 확인
+- `npm run test:operations`, `npm run test:admin-auth`, `npm run lint`, `npm run build` 통과
+
 ## 2026-07-16 - 0.10.3
 
 ### Changed

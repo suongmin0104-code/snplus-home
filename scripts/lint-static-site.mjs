@@ -194,6 +194,14 @@ if (!adminOperationsApi.includes("requireAdmin") || !adminInventoryPhotoApi.incl
   failures.push("Admin operations APIs must require an authenticated employee session.");
 }
 
+if (!adminOperationsScript.includes('type: "inventory-movement"') || !adminOperationsScript.includes("movementType:")) {
+  failures.push("Inventory movement requests must keep the operation type separate from the in/out direction.");
+}
+
+if (!adminOperationsApi.includes('"inventory-movement": "inventory"')) {
+  failures.push("Inventory movement requests must require inventory permission.");
+}
+
 if (!adminInventoryPhotoApi.includes("@vercel/blob") || !adminInventoryPhotoApi.includes('access: "private"')) {
   failures.push("Admin inventory photos must be stored in private Vercel Blob storage.");
 }
