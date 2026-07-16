@@ -5,6 +5,7 @@ import {
   CalendarCheck2,
   CalendarPlus,
   Check,
+  CircleDollarSign,
   CircleHelp,
   createIcons,
   Landmark,
@@ -24,6 +25,7 @@ import {
   Trash2,
   TrendingDown,
   TrendingUp,
+  WalletCards,
   X
 } from "lucide";
 
@@ -34,6 +36,7 @@ const iconSet = {
   CalendarCheck2,
   CalendarPlus,
   Check,
+  CircleDollarSign,
   CircleHelp,
   Landmark,
   LayoutDashboard,
@@ -52,6 +55,7 @@ const iconSet = {
   Trash2,
   TrendingDown,
   TrendingUp,
+  WalletCards,
   X
 };
 
@@ -69,6 +73,8 @@ const transactionDialog = document.querySelector("[data-transaction-dialog]");
 const transactionForm = document.querySelector("[data-transaction-form]");
 const taskDialog = document.querySelector("[data-task-dialog]");
 const taskForm = document.querySelector("[data-task-form]");
+const forecastDialog = document.querySelector("[data-forecast-dialog]");
+const forecastForm = document.querySelector("[data-forecast-form]");
 
 const params = new URLSearchParams(window.location.search);
 const isPreview = import.meta.env.DEV && params.has("ui-preview");
@@ -79,7 +85,11 @@ const state = {
   month: today.slice(0, 7),
   transactions: [],
   tasks: [],
+  forecast: null,
   loading: false,
+  loadRequest: 0,
+  checkingAccess: false,
+  accessNeedsRefresh: false,
   toastTimer: null
 };
 
@@ -91,7 +101,19 @@ const previewData = {
   tasks: [
     { id: "preview-tax-task-a", title: "부가가치세 자료 세무사 전달", dueDate: today, taskType: "부가가치세", ownerName: "담당자", memo: "매입 증빙 확인 후 전달", done: false, updatedAt: new Date().toISOString() },
     { id: "preview-tax-task-b", title: "급여대장 검토", dueDate: today, taskType: "급여·4대보험", ownerName: "담당자", memo: "", done: true, updatedAt: new Date().toISOString() }
-  ]
+  ],
+  forecast: {
+    month: today.slice(0, 7),
+    saved: true,
+    vatAmount: 720000,
+    withholdingAmount: 180000,
+    corporateTaxAmount: 1200000,
+    otherTaxAmount: 0,
+    totalAmount: 2100000,
+    reviewStatus: "estimate",
+    memo: "대표 화면 예시",
+    updatedAt: new Date().toISOString()
+  }
 };
 
 function refreshIcons() {
@@ -112,6 +134,24 @@ function formatDate(value, options = {}) {
 function formatCurrency(value) {
   const amount = Number(value) || 0;
   return `${new Intl.NumberFormat("ko-KR", { maximumFractionDigits: 0 }).format(amount)}원`;
+}
+
+function formatMonth(value) {
+  if (!/^\d{4}-\d{2}$/.test(String(value || ""))) return "조회 월";
+  const [year, month] = value.split("-").map(Number);
+  return `${year}년 ${month}월`;
+}
+
+function formatUpdatedAt(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  }).format(date);
 }
 
 function escapeHtml(value) {
@@ -219,6 +259,28 @@ function renderSummary() {
   document.querySelector("[data-nav-missing]").textContent = String(summary.missingEvidence);
 }
 
+function renderForecast() {
+  const forecast = state.user?.role === "owner" ? (state.forecast || {}) : {};
+  const total = ["vatAmount", "withholdingAmount", "corporateTaxAmount", "otherTaxAmount"]
+    .reduce((sum, key) => sum + Number(forecast[key] || 0), 0);
+  const saved = Boolean(forecast.saved || forecast.updatedAt);
+  const reviewed = forecast.reviewStatus === "advisor-reviewed";
+  const status = document.querySelector("[data-forecast-status]");
+
+  document.querySelector("[data-forecast-month-label]").textContent = formatMonth(state.month);
+  document.querySelector("[data-forecast-total]").textContent = formatCurrency(total);
+  document.querySelector("[data-forecast-vat]").textContent = formatCurrency(forecast.vatAmount);
+  document.querySelector("[data-forecast-withholding]").textContent = formatCurrency(forecast.withholdingAmount);
+  document.querySelector("[data-forecast-corporate]").textContent = formatCurrency(forecast.corporateTaxAmount);
+  document.querySelector("[data-forecast-other]").textContent = formatCurrency(forecast.otherTaxAmount);
+  status.textContent = saved ? (reviewed ? "세무사 확인" : "세무사 확인 전") : "입력 전";
+  status.classList.toggle("is-reviewed", saved && reviewed);
+  status.classList.toggle("is-empty", !saved);
+  document.querySelector("[data-forecast-updated]").textContent = saved
+    ? `${reviewed ? "확인 금액" : "예상 금액"}${forecast.updatedAt ? ` · ${formatUpdatedAt(forecast.updatedAt)} 저장` : ""}`
+    : "아직 입력된 예상 금액이 없습니다.";
+}
+
 function renderLedger() {
   const filter = directionFilter?.value || "all";
   const entries = state.transactions.filter((entry) => {
@@ -295,31 +357,45 @@ function renderEvidence() {
 
 function render() {
   renderSummary();
+  renderForecast();
   renderLedger();
   renderTasks();
   renderEvidence();
 }
 
 async function loadWorkspace({ notify = false } = {}) {
-  if (state.loading) return;
+  const requestedMonth = state.month;
+  const requestId = ++state.loadRequest;
   state.loading = true;
   document.querySelector("[data-tax-refresh]")?.classList.add("is-spinning");
   try {
+    let nextTransactions;
+    let nextTasks;
+    let nextForecast;
     if (isPreview) {
-      state.transactions = [...previewData.transactions];
-      state.tasks = [...previewData.tasks];
+      nextTransactions = [...previewData.transactions];
+      nextTasks = [...previewData.tasks];
+      nextForecast = { ...previewData.forecast, month: requestedMonth };
     } else {
-      const payload = await fetchJson(`/api/admin/operations?type=tax&month=${encodeURIComponent(state.month)}`);
-      state.transactions = Array.isArray(payload.transactions) ? payload.transactions : [];
-      state.tasks = Array.isArray(payload.tasks) ? payload.tasks : [];
+      const payload = await fetchJson(`/api/admin/operations?type=tax&month=${encodeURIComponent(requestedMonth)}`);
+      nextTransactions = Array.isArray(payload.transactions) ? payload.transactions : [];
+      nextTasks = Array.isArray(payload.tasks) ? payload.tasks : [];
+      nextForecast = state.user?.role === "owner" && payload.forecast ? payload.forecast : null;
     }
+    if (requestId !== state.loadRequest || requestedMonth !== state.month) return;
+    state.transactions = nextTransactions;
+    state.tasks = nextTasks;
+    state.forecast = nextForecast;
     render();
     if (notify) showToast("세무·회계 업무를 새로 확인했습니다.");
   } catch (error) {
+    if (requestId !== state.loadRequest || requestedMonth !== state.month) return;
     handleError(error, "세무·회계 업무를 불러오지 못했습니다.");
   } finally {
-    state.loading = false;
-    document.querySelector("[data-tax-refresh]")?.classList.remove("is-spinning");
+    if (requestId === state.loadRequest) {
+      state.loading = false;
+      document.querySelector("[data-tax-refresh]")?.classList.remove("is-spinning");
+    }
   }
 }
 
@@ -366,6 +442,21 @@ function openTask(entry = null) {
   window.setTimeout(() => taskForm.elements.title.focus(), 80);
 }
 
+function openForecast() {
+  if (state.user?.role !== "owner") return;
+  const forecast = state.forecast || {};
+  forecastForm.reset();
+  forecastForm.querySelector("[data-forecast-month-display]").value = state.month;
+  forecastForm.elements.vatAmount.value = forecast.vatAmount || "";
+  forecastForm.elements.withholdingAmount.value = forecast.withholdingAmount || "";
+  forecastForm.elements.corporateTaxAmount.value = forecast.corporateTaxAmount || "";
+  forecastForm.elements.otherTaxAmount.value = forecast.otherTaxAmount || "";
+  forecastForm.elements.reviewStatus.value = forecast.reviewStatus || "estimate";
+  forecastForm.elements.memo.value = forecast.memo || "";
+  forecastDialog.showModal();
+  window.setTimeout(() => forecastForm.elements.vatAmount.focus(), 80);
+}
+
 function upsertPreview(collection, entry) {
   const index = collection.findIndex((item) => item.id === entry.id);
   if (index >= 0) collection[index] = entry;
@@ -376,7 +467,8 @@ async function saveRecord(type, payload) {
   if (isPreview) {
     const entry = { ...payload, id: payload.id || globalThis.crypto?.randomUUID?.() || `preview-${Date.now()}`, updatedAt: new Date().toISOString() };
     if (type === "transaction") upsertPreview(state.transactions, entry);
-    else upsertPreview(state.tasks, entry);
+    else if (type === "task") upsertPreview(state.tasks, entry);
+    else state.forecast = { ...entry, saved: true };
     render();
     return entry;
   }
@@ -447,8 +539,42 @@ taskForm?.addEventListener("submit", async (event) => {
   }
 });
 
+forecastForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (state.user?.role !== "owner") return;
+  const submit = forecastForm.querySelector("button[type='submit']");
+  const formData = new FormData(forecastForm);
+  const payload = {
+    month: state.month,
+    expectedVersion: String(state.forecast?.version || ""),
+    vatAmount: Number(formData.get("vatAmount") || 0),
+    withholdingAmount: Number(formData.get("withholdingAmount") || 0),
+    corporateTaxAmount: Number(formData.get("corporateTaxAmount") || 0),
+    otherTaxAmount: Number(formData.get("otherTaxAmount") || 0),
+    reviewStatus: String(formData.get("reviewStatus") || "estimate"),
+    memo: String(formData.get("memo") || "").trim()
+  };
+  setBusy(submit, true);
+  try {
+    await saveRecord("forecast", payload);
+    forecastDialog.close();
+    showToast("대표 예상 세금을 저장했습니다.");
+  } catch (error) {
+    if (error?.status === 409) {
+      forecastDialog.close();
+      await loadWorkspace();
+      showToast(error.message || "다른 화면에서 수정된 최신 금액을 불러왔습니다.");
+    } else {
+      handleError(error, "예상 세금을 저장하지 못했습니다.");
+    }
+  } finally {
+    setBusy(submit, false);
+  }
+});
+
 document.querySelectorAll("[data-open-transaction]").forEach((button) => button.addEventListener("click", () => openTransaction()));
 document.querySelectorAll("[data-open-task]").forEach((button) => button.addEventListener("click", () => openTask()));
+document.querySelectorAll("[data-open-forecast]").forEach((button) => button.addEventListener("click", openForecast));
 document.querySelectorAll("[data-close-dialog]").forEach((button) => button.addEventListener("click", () => button.closest("dialog")?.close()));
 
 document.querySelector("[data-ledger-list]")?.addEventListener("click", (event) => {
@@ -529,7 +655,7 @@ document.querySelector("[data-menu-toggle]")?.addEventListener("click", () => {
 });
 scrim?.addEventListener("click", closeSidebar);
 
-[transactionDialog, taskDialog].forEach((dialog) => dialog?.addEventListener("click", (event) => {
+[transactionDialog, taskDialog, forecastDialog].forEach((dialog) => dialog?.addEventListener("click", (event) => {
   if (event.target === dialog) dialog.close();
 }));
 
@@ -542,6 +668,69 @@ function initializeServiceWorker() {
   if (!("serviceWorker" in navigator) || !window.isSecureContext) return;
   navigator.serviceWorker.register("/sw.js", { scope: "/", updateViaCache: "none" }).catch(() => undefined);
 }
+
+function applyUserAccess(user) {
+  state.user = user;
+  const isOwner = user?.role === "owner";
+  document.querySelector("[data-user-name]").textContent = user?.name || "관리자";
+  document.querySelector("[data-user-role]").textContent = isOwner ? "총책임자 · 모든 권한" : `${user?.title || "직원"} · 세무 권한`;
+  document.querySelector("[data-user-initial]").textContent = String(user?.name || "SN").slice(0, 2);
+  document.querySelectorAll("[data-owner-forecast]").forEach((element) => {
+    element.hidden = !isOwner;
+  });
+  if (!isOwner) {
+    state.forecast = null;
+    if (forecastDialog?.open) forecastDialog.close();
+  }
+  renderForecast();
+}
+
+function concealOwnerForecast() {
+  if (isPreview || state.user?.role !== "owner") return;
+  state.forecast = null;
+  state.accessNeedsRefresh = true;
+  document.querySelectorAll("[data-owner-forecast]").forEach((element) => {
+    element.hidden = true;
+  });
+  if (forecastDialog?.open) forecastDialog.close();
+  renderForecast();
+}
+
+async function revalidateAccess() {
+  if (isPreview || state.checkingAccess || document.hidden || !state.accessNeedsRefresh) return;
+  state.checkingAccess = true;
+  try {
+    const session = await fetchJson("/api/admin/session");
+    if (!session.authenticated) {
+      concealOwnerForecast();
+      window.location.replace("/admin");
+      return;
+    }
+    if (!canUseTax(session.user)) {
+      applyUserAccess(session.user);
+      setPageState("access", "이 계정에는 세무·회계 권한이 없습니다. 총책임자에게 권한을 요청해 주세요.");
+      return;
+    }
+    applyUserAccess(session.user);
+    state.accessNeedsRefresh = false;
+    setPageState("ready");
+    await loadWorkspace();
+  } catch (error) {
+    handleError(error, "로그인 상태를 다시 확인하지 못했습니다.");
+  } finally {
+    state.checkingAccess = false;
+  }
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    if (!isPreview) state.accessNeedsRefresh = true;
+    concealOwnerForecast();
+  } else {
+    revalidateAccess();
+  }
+});
+window.addEventListener("focus", revalidateAccess);
 
 async function initialize() {
   refreshIcons();
@@ -571,9 +760,7 @@ async function initialize() {
     return;
   }
 
-  document.querySelector("[data-user-name]").textContent = state.user.name || "관리자";
-  document.querySelector("[data-user-role]").textContent = state.user.role === "owner" ? "총책임자 · 모든 권한" : `${state.user.title || "직원"} · 세무 권한`;
-  document.querySelector("[data-user-initial]").textContent = String(state.user.name || "SN").slice(0, 2);
+  applyUserAccess(state.user);
   setPageState("ready");
   await loadWorkspace();
   initializeServiceWorker();

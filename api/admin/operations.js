@@ -24,8 +24,11 @@ import {
   deleteTaxTransaction,
   listTaxTasks,
   listTaxTransactions,
+  readTaxForecast,
+  saveTaxForecast,
   saveTaxTask,
   saveTaxTransaction,
+  summarizeTaxForecast,
   summarizeTaxWorkspace
 } from "../../lib/tax-store.js";
 
@@ -38,7 +41,8 @@ const TYPE_PERMISSION = Object.freeze({
   "inventory-movement": "inventory",
   tax: "tax",
   "tax-transaction": "tax",
-  "tax-task": "tax"
+  "tax-task": "tax",
+  "tax-forecast": "tax"
 });
 
 async function readBinaryBody(req) {
@@ -94,6 +98,8 @@ function errorMessage(error) {
     TAX_CATEGORY_REQUIRED: "거래 구분을 선택해 주세요.",
     TAX_AMOUNT_INVALID: "금액을 정확히 입력해 주세요.",
     TAX_TASK_TITLE_REQUIRED: "업무 제목을 입력해 주세요.",
+    TAX_MONTH_INVALID: "예상 세금을 저장할 조회 월을 확인해 주세요.",
+    TAX_FORECAST_CONFLICT: "다른 화면에서 같은 달의 예상 세금이 먼저 수정되었습니다. 최신 금액을 다시 확인해 주세요.",
     TAX_RECORD_ID_INVALID: "삭제할 기록을 확인해 주세요.",
     REQUEST_BODY_TOO_LARGE: "입력한 내용이 너무 깁니다."
   };
@@ -160,6 +166,9 @@ export default async function handler(req, res) {
   if (!permission) return sendJson(res, 400, { ok: false, message: "업무 구분을 확인해 주세요." });
   const auth = await requireAdmin(req, res, permission);
   if (!auth) return;
+  if (type === "tax-forecast" && auth.user.role !== "owner") {
+    return sendJson(res, 403, { ok: false, message: "예상 세금은 총책임자만 확인하고 수정할 수 있습니다." });
+  }
 
   try {
     if (req.method === "GET") {
@@ -178,11 +187,17 @@ export default async function handler(req, res) {
       if (type === "tax") {
         const [transactions, tasks] = await Promise.all([listTaxTransactions(), listTaxTasks()]);
         const month = String(req.query?.month ?? "").trim();
+        const summary = summarizeTaxWorkspace(transactions, tasks, month);
+        const forecast = auth.user.role === "owner"
+          ? summarizeTaxForecast(await readTaxForecast(summary.month), summary.month)
+          : null;
         return sendJson(res, 200, {
           ok: true,
           transactions,
           tasks,
-          summary: summarizeTaxWorkspace(transactions, tasks, month)
+          summary,
+          forecast,
+          canManageForecast: auth.user.role === "owner"
         });
       }
     }
@@ -194,6 +209,7 @@ export default async function handler(req, res) {
       if (type === "inventory-movement") return sendJson(res, 200, { ok: true, ...(await moveInventory(body, auth.user.id)) });
       if (type === "tax-transaction") return sendJson(res, 200, { ok: true, entry: await saveTaxTransaction(body, auth.user.id) });
       if (type === "tax-task") return sendJson(res, 200, { ok: true, entry: await saveTaxTask(body, auth.user.id) });
+      if (type === "tax-forecast") return sendJson(res, 200, { ok: true, entry: summarizeTaxForecast(await saveTaxForecast(body, auth.user.id), body.month) });
     }
 
     if (req.method === "DELETE") {
@@ -211,6 +227,6 @@ export default async function handler(req, res) {
     return sendJson(res, 405, { ok: false, message: "Method Not Allowed" });
   } catch (error) {
     console.error("ADMIN_OPERATIONS_FAILED", type, error?.message ?? error);
-    return sendJson(res, 400, { ok: false, message: errorMessage(error) });
+    return sendJson(res, error?.message === "TAX_FORECAST_CONFLICT" ? 409 : 400, { ok: false, message: errorMessage(error) });
   }
 }
