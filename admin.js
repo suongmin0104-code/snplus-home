@@ -54,6 +54,7 @@ import {
   ShieldAlert,
   ShieldCheck,
   SquarePen,
+  Smartphone,
   Trash2,
   Truck,
   UserCheck,
@@ -126,6 +127,7 @@ const iconSet = {
   ShieldAlert,
   ShieldCheck,
   SquarePen,
+  Smartphone,
   Trash2,
   Truck,
   UserCheck,
@@ -200,6 +202,87 @@ const activationMessage = document.querySelector("[data-activation-message]");
 const sidebar = document.querySelector("[data-sidebar]");
 const dialog = document.querySelector("[data-integration-dialog]");
 const toast = document.querySelector("[data-toast]");
+const sidebarScrim = document.querySelector("[data-sidebar-scrim]");
+const mobileMoreButton = document.querySelector("[data-mobile-more]");
+let deferredInstallPrompt = null;
+
+function isStandaloneApp() {
+  return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+}
+
+function updateInstallUi() {
+  const installed = isStandaloneApp();
+  body.classList.toggle("is-standalone", installed);
+  document.querySelectorAll("[data-install-app]").forEach((button) => {
+    button.hidden = installed;
+  });
+  const installCard = document.querySelector("[data-app-install-card]");
+  if (installCard) installCard.hidden = installed;
+}
+
+async function installWorkspaceApp() {
+  if (isStandaloneApp()) {
+    showToast("이미 SN 업무앱으로 실행 중입니다.");
+    return;
+  }
+
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    const choice = await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    if (choice?.outcome === "accepted") showToast("SN 업무앱 설치를 시작했습니다.");
+    updateInstallUi();
+    return;
+  }
+
+  const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  showToast(isIos
+    ? "Safari의 공유 버튼을 누른 뒤 '홈 화면에 추가'를 선택하세요."
+    : "브라우저 메뉴에서 '앱 설치' 또는 '홈 화면에 추가'를 선택하세요.");
+}
+
+function closeMobileMenu() {
+  sidebar?.classList.remove("is-open");
+  body.classList.remove("mobile-menu-open");
+  mobileMoreButton?.classList.remove("is-active");
+  mobileMoreButton?.setAttribute("aria-expanded", "false");
+}
+
+function toggleMobileMenu() {
+  const isOpen = !sidebar?.classList.contains("is-open");
+  sidebar?.classList.toggle("is-open", isOpen);
+  body.classList.toggle("mobile-menu-open", isOpen);
+  mobileMoreButton?.classList.toggle("is-active", isOpen);
+  mobileMoreButton?.setAttribute("aria-expanded", isOpen ? "true" : "false");
+}
+
+function initializeMobileApp() {
+  updateInstallUi();
+
+  window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    deferredInstallPrompt = event;
+    updateInstallUi();
+  });
+  window.addEventListener("appinstalled", () => {
+    deferredInstallPrompt = null;
+    updateInstallUi();
+    showToast("SN 업무앱 설치가 완료되었습니다.");
+  });
+  window.matchMedia("(display-mode: standalone)").addEventListener?.("change", updateInstallUi);
+
+  document.querySelectorAll("[data-install-app]").forEach((button) => {
+    button.addEventListener("click", installWorkspaceApp);
+  });
+
+  if (import.meta.env.PROD && "serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("/sw.js").catch((error) => {
+        console.warn("SN workspace service worker registration failed", error);
+      });
+    });
+  }
+}
 
 function refreshIcons() {
   createIcons({
@@ -409,7 +492,7 @@ function showModule(moduleName) {
     button.classList.toggle("is-active", active);
     button.setAttribute("aria-current", active ? "page" : "false");
   });
-  sidebar?.classList.remove("is-open");
+  closeMobileMenu();
   document.querySelector("#admin-main")?.focus({ preventScroll: true });
   window.scrollTo({ top: 0, behavior: "smooth" });
   if (requested === "tasks") worklog?.activate();
@@ -425,7 +508,8 @@ worklog = setupWorklog({
     setAuthState("login");
     showToast("보안 세션이 만료되었습니다.");
   },
-  refreshOverview: () => loadOverview()
+  refreshOverview: () => loadOverview(),
+  refreshIcons
 });
 operations = setupOperations({
   fetchJson,
@@ -664,9 +748,9 @@ dialog?.addEventListener("click", (event) => {
   if (event.target === dialog) dialog.close();
 });
 
-document.querySelector("[data-menu-toggle]")?.addEventListener("click", () => {
-  sidebar?.classList.toggle("is-open");
-});
+document.querySelector("[data-menu-toggle]")?.addEventListener("click", toggleMobileMenu);
+mobileMoreButton?.addEventListener("click", toggleMobileMenu);
+sidebarScrim?.addEventListener("click", closeMobileMenu);
 
 document.querySelector("[data-refresh]")?.addEventListener("click", async (event) => {
   const button = event.currentTarget;
@@ -704,7 +788,10 @@ document.querySelector("[data-logout]")?.addEventListener("click", async () => {
 });
 
 window.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && dialog?.open) dialog.close();
+  if (event.key !== "Escape") return;
+  if (dialog?.open) dialog.close();
+  closeMobileMenu();
 });
 
+initializeMobileApp();
 initialize();

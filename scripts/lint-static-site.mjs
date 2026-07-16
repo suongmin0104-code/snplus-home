@@ -10,6 +10,7 @@ const adminHtml = readFileSync(join(root, "admin.html"), "utf8");
 const adminScript = readFileSync(join(root, "admin.js"), "utf8");
 const adminWorklogScript = readFileSync(join(root, "admin-worklog.js"), "utf8");
 const adminOperationsScript = readFileSync(join(root, "admin-operations.js"), "utf8");
+const serviceWorker = readFileSync(join(root, "public", "sw.js"), "utf8");
 const adminAuth = readFileSync(join(root, "lib", "admin-auth.js"), "utf8");
 const adminTemplateApi = readFileSync(join(root, "api", "admin", "template.js"), "utf8");
 const adminWorklogApi = readFileSync(join(root, "api", "admin", "worklog.js"), "utf8");
@@ -104,12 +105,16 @@ requireFile("assets/company/sn-og-image.jpg", "Open Graph 대표 이미지가 �
 requireFile("public/favicon.png", "favicon 파일이 필요합니다.");
 requireFile("public/apple-touch-icon.png", "apple-touch-icon 파일이 필요합니다.");
 requireFile("public/site.webmanifest", "site.webmanifest 파일이 필요합니다.");
+requireFile("public/admin.webmanifest", "관리자 모바일앱 manifest가 필요합니다.");
+requireFile("public/sw.js", "모바일앱 service worker가 필요합니다.");
+requireFile("public/offline.html", "모바일앱 오프라인 안내 화면이 필요합니다.");
 requireFile("public/404.html", "404 페이지가 필요합니다.");
 requireFile("public/robots.txt", "public/robots.txt가 필요합니다.");
 requireFile("public/sitemap.xml", "public/sitemap.xml이 필요합니다.");
 requireFile("api/contact.js", "Vercel 문의 접수 API가 필요합니다.");
 requireFile("DOCS/CONTACT_SYSTEM.md", "문의 시스템 운영 문서가 필요합니다.");
 requireFile("DOCS/CONTACT_SYSTEM_ROADMAP.md", "문의 시스템 확장 로드맵 문서가 필요합니다.");
+requireFile("DOCS/MOBILE_APP.md", "관리자 휴대폰 앱 운영 문서가 필요합니다.");
 
 for (const api of forbiddenNavigationApis) {
   if (adminScript.includes(api)) {
@@ -125,6 +130,8 @@ for (const api of forbiddenNavigationApis) {
 
 requireAdminMatch(/<html\s+lang="ko"/, "admin.html must declare Korean language.");
 requireAdminMatch(/name="robots"\s+content="noindex, nofollow, noarchive"/, "Admin page must not be indexed.");
+requireAdminMatch(/rel="manifest"\s+href="\/admin\.webmanifest"/, "Admin mobile app manifest link is required.");
+requireAdminMatch(/class="mobile-app-nav"/, "Admin mobile bottom navigation is required.");
 requireAdminMatch(/data-login-form/, "Admin login form is required.");
 requireAdminMatch(/data-module-view="estimate"/, "Estimate management module is required.");
 requireAdminMatch(/data-module-view="production"/, "Production management module is required.");
@@ -149,6 +156,10 @@ for (const securityToken of ["HttpOnly", "Secure", "SameSite=Strict"]) {
 
 if (!robots.includes("Disallow: /admin")) {
   failures.push("robots.txt must disallow the admin workspace.");
+}
+
+if (!serviceWorker.includes('url.pathname.startsWith("/api/")')) {
+  failures.push("The service worker must bypass all authenticated admin API requests.");
 }
 
 const adminRewrite = vercelConfig.rewrites?.some(

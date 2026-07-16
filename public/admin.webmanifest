@@ -1,0 +1,28 @@
+{
+  "id": "/admin",
+  "name": "SN 업무포털",
+  "short_name": "SN 업무",
+  "description": "주식회사 에스앤 현장, 생산, 재고, 견적 및 문서 업무포털",
+  "lang": "ko-KR",
+  "start_url": "/admin?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f3f6f7",
+  "theme_color": "#102b46",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

@@ -1,14 +1,3 @@
-import {
-  CalendarCheck2,
-  Camera,
-  Clock3,
-  createIcons,
-  Image as ImageIcon,
-  MapPin,
-  Pencil,
-  Users
-} from "lucide";
-
 const STATUS_LABELS = Object.freeze({ planned: "예정", progress: "진행 중", completed: "완료" });
 const CATEGORY_LABELS = Object.freeze({ field: "현장 작업", delivery: "납품·설치", inspection: "점검·하자", office: "견적·사무", other: "기타" });
 const MAX_PHOTOS = 6;
@@ -46,13 +35,6 @@ function newId() {
 
 function photoUrl(photo) {
   return photo.previewUrl || `/api/admin/worklog-photo?path=${encodeURIComponent(photo.path)}`;
-}
-
-function refreshDynamicIcons() {
-  createIcons({
-    icons: { CalendarCheck2, Camera, Clock3, Image: ImageIcon, MapPin, Pencil, Users },
-    attrs: { "aria-hidden": "true", "stroke-width": 2 }
-  });
 }
 
 function addDays(value, amount) {
@@ -112,7 +94,7 @@ function previewEntries() {
   ];
 }
 
-export function setupWorklog({ fetchJson, showToast, onUnauthorized, refreshOverview }) {
+export function setupWorklog({ fetchJson, showToast, onUnauthorized, refreshOverview, refreshIcons }) {
   const calendar = document.querySelector("[data-worklog-calendar]");
   const list = document.querySelector("[data-worklog-list]");
   const monthLabel = document.querySelector("[data-worklog-month-label]");
@@ -226,7 +208,7 @@ export function setupWorklog({ fetchJson, showToast, onUnauthorized, refreshOver
     list.innerHTML = entries.length
       ? entries.map(entryMarkup).join("")
       : `<div class="worklog-empty"><i data-lucide="calendar-check-2"></i><strong>등록된 일정이 없습니다.</strong><span>선택한 날짜에 현장 작업이나 할 일을 추가하세요.</span></div>`;
-    refreshDynamicIcons();
+    refreshIcons();
   }
 
   function render() {
@@ -303,7 +285,7 @@ export function setupWorklog({ fetchJson, showToast, onUnauthorized, refreshOver
     dialog.querySelector("[data-worklog-dialog-title]").textContent = entry ? "일정·업무일지 수정" : "새 일정·업무일지";
     deleteButton.hidden = !entry || state.preview;
     renderPhotoGrid();
-    refreshDynamicIcons();
+    refreshIcons();
   }
 
   function openForm(entry = null) {
