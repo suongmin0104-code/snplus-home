@@ -309,7 +309,7 @@ async function loadWorkspace({ notify = false } = {}) {
       state.transactions = [...previewData.transactions];
       state.tasks = [...previewData.tasks];
     } else {
-      const payload = await fetchJson(`/api/admin/tax-workspace?month=${encodeURIComponent(state.month)}`);
+      const payload = await fetchJson(`/api/admin/operations?type=tax&month=${encodeURIComponent(state.month)}`);
       state.transactions = Array.isArray(payload.transactions) ? payload.transactions : [];
       state.tasks = Array.isArray(payload.tasks) ? payload.tasks : [];
     }
@@ -380,7 +380,7 @@ async function saveRecord(type, payload) {
     render();
     return entry;
   }
-  const result = await fetchJson("/api/admin/tax-workspace", { method: "POST", body: JSON.stringify({ type, ...payload }) });
+  const result = await fetchJson("/api/admin/operations", { method: "POST", body: JSON.stringify({ type: `tax-${type}`, ...payload }) });
   await loadWorkspace();
   return result.entry;
 }
@@ -392,7 +392,7 @@ async function deleteRecord(type, id) {
     render();
     return;
   }
-  await fetchJson(`/api/admin/tax-workspace?type=${encodeURIComponent(type)}&id=${encodeURIComponent(id)}`, { method: "DELETE" });
+  await fetchJson(`/api/admin/operations?type=${encodeURIComponent(`tax-${type}`)}&id=${encodeURIComponent(id)}`, { method: "DELETE" });
   await loadWorkspace();
 }
 
