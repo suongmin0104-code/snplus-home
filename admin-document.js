@@ -1,5 +1,6 @@
 const DRAFT_STORAGE_KEY = "sn-admin-document-drafts-v1";
 const INITIAL_ITEM_COUNT = 12;
+const OPERATION_ID_PATTERN = /^[A-Za-z0-9_-]{8,80}$/;
 
 const company = Object.freeze({
   name: "주식회사 에스앤",
@@ -35,11 +36,16 @@ function localDateString() {
   return new Date(now.getTime() - offset).toISOString().slice(0, 10);
 }
 
+function newOperationId(prefix = "estimate") {
+  return globalThis.crypto?.randomUUID?.() || `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
 function defaultDocument(type) {
   const meta = documentMeta[type] ?? documentMeta.estimate;
   const date = localDateString();
   return {
     type,
+    estimateId: type === "estimate" ? newOperationId() : "",
     date,
     client: "",
     project: "",
@@ -71,6 +77,57 @@ function readDrafts() {
 function parseNumber(value) {
   const parsed = Number(String(value ?? "").replaceAll(",", "").trim());
   return Number.isFinite(parsed) ? parsed : 0;
+}
+
+export function calculateDocumentTotals(items = [], vatMode = "separate") {
+  const lineTotal = (Array.isArray(items) ? items : []).reduce((sum, item) => {
+    return sum + Math.round(parseNumber(item?.quantity) * parseNumber(item?.unitPrice));
+  }, 0);
+  let supply = lineTotal;
+  let vat = 0;
+  let total = lineTotal;
+  if (vatMode === "separate") {
+    vat = Math.round(supply * 0.1);
+    total = supply + vat;
+  } else if (vatMode === "included") {
+    supply = Math.round(lineTotal / 1.1);
+    vat = lineTotal - supply;
+  }
+  return { supply, vat, total };
+}
+
+export function buildEstimateOperationPayload(data = {}) {
+  const items = Array.isArray(data.items) ? data.items : [];
+  const totals = calculateDocumentTotals(items, data.vatMode);
+  const client = String(data.client ?? "").trim();
+  const project = String(data.project ?? "").trim();
+  const documentNumber = String(data.documentNumber ?? "").trim();
+  const estimateId = OPERATION_ID_PATTERN.test(String(data.estimateId ?? ""))
+    ? String(data.estimateId)
+    : newOperationId();
+  const meaningfulItems = items.filter((item) => Object.values(item || {}).some((value) => String(value ?? "").trim()));
+
+  return {
+    type: "estimate",
+    id: estimateId,
+    title: project || (client ? `${client} 견적` : `견적서 ${documentNumber || data.date || ""}`.trim()),
+    date: String(data.date ?? "").trim(),
+    clientName: client,
+    contactName: String(data.managerName ?? "").trim(),
+    contactPhone: String(data.managerPhone ?? "").trim(),
+    documentNumber,
+    supplyAmount: totals.supply,
+    vatAmount: totals.vat,
+    totalAmount: totals.total,
+    itemCount: meaningfulItems.length,
+    source: "document-editor",
+    document: {
+      ...data,
+      type: "estimate",
+      estimateId,
+      items
+    }
+  };
 }
 
 function formatNumber(value) {
@@ -219,13 +276,15 @@ function makeInput(className, field, rowIndex, label, options = {}) {
   return input;
 }
 
-export function setupDocumentEditor({ showModule, showToast }) {
+export function setupDocumentEditor({ fetchJson, showModule, showToast, onEstimateSaved, onUnauthorized }) {
   const form = document.querySelector("[data-document-form]");
   if (!form) return { open() {} };
 
   const itemBody = form.querySelector("[data-document-items]");
   const saveStatus = document.querySelector("[data-doc-save-status]");
+  const saveButton = document.querySelector("[data-doc-save]");
   let currentType = "estimate";
+  let currentEstimateId = "";
   let saveTimer = null;
   const downloadButton = document.querySelector("[data-doc-download]");
   const shareButton = document.querySelector("[data-doc-share]");
@@ -326,7 +385,12 @@ export function setupDocumentEditor({ showModule, showToast }) {
     form.querySelectorAll("[data-doc-field]").forEach((field) => {
       values[field.dataset.docField] = field.value;
     });
-    return { type: currentType, ...values, items: collectItems() };
+    return {
+      type: currentType,
+      ...(currentType === "estimate" ? { estimateId: currentEstimateId || newOperationId() } : {}),
+      ...values,
+      items: collectItems()
+    };
   }
 
   function saveDraft({ notify = false } = {}) {
@@ -346,32 +410,73 @@ export function setupDocumentEditor({ showModule, showToast }) {
   }
 
   function calculate() {
-    let lineTotal = 0;
     itemBody.querySelectorAll("[data-item-row]").forEach((row) => {
       const quantity = parseNumber(row.querySelector('[data-item-field="quantity"]')?.value);
       const unitPrice = parseNumber(row.querySelector('[data-item-field="unitPrice"]')?.value);
       const amount = Math.round(quantity * unitPrice);
-      lineTotal += amount;
       row.querySelector("[data-item-amount]").textContent = amount ? formatNumber(amount) : "-";
     });
 
     const vatMode = form.querySelector('[data-doc-field="vatMode"]')?.value ?? "separate";
-    let supply = lineTotal;
-    let vat = 0;
-    let total = lineTotal;
-    if (vatMode === "separate") {
-      vat = Math.round(supply * 0.1);
-      total = supply + vat;
-    } else if (vatMode === "included") {
-      supply = Math.round(lineTotal / 1.1);
-      vat = lineTotal - supply;
-    }
+    const { supply, vat, total } = calculateDocumentTotals(collectItems(), vatMode);
 
     form.querySelector("[data-doc-subtotal]").textContent = `${formatNumber(supply)}원`;
     form.querySelector("[data-doc-vat]").textContent = `${formatNumber(vat)}원`;
     form.querySelector("[data-doc-total]").textContent = `${formatNumber(total)}원`;
     form.querySelector("[data-doc-amount-words]").textContent = `금 ${koreanNumber(total)}원정`;
     form.querySelector("[data-doc-amount-number]").textContent = `₩ ${formatNumber(total)}`;
+    return { supply, vat, total };
+  }
+
+  function updateSaveButtonLabel(busy = false) {
+    if (!saveButton) return;
+    const label = saveButton.querySelector("span");
+    if (label) label.textContent = busy ? "저장 중" : (currentType === "estimate" ? "견적관리 저장" : "임시저장");
+    saveButton.disabled = busy;
+    saveButton.setAttribute("aria-busy", busy ? "true" : "false");
+  }
+
+  async function saveEstimateToManagement({ notify = true } = {}) {
+    if (currentType !== "estimate") {
+      saveDraft({ notify });
+      return null;
+    }
+
+    const data = collectDocument();
+    if (!data.client.trim() && !data.project.trim()) {
+      form.querySelector('[data-doc-field="client"]')?.focus();
+      throw new Error("거래처 또는 공사명을 입력해 주세요.");
+    }
+    const payload = buildEstimateOperationPayload(data);
+    const result = await fetchJson("/api/admin/operations", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+    currentEstimateId = result.entry?.id || payload.id;
+    saveDraft();
+    const savedAt = new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
+    if (saveStatus) saveStatus.textContent = `견적관리에 저장됨 · ${savedAt}`;
+    try {
+      await onEstimateSaved?.(result.entry);
+    } catch (error) {
+      console.warn("Estimate list refresh failed after save", error);
+    }
+    if (notify) showToast("견적서를 견적관리에 저장했습니다.");
+    return result.entry;
+  }
+
+  function handleEstimateSaveError(error) {
+    if ([401, 403].includes(error?.status)) onUnauthorized?.(error);
+    showToast(error?.message || "견적서를 견적관리에 저장하지 못했습니다.");
+  }
+
+  async function saveEstimateBeforeOutput() {
+    try {
+      return await saveEstimateToManagement({ notify: false });
+    } catch (error) {
+      if (error && typeof error === "object") error.isEstimateSaveError = true;
+      throw error;
+    }
   }
 
   function setPdfActionsBusy(activeButton, busy, busyLabel = "PDF 생성 중") {
@@ -400,11 +505,13 @@ export function setupDocumentEditor({ showModule, showToast }) {
   }
 
   async function makeCurrentPdf() {
+    if (currentType === "estimate") await saveEstimateBeforeOutput();
     const { name } = prepareCurrentDocument();
     return createPdfFile(form, name);
   }
 
-  function copyCurrentDocumentForKakao() {
+  async function copyCurrentDocumentForKakao() {
+    if (currentType === "estimate") await saveEstimateBeforeOutput();
     prepareCurrentDocument();
     const imagePromise = createPngBlob(form);
     return navigator.clipboard.write([
@@ -413,6 +520,9 @@ export function setupDocumentEditor({ showModule, showToast }) {
   }
 
   function applyDocument(data) {
+    currentEstimateId = currentType === "estimate" && OPERATION_ID_PATTERN.test(String(data.estimateId ?? ""))
+      ? String(data.estimateId)
+      : (currentType === "estimate" ? newOperationId() : "");
     setField("date", data.date);
     setField("client", data.client);
     setField("project", data.project);
@@ -430,7 +540,7 @@ export function setupDocumentEditor({ showModule, showToast }) {
     calculate();
   }
 
-  function setType(type, { useDraft = true } = {}) {
+  function setType(type, { useDraft = true, documentData = null } = {}) {
     const nextType = documentMeta[type] ? type : "estimate";
     if (saveTimer) saveDraft();
     currentType = nextType;
@@ -446,14 +556,20 @@ export function setupDocumentEditor({ showModule, showToast }) {
       button.classList.toggle("is-active", button.dataset.docTypeButton === currentType);
       button.setAttribute("aria-pressed", button.dataset.docTypeButton === currentType ? "true" : "false");
     });
+    updateSaveButtonLabel();
 
     const draft = useDraft ? readDrafts()[currentType] : null;
-    applyDocument(draft ? { ...defaultDocument(currentType), ...draft } : defaultDocument(currentType));
-    if (saveStatus) saveStatus.textContent = draft ? "저장된 임시 문서를 불러왔습니다." : "새 문서 · 입력하면 자동 임시저장됩니다.";
+    const source = documentData || draft;
+    applyDocument(source ? { ...defaultDocument(currentType), ...source } : defaultDocument(currentType));
+    if (saveStatus) {
+      saveStatus.textContent = documentData
+        ? "견적관리에서 저장된 견적서를 불러왔습니다."
+        : (draft ? "저장된 임시 문서를 불러왔습니다." : "새 문서 · 입력하면 자동 임시저장됩니다.");
+    }
   }
 
-  function open(type = "estimate") {
-    setType(type);
+  function open(type = "estimate", documentData = null) {
+    setType(type, { useDraft: !documentData, documentData });
     showModule("document-editor");
     window.setTimeout(() => form.querySelector('[data-doc-field="client"]')?.focus(), 120);
   }
@@ -499,7 +615,20 @@ export function setupDocumentEditor({ showModule, showToast }) {
     itemBody.lastElementChild?.querySelector('[data-item-field="item"]')?.focus();
   });
 
-  document.querySelector("[data-doc-save]")?.addEventListener("click", () => saveDraft({ notify: true }));
+  saveButton?.addEventListener("click", async () => {
+    if (currentType !== "estimate") {
+      saveDraft({ notify: true });
+      return;
+    }
+    updateSaveButtonLabel(true);
+    try {
+      await saveEstimateToManagement();
+    } catch (error) {
+      handleEstimateSaveError(error);
+    } finally {
+      updateSaveButtonLabel(false);
+    }
+  });
 
   document.querySelector("[data-doc-reset]")?.addEventListener("click", () => {
     if (!window.confirm("현재 작성 내용을 비우고 새 문서를 시작할까요?")) return;
@@ -520,7 +649,8 @@ export function setupDocumentEditor({ showModule, showToast }) {
       showToast(`${file.name} 파일을 저장했습니다.`);
     } catch (error) {
       console.error("PDF download failed", error);
-      showToast("PDF 파일을 만들지 못했습니다. 잠시 후 다시 시도해 주세요.");
+      if (error?.isEstimateSaveError) handleEstimateSaveError(error);
+      else showToast("PDF 파일을 만들지 못했습니다. 잠시 후 다시 시도해 주세요.");
     } finally {
       setPdfActionsBusy(downloadButton, false);
     }
@@ -561,7 +691,8 @@ export function setupDocumentEditor({ showModule, showToast }) {
       }
     } catch (error) {
       console.error("PDF share failed", error);
-      showToast("공유할 PDF 파일을 만들지 못했습니다. 잠시 후 다시 시도해 주세요.");
+      if (error?.isEstimateSaveError) handleEstimateSaveError(error);
+      else showToast("공유할 PDF 파일을 만들지 못했습니다. 잠시 후 다시 시도해 주세요.");
     } finally {
       setPdfActionsBusy(shareButton, false);
     }

@@ -13,7 +13,7 @@
     <meta name="apple-mobile-web-app-title" content="SN 업무포털" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <link rel="manifest" href="/admin.webmanifest?v=0.10.3" />
+    <link rel="manifest" href="/admin.webmanifest?v=0.11.0" />
     <link rel="stylesheet" href="./admin.css" />
     <link rel="stylesheet" href="./admin-operations.css" />
     <script type="module" src="./admin.js"></script>
@@ -144,7 +144,7 @@
           <button class="portal-nav" type="button" data-module="inventory"><i data-lucide="package"></i><span>재고 관리</span></button>
           <button class="portal-nav" type="button" data-module="estimate"><i data-lucide="file-spreadsheet"></i><span>견적 관리</span></button>
           <p class="nav-label nav-label-group">사무 관리</p>
-          <button class="portal-nav" type="button" data-module="tax"><i data-lucide="receipt-text"></i><span>세무·회계</span><small data-nav-status="tax">연결 전</small></button>
+          <button class="portal-nav" type="button" data-module="tax"><i data-lucide="receipt-text"></i><span>세무·회계</span><small data-nav-status="tax">업무대장</small></button>
           <button class="portal-nav" type="button" data-module="clients"><i data-lucide="building-2"></i><span>거래처</span></button>
           <button class="portal-nav" type="button" data-module="document-editor"><i data-lucide="square-pen"></i><span>문서 작성</span></button>
           <button class="portal-nav" type="button" data-module="templates"><i data-lucide="files"></i><span>업무 서식</span></button>
@@ -213,18 +213,18 @@
               <section class="work-panel tax-panel">
                 <div class="panel-heading"><div><span class="panel-icon"><i data-lucide="receipt-text"></i></span><span><strong>세무·회계 현황</strong><small>신고 일정과 회계 업무</small></span></div><button type="button" data-go-module="tax">전체 보기 <i data-lucide="chevron-right"></i></button></div>
                 <ul class="check-list">
-                  <li><span class="check-symbol"><i data-lucide="calendar-days"></i></span><div><strong>신고 일정</strong><small>세무 ERP 연결 후 표시</small></div><span class="status-pill is-pending" data-integration-pill="tax">연결 전</span></li>
-                  <li><span class="check-symbol"><i data-lucide="circle-dollar-sign"></i></span><div><strong>매입·매출 집계</strong><small>회계 데이터 연결 후 표시</small></div><span class="status-pill is-muted">대기</span></li>
-                  <li><span class="check-symbol"><i data-lucide="file-check-2"></i></span><div><strong>증빙 확인</strong><small>자료 저장소 연결 후 표시</small></div><span class="status-pill is-muted">대기</span></li>
+                  <li><span class="check-symbol"><i data-lucide="calendar-days"></i></span><div><strong>세무 일정</strong><small>마감일과 완료 여부를 직접 관리</small></div><span class="status-pill is-connected" data-integration-pill="tax">사용 가능</span></li>
+                  <li><span class="check-symbol"><i data-lucide="circle-dollar-sign"></i></span><div><strong>입출금 기록</strong><small>월별 입금·출금과 차액 확인</small></div><span class="status-pill is-connected">사용 가능</span></li>
+                  <li><span class="check-symbol"><i data-lucide="file-check-2"></i></span><div><strong>증빙 확인</strong><small>누락 증빙만 모아 빠르게 확인</small></div><span class="status-pill is-connected">사용 가능</span></li>
                 </ul>
               </section>
             </div>
 
             <section class="integration-strip">
-              <div class="integration-copy"><span class="panel-icon"><i data-lucide="workflow"></i></span><span><strong>업무 시스템 연결 상태</strong><small>외부 ERP는 새 창으로 안전하게 연결됩니다.</small></span></div>
+              <div class="integration-copy"><span class="panel-icon"><i data-lucide="workflow"></i></span><span><strong>업무 시스템 상태</strong><small>내부 업무대장과 필요한 외부 시스템을 한곳에서 확인합니다.</small></span></div>
               <div class="integration-list">
                 <button type="button" data-integration="estimate"><span><i data-lucide="file-spreadsheet"></i><strong>견적 ERP</strong></span><span class="status-pill is-pending" data-integration-pill="estimate">연결 전</span></button>
-                <button type="button" data-integration="tax"><span><i data-lucide="receipt-text"></i><strong>세무 ERP</strong></span><span class="status-pill is-pending" data-integration-pill="tax">연결 전</span></button>
+                <button type="button" data-integration="tax"><span><i data-lucide="receipt-text"></i><strong>세무·회계 업무대장</strong></span><span class="status-pill is-connected" data-integration-pill="tax">사용 가능</span></button>
               </div>
             </section>
           </section>
@@ -283,14 +283,14 @@
             </div>
             <section class="template-quick-bar operation-document-bar">
               <span class="template-file-icon"><i data-lucide="file-spreadsheet"></i></span>
-              <div><strong>에스앤 견적서 바로 작성</strong><p>견적 일정을 확인한 뒤 공식 견적서를 작성하고 PDF로 저장할 수 있습니다.</p></div>
+              <div><strong>에스앤 견적서 바로 작성</strong><p>작성한 견적서는 견적관리 목록에 저장되고 PDF로도 바로 만들 수 있습니다.</p></div>
               <div class="template-quick-actions"><button class="primary-button" type="button" data-create-document="estimate"><i data-lucide="square-pen"></i> 견적서 작성</button><a class="secondary-button" href="/api/admin/template?file=estimate"><i data-lucide="download"></i> 원본 XLS</a></div>
             </section>
           </section>
 
           <section class="module-view" data-module-view="tax" aria-labelledby="tax-title">
-            <div class="page-heading"><div><p class="eyebrow">TAX & ACCOUNTING</p><h1 id="tax-title">세무·회계</h1><p>세무 신고 일정과 회계자료 확인 창구를 통합합니다.</p></div><button class="primary-button" type="button" data-integration="tax"><i data-lucide="plug-zap"></i><span data-integration-action="tax">ERP 연결 준비</span></button></div>
-            <section class="module-status-card"><span class="module-status-icon tone-violet"><i data-lucide="receipt-text"></i></span><div><p>세무·회계 시스템 상태</p><strong data-integration-title="tax">연결 전</strong><small data-integration-copy="tax">사용 중인 회계·세무 ERP 주소 또는 API 정보가 필요합니다.</small></div><span class="status-pill is-pending" data-integration-pill="tax">연결 전</span></section>
+            <div class="page-heading"><div><p class="eyebrow">TAX & ACCOUNTING</p><h1 id="tax-title">세무·회계</h1><p>입출금, 증빙과 세무 일정을 회사 내부에서 직접 관리합니다.</p></div><button class="primary-button" type="button" data-integration="tax"><i data-lucide="receipt-text"></i><span data-integration-action="tax">업무대장 열기</span></button></div>
+            <section class="module-status-card"><span class="module-status-icon tone-violet"><i data-lucide="receipt-text"></i></span><div><p>세무·회계 업무대장</p><strong data-integration-title="tax">사용 가능</strong><small data-integration-copy="tax">같은 업무포털 안에서 바로 사용할 수 있습니다.</small></div><span class="status-pill is-connected" data-integration-pill="tax">사용 가능</span></section>
             <div class="three-column-grid">
               <section class="work-panel compact-panel"><span class="panel-icon"><i data-lucide="calendar-days"></i></span><strong>신고 일정</strong><p>부가세, 원천세, 법인세 일정을 ERP와 연결합니다.</p><small>연결 후 표시</small></section>
               <section class="work-panel compact-panel"><span class="panel-icon"><i data-lucide="circle-dollar-sign"></i></span><strong>매입·매출</strong><p>기간별 집계와 확인 항목을 한눈에 표시합니다.</p><small>연결 후 표시</small></section>
@@ -358,7 +358,7 @@
                 <div class="template-card-actions"><button class="primary-button" type="button" data-create-document="transaction"><i data-lucide="square-pen"></i> 바로 작성</button><a class="secondary-button" href="/api/admin/template?file=transaction"><i data-lucide="download"></i> 원본 XLS</a></div>
               </article>
             </div>
-            <div class="template-security-note"><i data-lucide="shield-check"></i><p><strong>관리자 전용 문서 작성</strong><span>작성 중인 내용은 현재 브라우저에만 임시저장되며 원본 엑셀은 로그인 세션이 확인된 경우에만 전송됩니다.</span></p></div>
+            <div class="template-security-note"><i data-lucide="shield-check"></i><p><strong>관리자 전용 문서 작성</strong><span>작성 중에는 현재 브라우저에 임시저장되고, 완성한 견적서는 견적관리의 비공개 저장소에 등록됩니다.</span></p></div>
           </section>
 
           <section class="module-view document-editor-view" data-module-view="document-editor" aria-labelledby="document-editor-title">
@@ -370,7 +370,7 @@
               </div>
               <div class="document-toolbar-actions">
                 <button class="secondary-button" type="button" data-doc-reset><i data-lucide="file-plus-2"></i> 새 문서</button>
-                <button class="secondary-button" type="button" data-doc-save><i data-lucide="save"></i> 임시저장</button>
+                <button class="secondary-button" type="button" data-doc-save><i data-lucide="save"></i><span>견적관리 저장</span></button>
                 <button class="primary-button" type="button" data-doc-download><i data-lucide="file-down"></i><span>PDF 저장</span></button>
                 <button class="kakao-share-button" type="button" data-doc-share><i data-lucide="message-circle"></i><span>카카오톡 보내기</span></button>
               </div>
@@ -472,10 +472,10 @@
                 <button class="secondary-button" type="button" data-integration="estimate">연결 정보 확인</button>
               </section>
               <section class="setting-card">
-                <div><span class="setting-icon tone-violet"><i data-lucide="receipt-text"></i></span><span><strong>세무·회계 ERP</strong><small>신고·회계·증빙 관리</small></span></div>
-                <span class="status-pill is-pending" data-integration-pill="tax">연결 전</span>
-                <p data-integration-copy="tax">사용 중인 회계·세무 ERP 주소 또는 API 정보가 필요합니다.</p>
-                <button class="secondary-button" type="button" data-integration="tax">연결 정보 확인</button>
+                <div><span class="setting-icon tone-violet"><i data-lucide="receipt-text"></i></span><span><strong>세무·회계 업무대장</strong><small>입출금·증빙·일정 관리</small></span></div>
+                <span class="status-pill is-connected" data-integration-pill="tax">사용 가능</span>
+                <p data-integration-copy="tax">같은 업무포털 안에서 바로 사용할 수 있습니다.</p>
+                <button class="secondary-button" type="button" data-integration="tax">업무대장 열기</button>
               </section>
               <section class="setting-card security-setting">
                 <div><span class="setting-icon tone-teal"><i data-lucide="shield-check"></i></span><span><strong>관리자 보안</strong><small>서명 쿠키 기반 로그인</small></span></div>

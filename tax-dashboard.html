@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="주식회사 에스앤 내부 세무·회계 업무대장" />
+    <meta name="robots" content="noindex,nofollow,noarchive" />
+    <meta name="theme-color" content="#0b2638" />
+    <title>세무·회계 업무대장 | 주식회사 에스앤</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/admin.webmanifest?v=0.11.0" />
+    <link rel="stylesheet" href="/tax-dashboard.css" />
+  </head>
+  <body data-tax-state="loading">
+    <a class="skip-link" href="#tax-main">본문으로 바로가기</a>
+
+    <aside class="tax-sidebar" data-tax-sidebar aria-label="세무·회계 메뉴">
+      <a class="tax-brand" href="/admin" aria-label="SN 업무포털로 이동">
+        <img src="/assets/company/sn-logo-mark-small.png" alt="" />
+        <span><strong>SN 업무포털</strong><small>세무·회계 업무대장</small></span>
+      </a>
+
+      <nav class="tax-nav">
+        <p>WORKSPACE</p>
+        <button class="is-active" type="button" data-scroll-target="tax-overview"><i data-lucide="layout-dashboard"></i><span>한눈에 보기</span></button>
+        <button type="button" data-scroll-target="tax-ledger"><i data-lucide="arrow-left-right"></i><span>입출금 기록</span></button>
+        <button type="button" data-scroll-target="tax-tasks"><i data-lucide="calendar-check-2"></i><span>세무 일정</span></button>
+        <button type="button" data-scroll-target="tax-evidence"><i data-lucide="paperclip"></i><span>증빙 확인</span><em data-nav-missing>0</em></button>
+      </nav>
+
+      <div class="tax-sidebar-note">
+        <i data-lucide="shield-check"></i>
+        <div><strong>회사 내부 전용</strong><p>업무포털 로그인과 직원별 세무 권한을 그대로 사용합니다.</p></div>
+      </div>
+
+      <div class="tax-user">
+        <span data-user-initial>SN</span>
+        <div><strong data-user-name>관리자</strong><small data-user-role>세무·회계 권한</small></div>
+        <a href="/admin" title="업무포털로 돌아가기"><i data-lucide="log-out"></i><span class="sr-only">업무포털로 돌아가기</span></a>
+      </div>
+    </aside>
+
+    <div class="tax-scrim" data-tax-scrim></div>
+
+    <main class="tax-main" id="tax-main" tabindex="-1">
+      <header class="tax-topbar">
+        <button class="icon-button menu-button" type="button" data-menu-toggle aria-label="메뉴 열기"><i data-lucide="menu"></i></button>
+        <div class="tax-heading">
+          <p class="eyebrow">TAX &amp; ACCOUNTING WORKSPACE</p>
+          <h1>세무·회계 업무대장</h1>
+          <span data-today-label></span>
+        </div>
+        <div class="topbar-actions">
+          <label class="month-control"><span>조회 월</span><input type="month" data-tax-month /></label>
+          <button class="icon-button" type="button" data-tax-refresh aria-label="새로고침" title="새로고침"><i data-lucide="refresh-cw"></i></button>
+          <a class="secondary-button desktop-back" href="/admin"><i data-lucide="panel-left"></i> 업무포털</a>
+          <button class="primary-button" type="button" data-open-transaction><i data-lucide="plus"></i> 입출금 기록</button>
+        </div>
+      </header>
+
+      <section class="tax-loading" data-tax-loading aria-live="polite">
+        <span></span><strong>세무·회계 업무를 불러오는 중입니다.</strong>
+      </section>
+
+      <section class="tax-access" data-tax-access hidden>
+        <i data-lucide="lock-keyhole"></i>
+        <h1>세무·회계 권한이 필요합니다.</h1>
+        <p data-tax-access-message>총책임자에게 세무·회계 권한을 요청해 주세요.</p>
+        <a class="primary-button" href="/admin"><i data-lucide="arrow-left"></i> 업무포털로 돌아가기</a>
+      </section>
+
+      <div class="tax-app" data-tax-app hidden>
+        <section class="safety-banner" id="tax-overview">
+          <span class="safety-icon"><i data-lucide="badge-info"></i></span>
+          <div><strong>누구나 같은 순서로 기록하면 됩니다.</strong><p>1. 입출금 기록 → 2. 증빙 확인 → 3. 신고·제출 일정 완료. 이 화면은 회사 내부 업무대장이며 국세청 전자신고를 대신하지 않습니다.</p></div>
+          <button type="button" data-open-task><i data-lucide="calendar-plus"></i> 일정 추가</button>
+        </section>
+
+        <section class="summary-grid" aria-label="선택한 달의 세무·회계 현황">
+          <article class="summary-card tone-income"><span><i data-lucide="trending-up"></i> 이번 달 입금</span><strong data-summary-income>0원</strong><small data-summary-transaction-count>기록 0건</small></article>
+          <article class="summary-card tone-expense"><span><i data-lucide="trending-down"></i> 이번 달 출금</span><strong data-summary-expense>0원</strong><small>수기 등록 기준</small></article>
+          <article class="summary-card tone-balance"><span><i data-lucide="landmark"></i> 입출금 차액</span><strong data-summary-balance>0원</strong><small>입금에서 출금을 뺀 금액</small></article>
+          <article class="summary-card tone-action"><span><i data-lucide="list-checks"></i> 처리할 업무</span><strong data-summary-pending>0건</strong><small data-summary-warning>지연 0건 · 증빙 누락 0건</small></article>
+        </section>
+
+        <section class="workspace-grid">
+          <article class="workspace-panel ledger-panel" id="tax-ledger">
+            <header class="panel-heading">
+              <div><p class="eyebrow">CASHBOOK</p><h2>입출금 기록</h2><span>통장과 증빙을 보며 한 줄씩 기록합니다.</span></div>
+              <div class="panel-actions">
+                <label><span class="sr-only">입출금 구분</span><select data-ledger-direction><option value="all">전체</option><option value="income">입금</option><option value="expense">출금</option></select></label>
+                <button class="secondary-button" type="button" data-open-transaction><i data-lucide="plus"></i> 새 기록</button>
+              </div>
+            </header>
+            <div class="ledger-head" aria-hidden="true"><span>날짜</span><span>구분</span><span>거래 내용</span><span>금액</span><span>증빙</span><span>수정</span></div>
+            <div class="ledger-list" data-ledger-list></div>
+          </article>
+
+          <article class="workspace-panel tasks-panel" id="tax-tasks">
+            <header class="panel-heading">
+              <div><p class="eyebrow">DEADLINES</p><h2>세무·제출 일정</h2><span>마감할 일만 간단히 관리합니다.</span></div>
+              <button class="icon-button" type="button" data-open-task aria-label="일정 추가" title="일정 추가"><i data-lucide="plus"></i></button>
+            </header>
+            <div class="task-list" data-tax-task-list></div>
+          </article>
+        </section>
+
+        <section class="evidence-section" id="tax-evidence">
+          <header class="section-heading">
+            <div><p class="eyebrow">EVIDENCE CHECK</p><h2>증빙 확인이 필요한 거래</h2><span>영수증·세금계산서가 아직 확인되지 않은 항목만 모았습니다.</span></div>
+            <span class="count-badge"><b data-evidence-count>0</b>건 확인 필요</span>
+          </header>
+          <div class="evidence-list" data-evidence-list></div>
+        </section>
+
+        <section class="help-strip">
+          <div><i data-lucide="circle-help"></i><span><strong>어떻게 써야 할지 헷갈리나요?</strong><small>입금·출금이 생긴 날 기록하고, 영수증이 있으면 “첨부 확인”을 선택하세요. 신고 금액과 계정과목 판단은 세무대리인 검토 후 확정합니다.</small></span></div>
+          <a href="tel:0318522918"><i data-lucide="phone"></i><span><strong>031-852-2918</strong><small>회사 담당자에게 문의</small></span></a>
+        </section>
+      </div>
+    </main>
+
+    <dialog class="tax-dialog" data-transaction-dialog>
+      <form data-transaction-form>
+        <header><div><p class="eyebrow">CASHBOOK ENTRY</p><h2 data-transaction-dialog-title>입출금 기록</h2></div><button class="icon-button" type="button" data-close-dialog aria-label="닫기"><i data-lucide="x"></i></button></header>
+        <input type="hidden" name="id" />
+        <div class="form-grid">
+          <label><span>날짜 <b>*</b></span><input type="date" name="date" required /></label>
+          <label><span>입출금 구분 <b>*</b></span><select name="direction" required><option value="income">입금</option><option value="expense">출금</option></select></label>
+          <label><span>거래 구분 <b>*</b></span><select name="category" required><option value="매출">매출</option><option value="자재비">자재비</option><option value="외주비">외주비</option><option value="급여">급여</option><option value="임차료">임차료</option><option value="세금·공과">세금·공과</option><option value="차량·운반">차량·운반</option><option value="기타">기타</option></select></label>
+          <label><span>금액 <b>*</b></span><input type="number" name="amount" min="1" step="1" inputmode="numeric" placeholder="0" required /></label>
+          <label class="full"><span>거래처·내용</span><input type="text" name="clientName" maxlength="120" placeholder="예: ○○건설 자재대금" /></label>
+          <label><span>증빙 상태</span><select name="evidenceStatus"><option value="attached">첨부 확인</option><option value="missing">확인 필요</option><option value="not-required">증빙 없음</option></select></label>
+          <label class="full"><span>메모</span><textarea name="memo" maxlength="2000" placeholder="입금 확인사항, 영수증 위치 등 필요한 내용만 적으세요."></textarea></label>
+        </div>
+        <footer><button class="danger-button" type="button" data-delete-transaction hidden><i data-lucide="trash-2"></i> 삭제</button><span></span><button class="secondary-button" type="button" data-close-dialog>취소</button><button class="primary-button" type="submit"><i data-lucide="save"></i> 저장</button></footer>
+      </form>
+    </dialog>
+
+    <dialog class="tax-dialog" data-task-dialog>
+      <form data-task-form>
+        <header><div><p class="eyebrow">TAX TASK</p><h2 data-task-dialog-title>세무 일정 등록</h2></div><button class="icon-button" type="button" data-close-dialog aria-label="닫기"><i data-lucide="x"></i></button></header>
+        <input type="hidden" name="id" />
+        <div class="form-grid">
+          <label class="full"><span>업무 제목 <b>*</b></span><input type="text" name="title" maxlength="140" placeholder="예: 부가가치세 자료 세무사 전달" required /></label>
+          <label><span>마감일 <b>*</b></span><input type="date" name="dueDate" required /></label>
+          <label><span>업무 구분</span><select name="taskType"><option value="부가가치세">부가가치세</option><option value="원천세">원천세</option><option value="법인세">법인세</option><option value="급여·4대보험">급여·4대보험</option><option value="자료 제출">자료 제출</option><option value="기타">기타</option></select></label>
+          <label><span>담당자</span><input type="text" name="ownerName" maxlength="60" placeholder="담당자 이름" /></label>
+          <label class="check-label"><input type="checkbox" name="done" /><span><strong>업무 완료</strong><small>처리가 끝났을 때만 체크합니다.</small></span></label>
+          <label class="full"><span>메모</span><textarea name="memo" maxlength="2000" placeholder="준비할 자료나 확인할 사항을 적으세요."></textarea></label>
+        </div>
+        <footer><button class="danger-button" type="button" data-delete-task hidden><i data-lucide="trash-2"></i> 삭제</button><span></span><button class="secondary-button" type="button" data-close-dialog>취소</button><button class="primary-button" type="submit"><i data-lucide="save"></i> 저장</button></footer>
+      </form>
+    </dialog>
+
+    <div class="tax-toast" data-tax-toast role="status" aria-live="polite"></div>
+    <script type="module" src="/tax-dashboard.js"></script>
+  </body>
+</html>

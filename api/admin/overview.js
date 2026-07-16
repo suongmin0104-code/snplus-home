@@ -43,8 +43,8 @@ export default async function handler(req, res) {
     ? integration("견적 ERP", "ESTIMATE_ERP_URL")
     : { name: "견적 ERP", connected: false, status: "권한 없음", url: null };
   const tax = canTax
-    ? integration("세무·회계 ERP", "TAX_ERP_URL")
-    : { name: "세무·회계 ERP", connected: false, status: "권한 없음", url: null };
+    ? { name: "세무·회계 업무대장", connected: true, status: "사용 가능", url: "/admin/tax", internal: true }
+    : { name: "세무·회계 업무대장", connected: false, status: "권한 없음", url: null, internal: true };
   let taskSummary = canWorklog
     ? { value: null, label: "업무일지를 확인하지 못했습니다." }
     : { value: null, label: "권한 없음" };

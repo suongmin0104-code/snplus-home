@@ -148,9 +148,9 @@ const integrationMeta = {
     requirement: "서비스 이름, 접속 주소, API 제공 여부, 담당자 계정 정책"
   },
   tax: {
-    title: "세무·회계 ERP",
-    copy: "신고 일정과 회계자료를 확인하려면 사용 중인 세무·회계 ERP를 연결해야 합니다.",
-    requirement: "서비스 이름, 접속 주소, API 제공 여부, 세무대리인 연동 방식"
+    title: "세무·회계 업무대장",
+    copy: "같은 업무포털 안에서 입출금, 증빙과 세무 일정을 직접 관리합니다.",
+    requirement: "직원별 세무·회계 권한이 필요합니다."
   }
 };
 
@@ -178,7 +178,7 @@ const previewOverview = {
   ],
   integrations: {
     estimate: { name: "견적 ERP", connected: false, status: "연결 전", url: null },
-    tax: { name: "세무·회계 ERP", connected: false, status: "연결 전", url: null }
+    tax: { name: "세무·회계 업무대장", connected: true, status: "사용 가능", url: "/admin/tax", internal: true }
   },
   session: { expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString() }
 };
@@ -462,7 +462,7 @@ function showToast(message) {
 }
 
 function setPill(element, integration) {
-  element.textContent = integration.connected ? "연결됨" : "연결 전";
+  element.textContent = integration.status || (integration.connected ? "연결됨" : "연결 전");
   element.classList.toggle("is-connected", integration.connected);
   element.classList.toggle("is-pending", !integration.connected);
 }
@@ -506,7 +506,7 @@ function applyOverview(overview) {
   for (const [key, integration] of Object.entries(overview.integrations ?? {})) {
     document.querySelectorAll(`[data-integration-pill="${key}"]`).forEach((element) => setPill(element, integration));
     document.querySelectorAll(`[data-nav-status="${key}"]`).forEach((element) => {
-      element.textContent = integration.connected ? "연결됨" : "연결 전";
+      element.textContent = integration.status || (integration.connected ? "연결됨" : "연결 전");
       element.classList.toggle("is-connected", integration.connected);
     });
     document.querySelectorAll(`[data-integration-title="${key}"]`).forEach((element) => {
@@ -514,11 +514,11 @@ function applyOverview(overview) {
     });
     document.querySelectorAll(`[data-integration-copy="${key}"]`).forEach((element) => {
       element.textContent = integration.connected
-        ? "연결 주소가 등록되었습니다. 외부 ERP는 새 창에서 열립니다."
+        ? (integration.internal ? "같은 업무포털 안에서 바로 사용할 수 있습니다." : "연결 주소가 등록되었습니다. 외부 ERP는 새 창에서 열립니다.")
         : integrationMeta[key].copy;
     });
     document.querySelectorAll(`[data-integration-action="${key}"]`).forEach((element) => {
-      element.textContent = integration.connected ? "ERP 열기" : "ERP 연결 준비";
+      element.textContent = integration.internal ? "업무대장 열기" : (integration.connected ? "ERP 열기" : "ERP 연결 준비");
     });
   }
 
@@ -540,6 +540,15 @@ function escapeTableText(value) {
 }
 
 function showModule(moduleName) {
+  if (moduleName === "tax") {
+    if (!canUseModule("tax")) {
+      showToast("세무·회계 업무를 사용할 권한이 없습니다. 총책임자에게 문의해 주세요.");
+      return;
+    }
+    const isPreview = import.meta.env.DEV && new URLSearchParams(window.location.search).has("ui-preview");
+    window.location.assign(isPreview ? "/tax-dashboard.html?ui-preview=1" : "/admin/tax");
+    return;
+  }
   const requested = document.querySelector(`[data-module-view="${moduleName}"]`) ? moduleName : "dashboard";
   if (!canUseModule(requested)) {
     showToast("이 업무를 사용할 권한이 없습니다. 총책임자에게 문의해 주세요.");
@@ -562,7 +571,16 @@ function showModule(moduleName) {
   if (requested === "users") userManagement?.activate();
 }
 
-const documentEditor = setupDocumentEditor({ showModule, showToast });
+const documentEditor = setupDocumentEditor({
+  fetchJson,
+  showModule,
+  showToast,
+  onEstimateSaved: (entry) => operations?.reload("estimate", { selectedDate: entry?.date }),
+  onUnauthorized: () => {
+    setAuthState("login");
+    showToast("보안 세션이 만료되었습니다.");
+  }
+});
 worklog = setupWorklog({
   fetchJson,
   showToast,
@@ -577,6 +595,7 @@ operations = setupOperations({
   fetchJson,
   showToast,
   refreshIcons,
+  openEstimateDocument: (entry) => documentEditor.open("estimate", entry.document),
   onUnauthorized: (error) => {
     if (error?.status === 401) {
       setAuthState("login");
@@ -603,6 +622,10 @@ userManagement = setupUserManagement({
 });
 
 function openIntegrationDialog(key) {
+  if (key === "tax") {
+    showModule("tax");
+    return;
+  }
   const meta = integrationMeta[key];
   const integration = state.overview.integrations?.[key];
   if (!meta || !integration || !dialog) return;

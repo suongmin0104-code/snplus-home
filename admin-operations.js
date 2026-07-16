@@ -79,7 +79,39 @@ function previewData() {
   const today = todayKey();
   return {
     estimates: [
-      { id: "preview-estimate-a", date: today, title: "디자인난간 제작·설치", clientName: "거래처 예시", contactName: "담당자", contactPhone: "", memo: "", updatedAt: new Date().toISOString() }
+      {
+        id: "preview-estimate-a",
+        date: today,
+        title: "디자인난간 제작·설치",
+        clientName: "거래처 예시",
+        contactName: "박정환",
+        contactPhone: "010-4888-1504",
+        documentNumber: "SN-PREVIEW-001",
+        supplyAmount: 2000000,
+        vatAmount: 200000,
+        totalAmount: 2200000,
+        itemCount: 2,
+        source: "document-editor",
+        document: {
+          estimateId: "preview-estimate-a",
+          type: "estimate",
+          date: today,
+          documentNumber: "SN-PREVIEW-001",
+          client: "거래처 예시",
+          project: "디자인난간 제작·설치",
+          vatMode: "separate",
+          managerName: "박정환",
+          managerTitle: "이사",
+          managerPhone: "010-4888-1504",
+          notes: "미리보기용 견적 문서입니다.",
+          items: [
+            { item: "디자인난간", specification: "현장 맞춤", unit: "M", quantity: 20, unitPrice: 80000, note: "" },
+            { item: "설치비", specification: "현장 시공", unit: "식", quantity: 1, unitPrice: 400000, note: "" }
+          ]
+        },
+        memo: "견적서 작성 화면에서 저장된 문서",
+        updatedAt: new Date().toISOString()
+      }
     ],
     production: [
       { id: "preview-production-a", date: today, title: "난간 프레임 제작", drawingNumber: "SN-EXAMPLE-01", workers: "생산팀", shipped: false, memo: "용접 상태와 치수를 확인했습니다.", updatedAt: new Date().toISOString() }
@@ -91,7 +123,7 @@ function previewData() {
   };
 }
 
-export function setupOperations({ fetchJson, showToast, refreshIcons, onUnauthorized }) {
+export function setupOperations({ fetchJson, showToast, refreshIcons, onUnauthorized, openEstimateDocument }) {
   const state = {
     preview: false,
     estimate: { entries: [], loaded: false, selectedDate: todayKey(), visibleMonth: new Date(new Date().getFullYear(), new Date().getMonth(), 1) },
@@ -165,7 +197,15 @@ export function setupOperations({ fetchJson, showToast, refreshIcons, onUnauthor
 
   function estimateEntryMarkup(entry) {
     const contact = [entry.contactName, entry.contactPhone].filter(Boolean).join(" · ");
-    return `<article class="operation-entry" data-operation-id="${escapeHtml(entry.id)}"><div class="operation-entry-main"><div><strong>${escapeHtml(entry.title)}</strong><p>${escapeHtml(entry.clientName || "거래처 미지정")}${contact ? ` · ${escapeHtml(contact)}` : ""}</p>${entry.memo ? `<small>${escapeHtml(entry.memo)}</small>` : ""}</div></div><button class="operation-edit" type="button" data-estimate-edit="${escapeHtml(entry.id)}" aria-label="견적 일정 수정"><i data-lucide="pencil"></i></button></article>`;
+    const documentSummary = entry.document ? [
+      entry.documentNumber,
+      `합계 ${number(entry.totalAmount)}원`,
+      `품목 ${number(entry.itemCount)}건`
+    ].filter(Boolean).join(" · ") : "";
+    const documentButton = entry.document
+      ? `<button class="operation-edit is-document" type="button" data-estimate-document="${escapeHtml(entry.id)}" aria-label="저장된 견적서 열기" title="견적서 열기"><i data-lucide="file-text"></i></button>`
+      : "";
+    return `<article class="operation-entry" data-operation-id="${escapeHtml(entry.id)}"><div class="operation-entry-main"><div><strong>${escapeHtml(entry.title)}</strong><p>${escapeHtml(entry.clientName || "거래처 미지정")}${contact ? ` · ${escapeHtml(contact)}` : ""}</p>${documentSummary ? `<small class="operation-document-summary">${escapeHtml(documentSummary)}</small>` : ""}${entry.memo ? `<small>${escapeHtml(entry.memo)}</small>` : ""}</div></div><div class="operation-entry-actions">${documentButton}<button class="operation-edit" type="button" data-estimate-edit="${escapeHtml(entry.id)}" aria-label="견적 일정 수정" title="일정 수정"><i data-lucide="pencil"></i></button></div></article>`;
   }
 
   function renderEstimateList() {
@@ -475,6 +515,12 @@ export function setupOperations({ fetchJson, showToast, refreshIcons, onUnauthor
     renderEstimates();
   });
   document.querySelector("[data-estimate-list]")?.addEventListener("click", (event) => {
+    const documentButton = event.target.closest("[data-estimate-document]");
+    if (documentButton) {
+      const entry = state.estimate.entries.find((item) => item.id === documentButton.dataset.estimateDocument);
+      if (entry?.document) openEstimateDocument?.(entry);
+      return;
+    }
     const button = event.target.closest("[data-estimate-edit]");
     if (button) openEstimate(state.estimate.entries.find((entry) => entry.id === button.dataset.estimateEdit) || null);
   });
@@ -646,8 +692,16 @@ export function setupOperations({ fetchJson, showToast, refreshIcons, onUnauthor
         if (!state.inventory.loaded) await loadInventory(); else renderInventory();
       }
     },
-    async reload(moduleName) {
-      if (moduleName === "estimate") await loadEstimates();
+    async reload(moduleName, options = {}) {
+      if (moduleName === "estimate") {
+        const selectedDate = String(options.selectedDate ?? "");
+        const date = selectedDate ? parseDate(selectedDate) : null;
+        if (date && !Number.isNaN(date.getTime())) {
+          state.estimate.selectedDate = selectedDate;
+          state.estimate.visibleMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+        }
+        await loadEstimates();
+      }
       if (moduleName === "production") await loadProduction();
       if (moduleName === "inventory") await loadInventory();
     },
