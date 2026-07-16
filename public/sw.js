@@ -1,4 +1,4 @@
-const CACHE_VERSION = "sn-workspace-shell-v1";
+const CACHE_VERSION = "sn-workspace-shell-v2";
 const OFFLINE_URL = "/offline.html";
 const APP_SHELL = [
   OFFLINE_URL,

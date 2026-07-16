@@ -128,7 +128,7 @@
         </div>
         <div class="header-actions">
           <span class="internal-badge"><i data-lucide="lock-keyhole"></i> 내부 전용</span>
-          <button class="install-button" type="button" data-install-app title="업무앱 설치"><i data-lucide="smartphone"></i><span>앱 설치</span></button>
+          <button class="install-button" type="button" data-install-app title="업무앱 설치"><i data-lucide="smartphone"></i><span data-install-label>설치 안내</span></button>
           <button class="icon-button" type="button" data-refresh title="새로고침" aria-label="데이터 새로고침"><i data-lucide="refresh-cw"></i></button>
           <button class="icon-button" type="button" data-logout title="로그아웃" aria-label="로그아웃"><i data-lucide="log-out"></i></button>
         </div>
@@ -177,13 +177,13 @@
             <section class="app-install-card" data-app-install-card>
               <span class="app-install-icon"><i data-lucide="smartphone"></i></span>
               <div><strong>휴대폰에 SN 업무앱 설치</strong><p>현장·견적·재고·문서를 홈 화면에서 바로 열고, 사진 촬영과 PDF 공유를 편하게 사용하세요.</p></div>
-              <button class="primary-button" type="button" data-install-app><i data-lucide="download"></i> 앱 설치</button>
+              <button class="primary-button" type="button" data-install-app><i data-lucide="download"></i><span data-install-label>설치 안내</span></button>
             </section>
 
             <div class="summary-grid">
               <article class="summary-card">
                 <span class="summary-icon tone-teal"><i data-lucide="hard-hat"></i></span>
-                <div><p>현장 미완료</p><strong data-summary="tasks">확인 중</strong><small data-summary-note="tasks">현장 업무일지</small></div>
+                <div><p>현장 일정</p><strong data-summary="tasks">확인 중</strong><small data-summary-note="tasks">현장 업무일지</small></div>
               </article>
               <article class="summary-card">
                 <span class="summary-icon tone-blue"><i data-lucide="factory"></i></span>
@@ -310,10 +310,10 @@
             </div>
 
             <div class="worklog-summary" aria-label="업무일지 요약">
-              <article><span class="tone-blue"><i data-lucide="calendar-days"></i></span><div><small>오늘 일정</small><strong data-worklog-stat="today">0건</strong></div></article>
-              <article><span class="tone-amber"><i data-lucide="clock-3"></i></span><div><small>미완료</small><strong data-worklog-stat="active">0건</strong></div></article>
-              <article><span class="tone-red"><i data-lucide="circle-alert"></i></span><div><small>기한 경과</small><strong data-worklog-stat="overdue">0건</strong></div></article>
-              <article><span class="tone-teal"><i data-lucide="circle-check-big"></i></span><div><small>완료</small><strong data-worklog-stat="completed">0건</strong></div></article>
+              <article><span class="tone-blue"><i data-lucide="clipboard-list"></i></span><div><small>전체 일정</small><strong data-worklog-stat="total">0건</strong></div></article>
+              <article><span class="tone-teal"><i data-lucide="calendar-days"></i></span><div><small>오늘 일정</small><strong data-worklog-stat="today">0건</strong></div></article>
+              <article><span class="tone-amber"><i data-lucide="calendar-check-2"></i></span><div><small>이번 달</small><strong data-worklog-stat="month">0건</strong></div></article>
+              <article><span class="tone-violet"><i data-lucide="camera"></i></span><div><small>사진 기록</small><strong data-worklog-stat="photos">0장</strong></div></article>
             </div>
 
             <div class="worklog-layout">
@@ -335,11 +335,6 @@
                   <div><p class="eyebrow">DAILY LOG</p><h2 id="worklog-selected-label" data-worklog-selected-label></h2></div>
                   <button class="icon-button" type="button" data-worklog-new aria-label="선택한 날짜에 일정 추가" title="일정 추가"><i data-lucide="plus"></i></button>
                 </header>
-                <div class="worklog-filter" role="group" aria-label="상태 필터">
-                  <button type="button" data-worklog-filter="all" class="is-active">전체</button>
-                  <button type="button" data-worklog-filter="open">진행</button>
-                  <button type="button" data-worklog-filter="completed">완료</button>
-                </div>
                 <div class="worklog-agenda-list" data-worklog-list aria-live="polite">
                   <div class="worklog-loading"><i data-lucide="loader-circle"></i><span>업무일지를 불러오는 중입니다.</span></div>
                 </div>
@@ -502,6 +497,29 @@
       </nav>
     </div>
 
+    <dialog class="app-install-dialog" data-install-help-dialog>
+      <section>
+        <header>
+          <span><i data-lucide="smartphone"></i></span>
+          <div><p class="eyebrow">INSTALL SN WORKSPACE</p><h2 data-install-help-title>휴대폰에 업무앱 설치</h2></div>
+          <button class="icon-button" type="button" data-install-help-close aria-label="닫기"><i data-lucide="x"></i></button>
+        </header>
+        <div class="app-install-help-body">
+          <p data-install-help-copy>SN 업무포털은 Chrome 또는 Safari에서 홈 화면에 바로 설치할 수 있습니다.</p>
+          <ol data-install-help-steps>
+            <li><strong>1</strong><span>아래 버튼으로 Chrome에서 업무포털을 엽니다.</span></li>
+            <li><strong>2</strong><span>오른쪽 위 메뉴를 누릅니다.</span></li>
+            <li><strong>3</strong><span>앱 설치 또는 홈 화면에 추가를 선택합니다.</span></li>
+          </ol>
+          <p class="app-install-help-note"><i data-lucide="circle-alert"></i><span data-install-help-note>현재 Play 스토어 등록 전이며, 브라우저에서 안전하게 바로 설치하는 웹앱입니다.</span></p>
+        </div>
+        <footer>
+          <button class="secondary-button" type="button" data-install-help-close>닫기</button>
+          <a class="primary-button" data-open-chrome href="intent://snplus.ai.kr/admin#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=https%3A%2F%2Fsnplus.ai.kr%2Fadmin;end"><i data-lucide="external-link"></i> Chrome에서 열기</a>
+        </footer>
+      </section>
+    </dialog>
+
     <dialog class="worklog-dialog" data-worklog-dialog>
       <form data-worklog-form autocomplete="off">
         <header class="worklog-dialog-head">
@@ -512,14 +530,11 @@
         <div class="worklog-form-body">
           <input type="hidden" name="id" />
           <label class="worklog-field span-2"><span>일정·작업 제목 <b>*</b></span><input type="text" name="title" maxlength="120" required placeholder="예: 화성 현장 디자인난간 설치" /></label>
-          <label class="worklog-field"><span>날짜 <b>*</b></span><input type="date" name="date" required /></label>
-          <label class="worklog-field"><span>상태</span><select name="status"><option value="planned">예정</option><option value="progress">진행 중</option><option value="completed">완료</option></select></label>
-          <label class="worklog-field"><span>시작 시간</span><input type="time" name="startTime" /></label>
-          <label class="worklog-field"><span>종료 시간</span><input type="time" name="endTime" /></label>
+          <label class="worklog-field span-2"><span>날짜 <b>*</b></span><input type="date" name="date" required /></label>
           <label class="worklog-field"><span>업무 구분</span><select name="category"><option value="field">현장 작업</option><option value="delivery">납품·설치</option><option value="inspection">점검·하자</option><option value="office">견적·사무</option><option value="other">기타</option></select></label>
           <label class="worklog-field"><span>현장·장소</span><input type="text" name="site" maxlength="160" placeholder="현장명 또는 주소" /></label>
           <label class="worklog-field span-2"><span>참여자</span><input type="text" name="workers" maxlength="200" placeholder="작업자 또는 협력업체" /></label>
-          <label class="worklog-field span-2"><span>작업내용</span><textarea name="description" rows="5" maxlength="5000" placeholder="진행한 작업, 확인사항, 다음 할 일을 기록하세요."></textarea></label>
+          <label class="worklog-field span-2"><span>작업내용 및 기타사항</span><textarea name="description" rows="5" maxlength="5000" placeholder="진행한 작업, 확인사항, 다음 할 일과 기타사항을 기록하세요."></textarea></label>
 
           <section class="worklog-photo-field span-2">
             <div class="worklog-photo-heading"><span><strong>현장사진</strong><small>최대 6장 · 자동 용량 최적화</small></span><label class="secondary-button" for="worklog-photo-input"><i data-lucide="camera"></i> 촬영·사진 선택</label></div>

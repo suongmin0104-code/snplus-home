@@ -168,7 +168,7 @@ const previewOverview = {
   },
   company: { name: "주식회사 에스앤", phone: "031-852-2918", fax: "031-852-2919" },
   summary: {
-    tasks: { value: "2건", label: "오늘 1건 · 현장 업무일지" },
+    tasks: { value: "3건", label: "오늘 1건 · 이번 달 3건" },
     production: { value: "1건", label: "오늘 1건 · 생산완료 0건" },
     inventory: { value: "1종", label: "전체 수량 24" },
     estimates: { value: "1건", label: "오늘 1건 · 이번 달 1건" }
@@ -204,6 +204,8 @@ const dialog = document.querySelector("[data-integration-dialog]");
 const toast = document.querySelector("[data-toast]");
 const sidebarScrim = document.querySelector("[data-sidebar-scrim]");
 const mobileMoreButton = document.querySelector("[data-mobile-more]");
+const installHelpDialog = document.querySelector("[data-install-help-dialog]");
+const openChromeButton = document.querySelector("[data-open-chrome]");
 let deferredInstallPrompt = null;
 
 function isStandaloneApp() {
@@ -212,12 +214,68 @@ function isStandaloneApp() {
 
 function updateInstallUi() {
   const installed = isStandaloneApp();
+  const promptReady = Boolean(deferredInstallPrompt);
   body.classList.toggle("is-standalone", installed);
   document.querySelectorAll("[data-install-app]").forEach((button) => {
     button.hidden = installed;
+    button.dataset.installReady = promptReady ? "true" : "false";
+    button.title = promptReady ? "업무앱 설치" : "업무앱 설치 방법";
+    const label = button.querySelector("[data-install-label]");
+    if (label) label.textContent = promptReady ? "앱 설치" : "설치 안내";
   });
   const installCard = document.querySelector("[data-app-install-card]");
   if (installCard) installCard.hidden = installed;
+}
+
+function setInstallHelpSteps(steps) {
+  const list = installHelpDialog?.querySelector("[data-install-help-steps]");
+  if (!list) return;
+  list.replaceChildren(...steps.map((step, index) => {
+    const item = document.createElement("li");
+    const number = document.createElement("strong");
+    const copy = document.createElement("span");
+    number.textContent = String(index + 1);
+    copy.textContent = step;
+    item.append(number, copy);
+    return item;
+  }));
+}
+
+function openInstallHelp() {
+  if (!installHelpDialog) {
+    showToast("Chrome 메뉴에서 '앱 설치' 또는 '홈 화면에 추가'를 선택하세요.");
+    return;
+  }
+
+  const userAgent = navigator.userAgent.toLowerCase();
+  const isIos = /iphone|ipad|ipod/.test(userAgent);
+  const isAndroid = /android/.test(userAgent);
+  const isEmbedded = /(kakaotalk|naver|daumapps|instagram|fban|fbav|line\/|; wv\))/.test(userAgent);
+  const title = installHelpDialog.querySelector("[data-install-help-title]");
+  const copy = installHelpDialog.querySelector("[data-install-help-copy]");
+  const note = installHelpDialog.querySelector("[data-install-help-note]");
+
+  if (isIos) {
+    title.textContent = "iPhone에 업무앱 설치";
+    copy.textContent = "Safari에서 SN 업무포털을 연 뒤 홈 화면에 추가해 주세요.";
+    setInstallHelpSteps(["Safari에서 snplus.ai.kr/admin을 엽니다.", "화면 아래 공유 버튼을 누릅니다.", "홈 화면에 추가를 선택합니다."]);
+    note.textContent = "iPhone은 Safari의 홈 화면에 추가 기능으로 설치합니다.";
+  } else if (isAndroid) {
+    title.textContent = "Android에 업무앱 설치";
+    copy.textContent = isEmbedded
+      ? "현재 열린 앱 안의 브라우저는 웹앱 설치를 지원하지 않습니다. Chrome에서 다시 열어 주세요."
+      : "Chrome에서 SN 업무포털을 연 뒤 앱 설치를 선택해 주세요.";
+    setInstallHelpSteps(["아래 버튼으로 Chrome에서 업무포털을 엽니다.", "오른쪽 위 점 3개 메뉴를 누릅니다.", "앱 설치 또는 홈 화면에 추가를 선택합니다."]);
+    note.textContent = "현재 Play 스토어 등록 전이며, Chrome에서 안전하게 바로 설치하는 웹앱입니다.";
+  } else {
+    title.textContent = "컴퓨터에 업무앱 설치";
+    copy.textContent = "Chrome 또는 Edge에서 SN 업무포털을 독립 앱처럼 설치할 수 있습니다.";
+    setInstallHelpSteps(["Chrome 또는 Edge에서 업무포털을 엽니다.", "주소창의 설치 아이콘 또는 브라우저 메뉴를 누릅니다.", "SN 업무포털 설치를 선택합니다."]);
+    note.textContent = "설치 메뉴가 바로 보이지 않으면 페이지를 한 번 새로고침해 주세요.";
+  }
+
+  if (openChromeButton) openChromeButton.hidden = !isAndroid;
+  installHelpDialog.showModal();
 }
 
 async function installWorkspaceApp() {
@@ -235,10 +293,7 @@ async function installWorkspaceApp() {
     return;
   }
 
-  const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  showToast(isIos
-    ? "Safari의 공유 버튼을 누른 뒤 '홈 화면에 추가'를 선택하세요."
-    : "브라우저 메뉴에서 '앱 설치' 또는 '홈 화면에 추가'를 선택하세요.");
+  openInstallHelp();
 }
 
 function closeMobileMenu() {
@@ -275,11 +330,18 @@ function initializeMobileApp() {
     button.addEventListener("click", installWorkspaceApp);
   });
 
+  document.querySelectorAll("[data-install-help-close]").forEach((button) => {
+    button.addEventListener("click", () => installHelpDialog?.close());
+  });
+  installHelpDialog?.addEventListener("click", (event) => {
+    if (event.target === installHelpDialog) installHelpDialog.close();
+  });
+
   if (import.meta.env.PROD && "serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/sw.js").catch((error) => {
-        console.warn("SN workspace service worker registration failed", error);
-      });
+    navigator.serviceWorker.register("/sw.js", { scope: "/", updateViaCache: "none" }).then((registration) => {
+      registration.update().catch(() => undefined);
+    }).catch((error) => {
+      console.warn("SN workspace service worker registration failed", error);
     });
   }
 }

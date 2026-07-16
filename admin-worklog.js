@@ -1,4 +1,3 @@
-const STATUS_LABELS = Object.freeze({ planned: "예정", progress: "진행 중", completed: "완료" });
 const CATEGORY_LABELS = Object.freeze({ field: "현장 작업", delivery: "납품·설치", inspection: "점검·하자", office: "견적·사무", other: "기타" });
 const MAX_PHOTOS = 6;
 const MAX_UPLOAD_BYTES = 1.8 * 1024 * 1024;
@@ -50,9 +49,6 @@ function previewEntries() {
       id: "preview-field-install",
       title: "디자인난간 현장 설치",
       date: today,
-      startTime: "08:30",
-      endTime: "16:30",
-      status: "progress",
       category: "field",
       site: "화성시 현장",
       workers: "시공팀 3명",
@@ -65,9 +61,6 @@ function previewEntries() {
       id: "preview-delivery-plan",
       title: "볼라드 납품 일정 확인",
       date: addDays(today, 1),
-      startTime: "10:00",
-      endTime: "11:00",
-      status: "planned",
       category: "delivery",
       site: "부천 납품 현장",
       workers: "영업1팀",
@@ -80,9 +73,6 @@ function previewEntries() {
       id: "preview-inspection-done",
       title: "교량난간 설치 상태 점검",
       date: addDays(today, -1),
-      startTime: "14:00",
-      endTime: "15:30",
-      status: "completed",
       category: "inspection",
       site: "김포 교량 현장",
       workers: "백명욱 외 1명",
@@ -115,7 +105,6 @@ export function setupWorklog({ fetchJson, showToast, onUnauthorized, refreshOver
     entries: [],
     selectedDate: dateKey(today),
     visibleMonth: new Date(today.getFullYear(), today.getMonth(), 1),
-    filter: "all",
     loaded: false,
     loading: false,
     preview: false,
@@ -123,29 +112,25 @@ export function setupWorklog({ fetchJson, showToast, onUnauthorized, refreshOver
     pendingPhotos: []
   };
 
-  function filteredEntriesForSelectedDate() {
+  function entriesForSelectedDate() {
     return state.entries
       .filter((entry) => entry.date === state.selectedDate)
-      .filter((entry) => {
-        if (state.filter === "completed") return entry.status === "completed";
-        if (state.filter === "open") return entry.status !== "completed";
-        return true;
-      })
-      .sort((left, right) => `${left.startTime || "99:99"}${left.title}`.localeCompare(`${right.startTime || "99:99"}${right.title}`, "ko"));
+      .sort((left, right) => left.title.localeCompare(right.title, "ko"));
   }
 
   function updateStats(summary = null) {
     const today = todayKey();
+    const month = today.slice(0, 7);
     const calculated = summary || {
+      total: state.entries.length,
       today: state.entries.filter((entry) => entry.date === today).length,
-      active: state.entries.filter((entry) => entry.status !== "completed").length,
-      overdue: state.entries.filter((entry) => entry.status !== "completed" && entry.date < today).length,
-      completed: state.entries.filter((entry) => entry.status === "completed").length
+      month: state.entries.filter((entry) => entry.date.startsWith(month)).length,
+      photos: state.entries.reduce((total, entry) => total + (entry.photos?.length || 0), 0)
     };
 
     for (const [key, value] of Object.entries(calculated)) {
       document.querySelectorAll(`[data-worklog-stat="${key}"]`).forEach((element) => {
-        element.textContent = `${value}건`;
+        element.textContent = `${value}${key === "photos" ? "장" : "건"}`;
       });
     }
   }
@@ -174,7 +159,7 @@ export function setupWorklog({ fetchJson, showToast, onUnauthorized, refreshOver
       if (date.getMonth() !== month) classes.push("is-outside");
       if (key === state.selectedDate) classes.push("is-selected");
       if (key === today) classes.push("is-today");
-      const eventMarkup = entries.slice(0, 3).map((entry) => `<span data-status="${entry.status}">${escapeHtml(entry.title)}</span>`).join("");
+      const eventMarkup = entries.slice(0, 3).map((entry) => `<span>${escapeHtml(entry.title)}</span>`).join("");
       const more = entries.length > 3 ? `<small class="worklog-more-count">+${entries.length - 3}</small>` : "";
       const label = `${year}년 ${date.getMonth() + 1}월 ${date.getDate()}일, 일정 ${entries.length}건`;
       return `<button class="${classes.join(" ")}" type="button" data-worklog-date="${key}" role="gridcell" aria-label="${label}"><span class="worklog-day-number">${date.getDate()}</span><span class="worklog-day-events">${eventMarkup}</span>${more}</button>`;
@@ -182,9 +167,6 @@ export function setupWorklog({ fetchJson, showToast, onUnauthorized, refreshOver
   }
 
   function entryMarkup(entry) {
-    const time = entry.startTime
-      ? `${entry.startTime}${entry.endTime ? ` - ${entry.endTime}` : ""}`
-      : "종일";
     const photos = (entry.photos || []).slice(0, 4).map((photo, index) => {
       const url = escapeHtml(photoUrl(photo));
       return `<a href="${url}" target="_blank" rel="noopener" aria-label="${escapeHtml(entry.title)} 사진 ${index + 1}"><img src="${url}" alt="" loading="lazy" decoding="async" /></a>`;
@@ -193,10 +175,10 @@ export function setupWorklog({ fetchJson, showToast, onUnauthorized, refreshOver
     const site = entry.site ? `<span><i data-lucide="map-pin"></i>${escapeHtml(entry.site)}</span>` : "";
     const workers = entry.workers ? `<span><i data-lucide="users"></i>${escapeHtml(entry.workers)}</span>` : "";
 
-    return `<article class="worklog-entry-card" data-status="${entry.status}">
-      <div><span class="worklog-status" data-status="${entry.status}">${STATUS_LABELS[entry.status] || "예정"}</span><h3>${escapeHtml(entry.title)}</h3></div>
+    return `<article class="worklog-entry-card">
+      <div><h3>${escapeHtml(entry.title)}</h3></div>
       <button class="icon-button" type="button" data-worklog-edit="${entry.id}" aria-label="일정 수정" title="수정"><i data-lucide="pencil"></i></button>
-      <div class="worklog-entry-meta"><span><i data-lucide="clock-3"></i>${time}</span><span>${CATEGORY_LABELS[entry.category] || "기타"}</span>${site}${workers}${photoCount}<button type="button" data-worklog-ics="${entry.id}">캘린더 추가</button></div>
+      <div class="worklog-entry-meta"><span><i data-lucide="clipboard-list"></i>${CATEGORY_LABELS[entry.category] || "기타"}</span>${site}${workers}${photoCount}<button type="button" data-worklog-ics="${entry.id}">캘린더 추가</button></div>
       ${photos ? `<div class="worklog-entry-photos">${photos}</div>` : ""}
     </article>`;
   }
@@ -204,7 +186,7 @@ export function setupWorklog({ fetchJson, showToast, onUnauthorized, refreshOver
   function renderAgenda() {
     const date = parseDate(state.selectedDate);
     selectedLabel.textContent = new Intl.DateTimeFormat("ko-KR", { month: "long", day: "numeric", weekday: "short" }).format(date);
-    const entries = filteredEntriesForSelectedDate();
+    const entries = entriesForSelectedDate();
     list.innerHTML = entries.length
       ? entries.map(entryMarkup).join("")
       : `<div class="worklog-empty"><i data-lucide="calendar-check-2"></i><strong>등록된 일정이 없습니다.</strong><span>선택한 날짜에 현장 작업이나 할 일을 추가하세요.</span></div>`;
@@ -267,9 +249,6 @@ export function setupWorklog({ fetchJson, showToast, onUnauthorized, refreshOver
       id: newId(),
       title: "",
       date: state.selectedDate,
-      startTime: "",
-      endTime: "",
-      status: "planned",
       category: "field",
       site: "",
       workers: "",
@@ -374,9 +353,6 @@ export function setupWorklog({ fetchJson, showToast, onUnauthorized, refreshOver
       id: String(data.get("id") || ""),
       title: String(data.get("title") || "").trim(),
       date: String(data.get("date") || ""),
-      startTime: String(data.get("startTime") || ""),
-      endTime: String(data.get("endTime") || ""),
-      status: String(data.get("status") || "planned"),
       category: String(data.get("category") || "field"),
       site: String(data.get("site") || "").trim(),
       workers: String(data.get("workers") || "").trim(),
@@ -393,29 +369,10 @@ export function setupWorklog({ fetchJson, showToast, onUnauthorized, refreshOver
     return String(value).replace(/-/g, "");
   }
 
-  function localIcsDateTime(date) {
-    return `${dateKey(date).replace(/-/g, "")}T${pad(date.getHours())}${pad(date.getMinutes())}00`;
-  }
-
   function downloadIcs(entry) {
     const startDate = compactDate(entry.date);
     const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//SNPLUS//Field Work Log//KO", "CALSCALE:GREGORIAN", "BEGIN:VEVENT", `UID:${entry.id}@snplus.ai.kr`, `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "")}`];
-    if (entry.startTime) {
-      const start = parseDate(entry.date);
-      const [startHour, startMinute] = entry.startTime.split(":").map(Number);
-      start.setHours(startHour, startMinute, 0, 0);
-      const end = parseDate(entry.date);
-      if (entry.endTime) {
-        const [endHour, endMinute] = entry.endTime.split(":").map(Number);
-        end.setHours(endHour, endMinute, 0, 0);
-        if (end <= start) end.setDate(end.getDate() + 1);
-      } else {
-        end.setTime(start.getTime() + 60 * 60 * 1000);
-      }
-      lines.push(`DTSTART;TZID=Asia/Seoul:${localIcsDateTime(start)}`, `DTEND;TZID=Asia/Seoul:${localIcsDateTime(end)}`);
-    } else {
-      lines.push(`DTSTART;VALUE=DATE:${startDate}`, `DTEND;VALUE=DATE:${compactDate(addDays(entry.date, 1))}`);
-    }
+    lines.push(`DTSTART;VALUE=DATE:${startDate}`, `DTEND;VALUE=DATE:${compactDate(addDays(entry.date, 1))}`);
     lines.push(`SUMMARY:${icsEscape(entry.title)}`);
     if (entry.site) lines.push(`LOCATION:${icsEscape(entry.site)}`);
     if (entry.description || entry.workers) lines.push(`DESCRIPTION:${icsEscape([entry.description, entry.workers && `참여자: ${entry.workers}`].filter(Boolean).join("\n"))}`);
@@ -475,14 +432,6 @@ export function setupWorklog({ fetchJson, showToast, onUnauthorized, refreshOver
 
   document.querySelectorAll("[data-worklog-new]").forEach((button) => button.addEventListener("click", () => openForm()));
   document.querySelectorAll("[data-worklog-close]").forEach((button) => button.addEventListener("click", closeForm));
-
-  document.querySelectorAll("[data-worklog-filter]").forEach((button) => {
-    button.addEventListener("click", () => {
-      state.filter = button.dataset.worklogFilter;
-      document.querySelectorAll("[data-worklog-filter]").forEach((item) => item.classList.toggle("is-active", item === button));
-      renderAgenda();
-    });
-  });
 
   dialog.addEventListener("click", (event) => {
     if (event.target === dialog) closeForm();

@@ -58,8 +58,8 @@ export default async function handler(req, res) {
     const entries = await listWorklogs();
     const worklog = summarizeWorklogs(entries);
     taskSummary = {
-      value: `${worklog.active}건`,
-      label: worklog.today ? `오늘 ${worklog.today}건 · 현장 업무일지` : "현장 업무일지 저장소 연결됨"
+      value: `${worklog.total}건`,
+      label: `오늘 ${worklog.today}건 · 이번 달 ${worklog.month}건`
     };
   } catch (error) {
     if (error?.message === "WORKLOG_PERMISSION_SKIPPED") {
