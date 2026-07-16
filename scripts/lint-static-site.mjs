@@ -130,7 +130,7 @@ for (const api of forbiddenNavigationApis) {
 
 requireAdminMatch(/<html\s+lang="ko"/, "admin.html must declare Korean language.");
 requireAdminMatch(/name="robots"\s+content="noindex, nofollow, noarchive"/, "Admin page must not be indexed.");
-requireAdminMatch(/rel="manifest"\s+href="\/admin\.webmanifest"/, "Admin mobile app manifest link is required.");
+requireAdminMatch(/rel="manifest"\s+href="\/admin\.webmanifest(?:\?[^\"]*)?"/, "Admin mobile app manifest link is required.");
 requireAdminMatch(/class="mobile-app-nav"/, "Admin mobile bottom navigation is required.");
 requireAdminMatch(/data-login-form/, "Admin login form is required.");
 requireAdminMatch(/data-module-view="estimate"/, "Estimate management module is required.");
