@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const folders = ["docs", "catalog", "company"];
+const requiredRootFiles = ["bollard.css", "bollard.js"];
 
 function copyDirectory(source, target) {
   mkdirSync(target, { recursive: true });
@@ -30,4 +31,22 @@ for (const folder of folders) {
     copyDirectory(source, target);
     console.log(`copied assets/${folder}`);
   }
+}
+
+for (const file of requiredRootFiles) {
+  const source = join(root, file);
+  const target = join(root, "dist", file);
+
+  if (!existsSync(source)) {
+    throw new Error(`Required production asset is missing: ${file}`);
+  }
+
+  mkdirSync(dirname(target), { recursive: true });
+  copyFileSync(source, target);
+
+  if (!existsSync(target)) {
+    throw new Error(`Required production asset was not copied: ${file}`);
+  }
+
+  console.log(`copied ${file}`);
 }
