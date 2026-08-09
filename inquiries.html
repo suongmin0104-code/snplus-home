@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow, noarchive" />
+  <meta name="description" content="주식회사 에스앤 홈페이지 견적문의 관리자 전용 확인 화면" />
+  <title>홈페이지 문의함 | 주식회사 에스앤 관리자</title>
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="stylesheet" href="/inquiries.css" />
+</head>
+<body>
+  <header class="inbox-header">
+    <a class="brand" href="/admin" aria-label="에스앤 관리자 홈으로 이동">
+      <span class="brand-mark">SN</span>
+      <span>
+        <strong>주식회사 에스앤</strong>
+        <small>홈페이지 문의함</small>
+      </span>
+    </a>
+    <div class="header-actions">
+      <a class="button button-secondary" href="/admin">관리자 홈</a>
+      <button class="button button-primary" type="button" data-refresh>새로고침</button>
+    </div>
+  </header>
+
+  <main class="inbox-main">
+    <section class="intro-panel" aria-labelledby="page-title">
+      <div>
+        <p class="eyebrow">WEBSITE LEADS</p>
+        <h1 id="page-title">견적문의가 들어오면 이곳에 먼저 저장됩니다.</h1>
+        <p>메일 발송 설정에 문제가 생겨도 고객 연락처·문의내용·현장사진을 Vercel Private Blob에 보관합니다.</p>
+      </div>
+      <div class="system-state" data-system-state role="status" aria-live="polite">문의함을 불러오는 중입니다.</div>
+    </section>
+
+    <section class="summary-grid" aria-label="문의 현황">
+      <article class="summary-card summary-card-accent">
+        <span>신규 문의</span>
+        <strong data-summary="new">0</strong>
+        <small>아직 확인 전</small>
+      </article>
+      <article class="summary-card">
+        <span>연락 완료</span>
+        <strong data-summary="contacted">0</strong>
+        <small>고객과 통화·문자 완료</small>
+      </article>
+      <article class="summary-card">
+        <span>견적 발송</span>
+        <strong data-summary="quoted">0</strong>
+        <small>견적서 전달 완료</small>
+      </article>
+      <article class="summary-card">
+        <span>전체 문의</span>
+        <strong data-summary="total">0</strong>
+        <small>Private Blob 저장 건수</small>
+      </article>
+    </section>
+
+    <section class="toolbar" aria-label="문의 검색 및 필터">
+      <label>
+        <span>처리상태</span>
+        <select data-status-filter>
+          <option value="all">전체</option>
+          <option value="new">신규</option>
+          <option value="contacted">연락 완료</option>
+          <option value="quoted">견적 발송</option>
+          <option value="closed">종결</option>
+          <option value="spam">스팸</option>
+        </select>
+      </label>
+      <label class="search-field">
+        <span>검색</span>
+        <input type="search" data-search placeholder="회사명·담당자·지역·전화번호" autocomplete="off" />
+      </label>
+      <p class="result-count"><strong data-result-count>0</strong>건 표시</p>
+    </section>
+
+    <section class="inquiry-list" data-inquiry-list aria-live="polite" aria-busy="true"></section>
+
+    <section class="empty-state" data-empty-state hidden>
+      <strong>조건에 맞는 문의가 없습니다.</strong>
+      <p>필터나 검색어를 바꿔 확인해 주세요.</p>
+    </section>
+
+    <section class="auth-state" data-auth-state hidden>
+      <strong>관리자 로그인이 필요합니다.</strong>
+      <p>문의 내용과 현장사진은 관리자 인증 후에만 열립니다.</p>
+      <a class="button button-primary" href="/admin">관리자 로그인</a>
+    </section>
+  </main>
+
+  <footer class="inbox-footer">
+    <span>개인정보 포함 화면입니다. 공용기기에서는 사용 후 관리자 로그아웃을 실행하세요.</span>
+    <span>주식회사 에스앤 · 031-852-2918</span>
+  </footer>
+
+  <script type="module" src="/inquiries.js"></script>
+</body>
+</html>

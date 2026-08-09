@@ -11,7 +11,8 @@ export default defineConfig({
         main: fileURLToPath(new URL("./index.html", import.meta.url)),
         bollard: fileURLToPath(new URL("./bollard.html", import.meta.url)),
         admin: fileURLToPath(new URL("./admin.html", import.meta.url)),
-        tax: fileURLToPath(new URL("./tax-dashboard.html", import.meta.url))
+        tax: fileURLToPath(new URL("./tax-dashboard.html", import.meta.url)),
+        inquiries: fileURLToPath(new URL("./inquiries.html", import.meta.url))
       }
     }
   }

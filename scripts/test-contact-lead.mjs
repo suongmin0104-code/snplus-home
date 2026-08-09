@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import contactHandler from "../api/contact.js";
+import contactHandler, { setContactStoreForTests } from "../api/contact.js";
 
 function createResponse() {
   const headers = new Map();
@@ -34,6 +34,10 @@ const originalEnvironment = {
   CONTACT_RECEIVER_EMAIL: process.env.CONTACT_RECEIVER_EMAIL
 };
 const outboundRequests = [];
+const storedEntries = [];
+const notificationUpdates = [];
+let storeAttempts = 0;
+let storeMode = "success";
 let resendMode = "success";
 
 globalThis.fetch = async (url, options = {}) => {
@@ -51,6 +55,28 @@ globalThis.fetch = async (url, options = {}) => {
     text: async () => ""
   };
 };
+
+setContactStoreForTests({
+  async save(inquiry, notification) {
+    storeAttempts += 1;
+    if (storeMode === "fail") throw new Error("CONTACT_STORAGE_FAILED");
+    const stored = {
+      ...inquiry,
+      status: "new",
+      notification,
+      storedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    storedEntries.push(stored);
+    return stored;
+  },
+  async updateNotification(entry, notification) {
+    if (storeMode === "fail-update") throw new Error("CONTACT_STORAGE_FAILED");
+    const updated = { ...entry, notification, updatedAt: new Date().toISOString() };
+    notificationUpdates.push({ leadId: entry.leadId, notification });
+    return updated;
+  }
+});
 
 process.env.RESEND_API_KEY = "re_test_snplus";
 process.env.CONTACT_FROM_EMAIL = "SNPLUS Test <test@snplus.ai.kr>";
@@ -95,8 +121,12 @@ try {
 
   assert.equal(validPhotoInquiry.status, 200);
   assert.equal(validPhotoInquiry.json.ok, true);
+  assert.equal(validPhotoInquiry.json.stored, true);
+  assert.equal(validPhotoInquiry.json.notified, true);
   assert.match(validPhotoInquiry.json.leadId, /^SN-\d{8}-[A-F0-9]{8}$/);
   assert.equal(outboundRequests.length, 1);
+  assert.equal(storedEntries.length, 1);
+  assert.equal(notificationUpdates.at(-1).notification.status, "sent");
 
   const firstRequest = outboundRequests[0];
   assert.equal(firstRequest.url, "https://api.resend.com/emails");
@@ -127,7 +157,10 @@ try {
 
   assert.equal(legacyHomepageInquiry.status, 200);
   assert.equal(legacyHomepageInquiry.json.ok, true);
+  assert.equal(legacyHomepageInquiry.json.stored, true);
+  assert.equal(legacyHomepageInquiry.json.notified, true);
   assert.equal(outboundRequests.length, 2);
+  assert.equal(storedEntries.length, 2);
   const secondMail = JSON.parse(outboundRequests[1].options.body);
   assert.equal(secondMail.attachments, undefined);
   assert.match(secondMail.text, /디자인형 울타리/);
@@ -150,41 +183,82 @@ try {
   assert.equal(invalidPhotoInquiry.status, 400);
   assert.equal(invalidPhotoInquiry.json.ok, false);
   assert.equal(outboundRequests.length, 2);
+  assert.equal(storeAttempts, 2);
 
   delete process.env.RESEND_API_KEY;
   delete process.env.CONTACT_FROM_EMAIL;
-  const missingConfiguration = await invokeContact({
+  const storedWithoutMail = await invokeContact({
     companyName: "메일 설정 누락 테스트",
     contactName: "테스트 담당자",
     phone: "010-1234-5678",
-    message: "메일 환경변수가 없으면 안전한 오류코드를 반환해야 합니다.",
+    message: "메일 환경변수가 없어도 문의는 저장되어야 합니다.",
     privacyConsent: true
   });
 
-  assert.equal(missingConfiguration.status, 503);
-  assert.equal(missingConfiguration.json.ok, false);
-  assert.equal(missingConfiguration.json.errorCode, "MAIL_CONFIGURATION_MISSING");
+  assert.equal(storedWithoutMail.status, 200);
+  assert.equal(storedWithoutMail.json.ok, true);
+  assert.equal(storedWithoutMail.json.stored, true);
+  assert.equal(storedWithoutMail.json.notified, false);
   assert.equal(outboundRequests.length, 2);
+  assert.equal(storedEntries.length, 3);
+  assert.equal(notificationUpdates.at(-1).notification.status, "not_configured");
+  assert.equal(notificationUpdates.at(-1).notification.errorCode, "MAIL_CONFIGURATION_MISSING");
 
   process.env.RESEND_API_KEY = "re_test_snplus";
   process.env.CONTACT_FROM_EMAIL = "SNPLUS Test <test@snplus.ai.kr>";
   resendMode = "reject";
-  const providerRejected = await invokeContact({
+  const storedAfterProviderRejection = await invokeContact({
     companyName: "메일 공급자 거부 테스트",
     contactName: "테스트 담당자",
     phone: "010-1234-5678",
-    message: "Resend가 발송을 거부하면 공급자 오류로 구분해야 합니다.",
+    message: "Resend가 거부해도 문의는 저장되어야 합니다.",
     privacyConsent: true
   });
 
-  assert.equal(providerRejected.status, 502);
-  assert.equal(providerRejected.json.ok, false);
-  assert.equal(providerRejected.json.errorCode, "MAIL_PROVIDER_REJECTED");
+  assert.equal(storedAfterProviderRejection.status, 200);
+  assert.equal(storedAfterProviderRejection.json.ok, true);
+  assert.equal(storedAfterProviderRejection.json.stored, true);
+  assert.equal(storedAfterProviderRejection.json.notified, false);
   assert.equal(outboundRequests.length, 3);
-  assert.equal(providerRejected.json.message.includes("re_test_snplus"), false);
+  assert.equal(storedEntries.length, 4);
+  assert.equal(notificationUpdates.at(-1).notification.status, "failed");
+  assert.equal(notificationUpdates.at(-1).notification.errorCode, "MAIL_PROVIDER_REJECTED");
+
+  storeMode = "fail";
+  resendMode = "success";
+  const mailOnlySuccess = await invokeContact({
+    companyName: "저장소 장애 메일 성공 테스트",
+    contactName: "테스트 담당자",
+    phone: "010-1234-5678",
+    message: "저장소가 실패해도 메일이 성공하면 접수를 성공 처리합니다.",
+    privacyConsent: true
+  });
+
+  assert.equal(mailOnlySuccess.status, 200);
+  assert.equal(mailOnlySuccess.json.ok, true);
+  assert.equal(mailOnlySuccess.json.stored, false);
+  assert.equal(mailOnlySuccess.json.notified, true);
+  assert.equal(outboundRequests.length, 4);
+
+  delete process.env.RESEND_API_KEY;
+  delete process.env.CONTACT_FROM_EMAIL;
+  const totalDeliveryFailure = await invokeContact({
+    companyName: "저장소·메일 동시 장애 테스트",
+    contactName: "테스트 담당자",
+    phone: "010-1234-5678",
+    message: "저장소와 메일이 모두 실패하면 성공으로 표시하면 안 됩니다.",
+    privacyConsent: true
+  });
+
+  assert.equal(totalDeliveryFailure.status, 503);
+  assert.equal(totalDeliveryFailure.json.ok, false);
+  assert.equal(totalDeliveryFailure.json.errorCode, "CONTACT_DELIVERY_UNAVAILABLE");
+  assert.equal(totalDeliveryFailure.json.message.includes("re_test_snplus"), false);
+  assert.equal(outboundRequests.length, 4);
 
   console.log("contact lead tests passed");
 } finally {
+  setContactStoreForTests(null);
   globalThis.fetch = originalFetch;
   for (const [key, value] of Object.entries(originalEnvironment)) {
     if (value === undefined) delete process.env[key];
