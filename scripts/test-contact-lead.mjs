@@ -34,9 +34,17 @@ const originalEnvironment = {
   CONTACT_RECEIVER_EMAIL: process.env.CONTACT_RECEIVER_EMAIL
 };
 const outboundRequests = [];
+let resendMode = "success";
 
 globalThis.fetch = async (url, options = {}) => {
   outboundRequests.push({ url: String(url), options });
+  if (resendMode === "reject") {
+    return {
+      ok: false,
+      status: 403,
+      text: async () => '{"message":"sender domain is not verified"}'
+    };
+  }
   return {
     ok: true,
     status: 200,
@@ -142,6 +150,38 @@ try {
   assert.equal(invalidPhotoInquiry.status, 400);
   assert.equal(invalidPhotoInquiry.json.ok, false);
   assert.equal(outboundRequests.length, 2);
+
+  delete process.env.RESEND_API_KEY;
+  delete process.env.CONTACT_FROM_EMAIL;
+  const missingConfiguration = await invokeContact({
+    companyName: "메일 설정 누락 테스트",
+    contactName: "테스트 담당자",
+    phone: "010-1234-5678",
+    message: "메일 환경변수가 없으면 안전한 오류코드를 반환해야 합니다.",
+    privacyConsent: true
+  });
+
+  assert.equal(missingConfiguration.status, 503);
+  assert.equal(missingConfiguration.json.ok, false);
+  assert.equal(missingConfiguration.json.errorCode, "MAIL_CONFIGURATION_MISSING");
+  assert.equal(outboundRequests.length, 2);
+
+  process.env.RESEND_API_KEY = "re_test_snplus";
+  process.env.CONTACT_FROM_EMAIL = "SNPLUS Test <test@snplus.ai.kr>";
+  resendMode = "reject";
+  const providerRejected = await invokeContact({
+    companyName: "메일 공급자 거부 테스트",
+    contactName: "테스트 담당자",
+    phone: "010-1234-5678",
+    message: "Resend가 발송을 거부하면 공급자 오류로 구분해야 합니다.",
+    privacyConsent: true
+  });
+
+  assert.equal(providerRejected.status, 502);
+  assert.equal(providerRejected.json.ok, false);
+  assert.equal(providerRejected.json.errorCode, "MAIL_PROVIDER_REJECTED");
+  assert.equal(outboundRequests.length, 3);
+  assert.equal(providerRejected.json.message.includes("re_test_snplus"), false);
 
   console.log("contact lead tests passed");
 } finally {
