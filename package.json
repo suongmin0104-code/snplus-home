@@ -1,6 +1,6 @@
 {
   "name": "sn-home",
-  "version": "0.14.0",
+  "version": "0.12.2",
   "private": true,
   "type": "module",
   "scripts": {
