@@ -214,13 +214,14 @@ export default async function handler(req, res) {
 
     if (req.method === "DELETE") {
       const id = String(req.query?.id ?? "").trim();
+      let deletion = null;
       if (type === "estimate") await deleteEstimate(id);
       else if (type === "production") await deleteProduction(id);
-      else if (type === "inventory") await deleteInventory(id);
+      else if (type === "inventory") deletion = await deleteInventory(id);
       else if (type === "tax-transaction") await deleteTaxTransaction(id);
       else if (type === "tax-task") await deleteTaxTask(id);
       else return sendJson(res, 405, { ok: false, message: "이 업무는 삭제할 수 없습니다." });
-      return sendJson(res, 200, { ok: true });
+      return sendJson(res, 200, { ok: true, ...(deletion || {}) });
     }
 
     res.setHeader("Allow", "GET, POST, PATCH, DELETE");

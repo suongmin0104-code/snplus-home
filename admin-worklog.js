@@ -84,7 +84,7 @@ function previewEntries() {
   ];
 }
 
-export function setupWorklog({ fetchJson, showToast, onUnauthorized, refreshOverview, refreshIcons }) {
+export function setupWorklog({ fetchJson, showToast, onUnauthorized, refreshIcons }) {
   const calendar = document.querySelector("[data-worklog-calendar]");
   const list = document.querySelector("[data-worklog-list]");
   const monthLabel = document.querySelector("[data-worklog-month-label]");
@@ -109,7 +109,8 @@ export function setupWorklog({ fetchJson, showToast, onUnauthorized, refreshOver
     loading: false,
     preview: false,
     formPhotos: [],
-    pendingPhotos: []
+    pendingPhotos: [],
+    loadRequest: 0
   };
 
   function entriesForSelectedDate() {
@@ -118,15 +119,19 @@ export function setupWorklog({ fetchJson, showToast, onUnauthorized, refreshOver
       .sort((left, right) => left.title.localeCompare(right.title, "ko"));
   }
 
-  function updateStats(summary = null) {
+  function worklogSummary() {
     const today = todayKey();
     const month = today.slice(0, 7);
-    const calculated = summary || {
+    return {
       total: state.entries.length,
       today: state.entries.filter((entry) => entry.date === today).length,
       month: state.entries.filter((entry) => entry.date.startsWith(month)).length,
       photos: state.entries.reduce((total, entry) => total + (entry.photos?.length || 0), 0)
     };
+  }
+
+  function updateStats(summary = null) {
+    const calculated = summary || worklogSummary();
 
     for (const [key, value] of Object.entries(calculated)) {
       document.querySelectorAll(`[data-worklog-stat="${key}"]`).forEach((element) => {
@@ -203,30 +208,41 @@ export function setupWorklog({ fetchJson, showToast, onUnauthorized, refreshOver
     list.innerHTML = `<div class="worklog-loading"><span>업무일지를 불러오는 중입니다.</span></div>`;
   }
 
-  async function reload() {
+  async function reload({ notify = false } = {}) {
     if (state.loading) return;
+    const requestId = ++state.loadRequest;
     state.loading = true;
     setLoading();
 
     try {
       if (state.preview) {
+        if (requestId !== state.loadRequest) return;
         state.entries = previewEntries();
         state.loaded = true;
         render();
+        if (notify) showToast("업무일지를 새로 확인했습니다.");
         return;
       }
       const payload = await fetchJson("/api/admin/worklog");
+      if (requestId !== state.loadRequest) return;
       state.entries = Array.isArray(payload.entries) ? payload.entries : [];
       state.loaded = true;
       renderCalendar();
       renderAgenda();
       updateStats(payload.summary);
+      if (notify) showToast("업무일지를 새로 확인했습니다.");
     } catch (error) {
+      if (requestId !== state.loadRequest) return;
       if (error.status === 401) onUnauthorized?.();
       list.innerHTML = `<div class="worklog-error"><strong>업무일지를 불러오지 못했습니다.</strong><span>${escapeHtml(error.message || "잠시 후 다시 확인해 주세요.")}</span><button class="secondary-button compact-button" type="button" data-worklog-retry>다시 시도</button></div>`;
     } finally {
-      state.loading = false;
+      if (requestId === state.loadRequest) state.loading = false;
     }
+  }
+
+  function ignorePendingReload() {
+    state.loadRequest += 1;
+    state.loading = false;
   }
 
   function clearPendingPhotos() {
@@ -489,11 +505,18 @@ export function setupWorklog({ fetchJson, showToast, onUnauthorized, refreshOver
         uploaded.push(await uploadPhoto(photo, payload.id));
       }
       payload.photos.push(...uploaded);
-      await fetchJson("/api/admin/worklog", { method: "POST", body: JSON.stringify(payload) });
+      const result = await fetchJson("/api/admin/worklog", { method: "POST", body: JSON.stringify(payload) });
+      ignorePendingReload();
       clearPendingPhotos();
       dialog.close();
-      await reload();
-      await refreshOverview?.();
+      if (result.entry && state.loaded) {
+        state.entries = [result.entry, ...state.entries.filter((entry) => entry.id !== result.entry.id)]
+          .sort((left, right) => `${left.date} ${left.title}`.localeCompare(`${right.date} ${right.title}`, "ko"));
+        state.loaded = true;
+        render();
+      } else {
+        await reload();
+      }
       showToast("일정과 현장 업무일지를 저장했습니다.");
     } catch (error) {
       if (uploaded.length) await deleteUploadedPhotos(uploaded);
@@ -511,9 +534,15 @@ export function setupWorklog({ fetchJson, showToast, onUnauthorized, refreshOver
     deleteButton.disabled = true;
     try {
       await fetchJson(`/api/admin/worklog?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+      const hadSnapshot = state.loaded;
+      ignorePendingReload();
       closeForm();
-      await reload();
-      await refreshOverview?.();
+      if (hadSnapshot) {
+        state.entries = state.entries.filter((entry) => entry.id !== id);
+        render();
+      } else {
+        await reload();
+      }
       showToast("업무일지를 삭제했습니다.");
     } catch (error) {
       if (error.status === 401) onUnauthorized?.();
@@ -534,6 +563,7 @@ export function setupWorklog({ fetchJson, showToast, onUnauthorized, refreshOver
       state.loaded = false;
     },
     reset() {
+      ignorePendingReload();
       state.entries = [];
       state.loaded = false;
       clearPendingPhotos();

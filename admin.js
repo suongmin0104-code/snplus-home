@@ -467,6 +467,16 @@ function setPill(element, integration) {
   element.classList.toggle("is-pending", !integration.connected);
 }
 
+function applyOverviewSummary(key, summary = {}) {
+  const safeSummary = summary || {};
+  document.querySelectorAll(`[data-summary="${key}"]`).forEach((element) => {
+    element.textContent = safeSummary.value ?? "상세 확인";
+  });
+  document.querySelectorAll(`[data-summary-note="${key}"]`).forEach((element) => {
+    element.textContent = safeSummary.label || "해당 업무 화면에서 확인해 주세요.";
+  });
+}
+
 function applyOverview(overview) {
   state.overview = overview;
   state.user = overview.user || state.user;
@@ -486,20 +496,21 @@ function applyOverview(overview) {
   });
 
   for (const [key, summary] of Object.entries(overview.summary ?? {})) {
-    document.querySelectorAll(`[data-summary="${key}"]`).forEach((element) => {
-      element.textContent = summary.value ?? "연동 후 표시";
-    });
-    document.querySelectorAll(`[data-summary-note="${key}"]`).forEach((element) => {
-      element.textContent = summary.label;
-    });
+    applyOverviewSummary(key, summary);
   }
 
   const recentEstimateBody = document.querySelector("[data-recent-estimates]");
   if (recentEstimateBody) {
     const entries = Array.isArray(overview.recentEstimates) ? overview.recentEstimates : [];
+    const emptyTitle = overview.summaryMode === "detail-only"
+      ? "사용량 보호를 위해 견적 관리에서 확인하세요."
+      : "등록된 견적 일정이 없습니다.";
+    const emptyCopy = overview.summaryMode === "detail-only"
+      ? "견적 관리 화면을 열면 필요한 자료만 불러옵니다."
+      : "견적 관리에서 첫 일정을 등록해 주세요.";
     recentEstimateBody.innerHTML = entries.length
       ? entries.map((entry) => `<tr><td>${String(entry.date || "").replaceAll("-", ".")}</td><td>${escapeTableText(entry.clientName || "미지정")}</td><td>${escapeTableText(entry.title || "")}</td></tr>`).join("")
-      : '<tr class="empty-row"><td colspan="3"><i data-lucide="database-zap"></i><strong>등록된 견적 일정이 없습니다.</strong><span>견적 관리에서 첫 일정을 등록해 주세요.</span></td></tr>';
+      : `<tr class="empty-row"><td colspan="3"><i data-lucide="database-zap"></i><strong>${emptyTitle}</strong><span>${emptyCopy}</span></td></tr>`;
     refreshIcons();
   }
 
@@ -575,7 +586,7 @@ const documentEditor = setupDocumentEditor({
   fetchJson,
   showModule,
   showToast,
-  onEstimateSaved: (entry) => operations?.reload("estimate", { selectedDate: entry?.date }),
+  onEstimateSaved: (entry) => operations?.applyEstimate(entry),
   onUnauthorized: () => {
     setAuthState("login");
     showToast("보안 세션이 만료되었습니다.");
@@ -588,7 +599,6 @@ worklog = setupWorklog({
     setAuthState("login");
     showToast("보안 세션이 만료되었습니다.");
   },
-  refreshOverview: () => loadOverview(),
   refreshIcons
 });
 operations = setupOperations({
@@ -839,11 +849,23 @@ sidebarScrim?.addEventListener("click", closeMobileMenu);
 
 document.querySelector("[data-refresh]")?.addEventListener("click", async (event) => {
   const button = event.currentTarget;
+  if (button.disabled) return;
+  button.disabled = true;
+  button.setAttribute("aria-busy", "true");
   button.classList.add("is-spinning");
   try {
-    await loadOverview({ notify: true });
-    if (state.currentModule === "tasks") await worklog.reload();
-    if (["estimate", "production", "inventory"].includes(state.currentModule)) await operations.reload(state.currentModule);
+    if (state.currentModule === "dashboard") {
+      await loadOverview({ notify: true });
+    } else if (state.currentModule === "tasks") {
+      await worklog.reload({ notify: true });
+    } else if (["estimate", "production", "inventory"].includes(state.currentModule)) {
+      const refreshed = await operations.reload(state.currentModule);
+      if (refreshed) showToast("현재 업무를 새로 확인했습니다.");
+    } else if (state.currentModule === "users") {
+      document.querySelector("[data-user-refresh]")?.click();
+    } else {
+      showToast("현재 화면은 별도로 새로 불러올 자료가 없습니다.");
+    }
   } catch (error) {
     if (error.status === 401) {
       setAuthState("login");
@@ -853,6 +875,8 @@ document.querySelector("[data-refresh]")?.addEventListener("click", async (event
     }
   } finally {
     button.classList.remove("is-spinning");
+    button.disabled = false;
+    button.removeAttribute("aria-busy");
   }
 });
 

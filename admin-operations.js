@@ -69,6 +69,38 @@ export function buildInventoryMovementPayload({ itemId, movementType, quantity, 
   };
 }
 
+export function createSingleFlightLoader() {
+  let generation = 0;
+  let pending = null;
+
+  return {
+    run({ load, apply, onError }) {
+      if (pending) return pending;
+      const requestGeneration = generation;
+      let request;
+      request = (async () => {
+        try {
+          const value = await load();
+          if (requestGeneration !== generation) return false;
+          apply(value);
+          return true;
+        } catch (error) {
+          if (requestGeneration === generation) onError?.(error);
+          return false;
+        } finally {
+          if (pending === request) pending = null;
+        }
+      })();
+      pending = request;
+      return request;
+    },
+    invalidate() {
+      generation += 1;
+      pending = null;
+    }
+  };
+}
+
 function closeOnBackdrop(dialog, close) {
   dialog?.addEventListener("click", (event) => {
     if (event.target === dialog) close();
@@ -134,8 +166,11 @@ export function setupOperations({ fetchJson, showToast, refreshIcons, onUnauthor
     preview: false,
     estimate: { entries: [], loaded: false, selectedDate: todayKey(), visibleMonth: new Date(new Date().getFullYear(), new Date().getMonth(), 1) },
     production: { entries: [], loaded: false, filter: "all" },
-    inventory: { items: [], movements: [], loaded: false, formPhoto: null, pendingPhoto: null }
+    inventory: { items: [], movements: [], summary: null, loaded: false, formPhoto: null, pendingPhoto: null }
   };
+  const estimateLoader = createSingleFlightLoader();
+  const productionLoader = createSingleFlightLoader();
+  const inventoryLoader = createSingleFlightLoader();
 
   const estimateDialog = document.querySelector("[data-estimate-dialog]");
   const estimateForm = document.querySelector("[data-estimate-form]");
@@ -165,6 +200,18 @@ export function setupOperations({ fetchJson, showToast, refreshIcons, onUnauthor
   function handleError(error, fallback) {
     if ([401, 403].includes(error?.status)) onUnauthorized?.(error);
     showToast(error?.message || fallback);
+  }
+
+  function upsertSorted(entries, entry, compare) {
+    return [entry, ...entries.filter((item) => item.id !== entry.id)].sort(compare);
+  }
+
+  function compareOperationEntries(left, right) {
+    return `${left.date}${left.title}`.localeCompare(`${right.date}${right.title}`, "ko");
+  }
+
+  function compareInventoryItems(left, right) {
+    return left.name.localeCompare(right.name, "ko");
   }
 
   function updateEstimateStats(summary = null) {
@@ -239,21 +286,18 @@ export function setupOperations({ fetchJson, showToast, refreshIcons, onUnauthor
     updateEstimateStats(summary);
   }
 
-  async function loadEstimates() {
-    try {
-      if (state.preview) {
-        state.estimate.entries = previewData().estimates;
+  function loadEstimates() {
+    return estimateLoader.run({
+      load: () => state.preview
+        ? Promise.resolve({ entries: previewData().estimates, summary: null })
+        : fetchJson("/api/admin/operations?type=estimate"),
+      apply: (payload) => {
+        state.estimate.entries = payload.entries || [];
         state.estimate.loaded = true;
-        renderEstimates();
-        return;
-      }
-      const payload = await fetchJson("/api/admin/operations?type=estimate");
-      state.estimate.entries = payload.entries || [];
-      state.estimate.loaded = true;
-      renderEstimates(payload.summary);
-    } catch (error) {
-      handleError(error, "견적 일정을 불러오지 못했습니다.");
-    }
+        renderEstimates(payload.summary);
+      },
+      onError: (error) => handleError(error, "견적 일정을 불러오지 못했습니다.")
+    });
   }
 
   function openEstimate(entry = null) {
@@ -366,21 +410,18 @@ export function setupOperations({ fetchJson, showToast, refreshIcons, onUnauthor
     refreshIcons();
   }
 
-  async function loadProduction() {
-    try {
-      if (state.preview) {
-        state.production.entries = previewData().production;
+  function loadProduction() {
+    return productionLoader.run({
+      load: () => state.preview
+        ? Promise.resolve({ entries: previewData().production, summary: null })
+        : fetchJson("/api/admin/operations?type=production"),
+      apply: (payload) => {
+        state.production.entries = payload.entries || [];
         state.production.loaded = true;
-        renderProduction();
-        return;
-      }
-      const payload = await fetchJson("/api/admin/operations?type=production");
-      state.production.entries = payload.entries || [];
-      state.production.loaded = true;
-      renderProduction(payload.summary);
-    } catch (error) {
-      handleError(error, "생산일보를 불러오지 못했습니다.");
-    }
+        renderProduction(payload.summary);
+      },
+      onError: (error) => handleError(error, "생산일보를 불러오지 못했습니다.")
+    });
   }
 
   function openProduction(entry = null) {
@@ -416,14 +457,18 @@ export function setupOperations({ fetchJson, showToast, refreshIcons, onUnauthor
     return `<article class="movement-entry"><span class="movement-type is-${movement.type}">${typeLabel}</span><div><strong>${escapeHtml(movement.itemName)}</strong><p>${number(movement.quantity)} ${escapeHtml(movement.unit)} · ${number(movement.previousQuantity)} → ${number(movement.nextQuantity)}</p>${movement.note ? `<small>${escapeHtml(movement.note)}</small>` : ""}</div><time>${escapeHtml(displayDateTime(movement.createdAt))}</time></article>`;
   }
 
-  function updateInventoryStats(summary = null) {
+  function calculateInventorySummary() {
     const currentMonth = todayKey().slice(0, 7);
-    const values = summary || {
+    return {
       items: state.inventory.items.length,
       totalQuantity: state.inventory.items.reduce((sum, item) => sum + Number(item.quantity || 0), 0),
       monthIn: state.inventory.movements.filter((item) => item.type === "in" && item.createdAt?.startsWith(currentMonth)).length,
       monthOut: state.inventory.movements.filter((item) => item.type === "out" && item.createdAt?.startsWith(currentMonth)).length
     };
+  }
+
+  function updateInventoryStats(summary = null) {
+    const values = summary || calculateInventorySummary();
     Object.entries(values).forEach(([key, value]) => {
       const output = document.querySelector(`[data-inventory-stat="${key}"]`);
       if (output) output.textContent = key === "items" ? `${value}종` : key === "totalQuantity" ? number(value) : `${value}건`;
@@ -444,24 +489,22 @@ export function setupOperations({ fetchJson, showToast, refreshIcons, onUnauthor
     refreshIcons();
   }
 
-  async function loadInventory() {
-    try {
-      if (state.preview) {
+  function loadInventory() {
+    return inventoryLoader.run({
+      load: () => {
+        if (!state.preview) return fetchJson("/api/admin/operations?type=inventory");
         const preview = previewData();
-        state.inventory.items = preview.inventory;
-        state.inventory.movements = preview.movements;
+        return Promise.resolve({ items: preview.inventory, movements: preview.movements, summary: null });
+      },
+      apply: (payload) => {
+        state.inventory.items = payload.items || [];
+        state.inventory.movements = payload.movements || [];
+        state.inventory.summary = payload.summary || calculateInventorySummary();
         state.inventory.loaded = true;
-        renderInventory();
-        return;
-      }
-      const payload = await fetchJson("/api/admin/operations?type=inventory");
-      state.inventory.items = payload.items || [];
-      state.inventory.movements = payload.movements || [];
-      state.inventory.loaded = true;
-      renderInventory(payload.summary);
-    } catch (error) {
-      handleError(error, "재고 정보를 불러오지 못했습니다.");
-    }
+        renderInventory(state.inventory.summary);
+      },
+      onError: (error) => handleError(error, "재고 정보를 불러오지 못했습니다.")
+    });
   }
 
   function revokePendingPhoto() {
@@ -614,9 +657,17 @@ export function setupOperations({ fetchJson, showToast, refreshIcons, onUnauthor
     if (!estimateForm.reportValidity() || state.preview) return;
     setButtonBusy(estimateSubmit, true, "저장 중");
     try {
-      await fetchJson("/api/admin/operations", { method: "POST", body: JSON.stringify({ type: "estimate", id: formValue(estimateForm, "id"), title: formValue(estimateForm, "title"), date: formValue(estimateForm, "date"), clientName: formValue(estimateForm, "clientName"), contactName: formValue(estimateForm, "contactName"), contactPhone: formValue(estimateForm, "contactPhone"), memo: formValue(estimateForm, "memo") }) });
+      const result = await fetchJson("/api/admin/operations", { method: "POST", body: JSON.stringify({ type: "estimate", id: formValue(estimateForm, "id"), title: formValue(estimateForm, "title"), date: formValue(estimateForm, "date"), clientName: formValue(estimateForm, "clientName"), contactName: formValue(estimateForm, "contactName"), contactPhone: formValue(estimateForm, "contactPhone"), memo: formValue(estimateForm, "memo") }) });
+      if (!result.entry) throw new Error("저장된 견적 일정을 확인하지 못했습니다.");
+      const hasSnapshot = state.estimate.loaded;
+      estimateLoader.invalidate();
       closeEstimate();
-      await loadEstimates();
+      if (hasSnapshot) {
+        state.estimate.entries = upsertSorted(state.estimate.entries, result.entry, compareOperationEntries);
+        renderEstimates();
+      } else {
+        await loadEstimates();
+      }
       showToast("견적 일정을 저장했습니다.");
     } catch (error) { handleError(error, "견적 일정을 저장하지 못했습니다."); }
     finally { setButtonBusy(estimateSubmit, false); }
@@ -627,8 +678,15 @@ export function setupOperations({ fetchJson, showToast, refreshIcons, onUnauthor
     if (!id || !window.confirm("이 견적 일정을 삭제할까요?")) return;
     try {
       await fetchJson(`/api/admin/operations?type=estimate&id=${encodeURIComponent(id)}`, { method: "DELETE" });
+      const hasSnapshot = state.estimate.loaded;
+      estimateLoader.invalidate();
       closeEstimate();
-      await loadEstimates();
+      if (hasSnapshot) {
+        state.estimate.entries = state.estimate.entries.filter((entry) => entry.id !== id);
+        renderEstimates();
+      } else {
+        await loadEstimates();
+      }
       showToast("견적 일정을 삭제했습니다.");
     } catch (error) { handleError(error, "견적 일정을 삭제하지 못했습니다."); }
   });
@@ -651,9 +709,17 @@ export function setupOperations({ fetchJson, showToast, refreshIcons, onUnauthor
     if (!productionForm.reportValidity() || state.preview) return;
     setButtonBusy(productionSubmit, true, "저장 중");
     try {
-      await fetchJson("/api/admin/operations", { method: "POST", body: JSON.stringify({ type: "production", id: formValue(productionForm, "id"), title: formValue(productionForm, "title"), date: formValue(productionForm, "date"), drawingNumber: formValue(productionForm, "drawingNumber"), workers: formValue(productionForm, "workers"), shipped: productionForm.elements.namedItem("shipped").checked, memo: formValue(productionForm, "memo") }) });
+      const result = await fetchJson("/api/admin/operations", { method: "POST", body: JSON.stringify({ type: "production", id: formValue(productionForm, "id"), title: formValue(productionForm, "title"), date: formValue(productionForm, "date"), drawingNumber: formValue(productionForm, "drawingNumber"), workers: formValue(productionForm, "workers"), shipped: productionForm.elements.namedItem("shipped").checked, memo: formValue(productionForm, "memo") }) });
+      if (!result.entry) throw new Error("저장된 생산일보를 확인하지 못했습니다.");
+      const hasSnapshot = state.production.loaded;
+      productionLoader.invalidate();
       closeProduction();
-      await loadProduction();
+      if (hasSnapshot) {
+        state.production.entries = upsertSorted(state.production.entries, result.entry, compareOperationEntries);
+        renderProduction();
+      } else {
+        await loadProduction();
+      }
       showToast("생산일보를 저장했습니다.");
     } catch (error) { handleError(error, "생산일보를 저장하지 못했습니다."); }
     finally { setButtonBusy(productionSubmit, false); }
@@ -664,8 +730,15 @@ export function setupOperations({ fetchJson, showToast, refreshIcons, onUnauthor
     if (!id || !window.confirm("이 생산일보를 삭제할까요?")) return;
     try {
       await fetchJson(`/api/admin/operations?type=production&id=${encodeURIComponent(id)}`, { method: "DELETE" });
+      const hasSnapshot = state.production.loaded;
+      productionLoader.invalidate();
       closeProduction();
-      await loadProduction();
+      if (hasSnapshot) {
+        state.production.entries = state.production.entries.filter((entry) => entry.id !== id);
+        renderProduction();
+      } else {
+        await loadProduction();
+      }
       showToast("생산일보를 삭제했습니다.");
     } catch (error) { handleError(error, "생산일보를 삭제하지 못했습니다."); }
   });
@@ -715,9 +788,23 @@ export function setupOperations({ fetchJson, showToast, refreshIcons, onUnauthor
     setButtonBusy(inventorySubmit, true, state.inventory.pendingPhoto ? "사진 저장 중" : "저장 중");
     try {
       if (state.inventory.pendingPhoto) uploaded = await uploadInventoryPhoto(state.inventory.pendingPhoto, itemId);
-      await fetchJson("/api/admin/operations", { method: "POST", body: JSON.stringify({ type: "inventory", id: itemId, name: formValue(inventoryForm, "name"), spec: formValue(inventoryForm, "spec"), quantity: Number(formValue(inventoryForm, "quantity") || 0), unit: formValue(inventoryForm, "unit"), location: formValue(inventoryForm, "location"), photo: uploaded || state.inventory.formPhoto, memo: formValue(inventoryForm, "memo") }) });
+      const result = await fetchJson("/api/admin/operations", { method: "POST", body: JSON.stringify({ type: "inventory", id: itemId, name: formValue(inventoryForm, "name"), spec: formValue(inventoryForm, "spec"), quantity: Number(formValue(inventoryForm, "quantity") || 0), unit: formValue(inventoryForm, "unit"), location: formValue(inventoryForm, "location"), photo: uploaded || state.inventory.formPhoto, memo: formValue(inventoryForm, "memo") }) });
+      if (!result.item) throw new Error("저장된 재고 제품을 확인하지 못했습니다.");
+      const hasSnapshot = state.inventory.loaded;
+      inventoryLoader.invalidate();
       closeInventory();
-      await loadInventory();
+      if (hasSnapshot) {
+        const previousSummary = state.inventory.summary || calculateInventorySummary();
+        state.inventory.items = upsertSorted(state.inventory.items, result.item, compareInventoryItems);
+        state.inventory.summary = {
+          ...previousSummary,
+          items: state.inventory.items.length,
+          totalQuantity: state.inventory.items.reduce((sum, item) => sum + Number(item.quantity || 0), 0)
+        };
+        renderInventory(state.inventory.summary);
+      } else {
+        await loadInventory();
+      }
       showToast("재고 제품을 저장했습니다.");
     } catch (error) {
       if (uploaded) await deleteUploadedPhoto(uploaded);
@@ -729,9 +816,26 @@ export function setupOperations({ fetchJson, showToast, refreshIcons, onUnauthor
     const id = formValue(inventoryForm, "id");
     if (!id || !window.confirm("이 제품과 연결된 입출고 기록을 모두 삭제할까요?")) return;
     try {
-      await fetchJson(`/api/admin/operations?type=inventory&id=${encodeURIComponent(id)}`, { method: "DELETE" });
+      const result = await fetchJson(`/api/admin/operations?type=inventory&id=${encodeURIComponent(id)}`, { method: "DELETE" });
+      const hasSnapshot = state.inventory.loaded;
+      inventoryLoader.invalidate();
       closeInventory();
-      await loadInventory();
+      if (hasSnapshot) {
+        const previousSummary = state.inventory.summary || calculateInventorySummary();
+        const deletedMovements = result.deletedMovements || {};
+        state.inventory.items = state.inventory.items.filter((item) => item.id !== id);
+        state.inventory.movements = state.inventory.movements.filter((movement) => movement.itemId !== id);
+        state.inventory.summary = {
+          ...previousSummary,
+          items: state.inventory.items.length,
+          totalQuantity: state.inventory.items.reduce((sum, item) => sum + Number(item.quantity || 0), 0),
+          monthIn: Math.max(0, Number(previousSummary.monthIn || 0) - Number(deletedMovements.monthIn || 0)),
+          monthOut: Math.max(0, Number(previousSummary.monthOut || 0) - Number(deletedMovements.monthOut || 0))
+        };
+        renderInventory(state.inventory.summary);
+      } else {
+        await loadInventory();
+      }
       showToast("재고 제품을 삭제했습니다.");
     } catch (error) { handleError(error, "재고 제품을 삭제하지 못했습니다."); }
   });
@@ -750,28 +854,65 @@ export function setupOperations({ fetchJson, showToast, refreshIcons, onUnauthor
           note: formValue(movementForm, "note")
         }))
       });
-      state.inventory.items = state.inventory.items.map((item) => item.id === payload.item?.id ? payload.item : item);
-      if (payload.movement) {
-        state.inventory.movements = [payload.movement, ...state.inventory.movements.filter((item) => item.id !== payload.movement.id)];
-      }
+      const hasSnapshot = state.inventory.loaded;
+      inventoryLoader.invalidate();
       closeMovement();
-      renderInventory();
+      if (hasSnapshot) {
+        const previousSummary = state.inventory.summary || calculateInventorySummary();
+        state.inventory.items = state.inventory.items.map((item) => item.id === payload.item?.id ? payload.item : item);
+        if (payload.movement) {
+          state.inventory.movements = [payload.movement, ...state.inventory.movements.filter((item) => item.id !== payload.movement.id)];
+        }
+        const movementIsCurrentMonth = payload.movement?.createdAt?.startsWith(todayKey().slice(0, 7));
+        state.inventory.summary = {
+          ...previousSummary,
+          items: state.inventory.items.length,
+          totalQuantity: state.inventory.items.reduce((sum, item) => sum + Number(item.quantity || 0), 0),
+          monthIn: Number(previousSummary.monthIn || 0) + (movementIsCurrentMonth && payload.movement?.type === "in" ? 1 : 0),
+          monthOut: Number(previousSummary.monthOut || 0) + (movementIsCurrentMonth && payload.movement?.type === "out" ? 1 : 0)
+        };
+        renderInventory(state.inventory.summary);
+      } else {
+        await loadInventory();
+      }
       showToast("재고 수량과 입출고 원장을 반영했습니다.");
     } catch (error) { handleError(error, "재고 수량을 변경하지 못했습니다."); }
     finally { setButtonBusy(movementSubmit, false); }
   });
 
   return {
+    applyEstimate(entry) {
+      if (!entry?.id) return false;
+      estimateLoader.invalidate();
+      const selectedDate = String(entry.date || "");
+      const date = selectedDate ? parseDate(selectedDate) : null;
+      if (date && !Number.isNaN(date.getTime())) {
+        state.estimate.selectedDate = selectedDate;
+        state.estimate.visibleMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+      }
+      if (state.estimate.loaded) {
+        state.estimate.entries = upsertSorted(state.estimate.entries, entry, compareOperationEntries);
+        renderEstimates();
+      }
+      return true;
+    },
     async activate(moduleName) {
       if (moduleName === "estimate") {
-        if (!state.estimate.loaded) await loadEstimates(); else renderEstimates();
+        if (!state.estimate.loaded) return loadEstimates();
+        renderEstimates();
+        return true;
       }
       if (moduleName === "production") {
-        if (!state.production.loaded) await loadProduction(); else renderProduction();
+        if (!state.production.loaded) return loadProduction();
+        renderProduction();
+        return true;
       }
       if (moduleName === "inventory") {
-        if (!state.inventory.loaded) await loadInventory(); else renderInventory();
+        if (!state.inventory.loaded) return loadInventory();
+        renderInventory(state.inventory.summary);
+        return true;
       }
+      return false;
     },
     async reload(moduleName, options = {}) {
       if (moduleName === "estimate") {
@@ -781,24 +922,33 @@ export function setupOperations({ fetchJson, showToast, refreshIcons, onUnauthor
           state.estimate.selectedDate = selectedDate;
           state.estimate.visibleMonth = new Date(date.getFullYear(), date.getMonth(), 1);
         }
-        await loadEstimates();
+        return loadEstimates();
       }
-      if (moduleName === "production") await loadProduction();
-      if (moduleName === "inventory") await loadInventory();
+      if (moduleName === "production") return loadProduction();
+      if (moduleName === "inventory") return loadInventory();
+      return false;
     },
     enablePreview() {
+      estimateLoader.invalidate();
+      productionLoader.invalidate();
+      inventoryLoader.invalidate();
       state.preview = true;
       state.estimate.loaded = false;
       state.production.loaded = false;
+      state.inventory.summary = null;
       state.inventory.loaded = false;
     },
     reset() {
+      estimateLoader.invalidate();
+      productionLoader.invalidate();
+      inventoryLoader.invalidate();
       state.estimate.entries = [];
       state.estimate.loaded = false;
       state.production.entries = [];
       state.production.loaded = false;
       state.inventory.items = [];
       state.inventory.movements = [];
+      state.inventory.summary = null;
       state.inventory.loaded = false;
       [estimateDialog, estimatePreviewDialog, productionDialog, inventoryDialog, movementDialog].forEach((dialog) => { if (dialog?.open) dialog.close(); });
       revokePendingPhoto();

@@ -53,7 +53,7 @@ export default async function handler(req, res) {
   try {
     if (req.method === "GET") {
       if (!isInventoryPhotoPath(path)) return sendJson(res, 404, { ok: false, message: "제품사진을 찾을 수 없습니다." });
-      const result = await get(path, { access: "private", useCache: false });
+      const result = await get(path, { access: "private" });
       if (!result?.stream) return sendJson(res, 404, { ok: false, message: "제품사진을 찾을 수 없습니다." });
       res.statusCode = 200;
       res.setHeader("Content-Type", result.blob.contentType || "image/jpeg");
@@ -76,7 +76,7 @@ export default async function handler(req, res) {
       }
       const photoId = randomUUID();
       const photoPath = `${INVENTORY_PHOTO_PREFIX}${itemId}/${photoId}.${extension}`;
-      await put(photoPath, body, { access: "private", addRandomSuffix: false, allowOverwrite: false, contentType, cacheControlMaxAge: 60 });
+      await put(photoPath, body, { access: "private", addRandomSuffix: false, allowOverwrite: false, contentType, cacheControlMaxAge: 3600 });
       return sendJson(res, 200, {
         ok: true,
         photo: { id: photoId, path: photoPath, name: safeFileName(req.headers?.["x-file-name"]), contentType, size: body.length, uploadedAt: new Date().toISOString() }

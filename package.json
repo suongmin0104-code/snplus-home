@@ -1,13 +1,15 @@
 {
   "name": "sn-home",
-  "version": "0.12.0",
+  "version": "0.12.1",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "admin:configure": "node scripts/configure-admin-vercel.mjs",
     "admin:hash": "node scripts/hash-admin-password.mjs",
+    "test": "npm run test:admin-auth && npm run test:blob-quota && npm run test:operations && npm run test:tax",
     "test:admin-auth": "node scripts/test-admin-auth.mjs",
+    "test:blob-quota": "node scripts/test-overview-quota-hotfix.mjs",
     "test:operations": "node scripts/test-operations.mjs",
     "test:tax": "node scripts/test-tax-workspace.mjs",
     "lint": "node scripts/lint-static-site.mjs",

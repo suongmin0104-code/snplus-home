@@ -75,7 +75,7 @@ export default async function handler(req, res) {
         return sendJson(res, 404, { ok: false, message: "사진을 찾을 수 없습니다." });
       }
 
-      const result = await get(path, { access: "private", useCache: false });
+      const result = await get(path, { access: "private" });
       if (!result?.stream) {
         return sendJson(res, 404, { ok: false, message: "사진을 찾을 수 없습니다." });
       }
@@ -114,7 +114,7 @@ export default async function handler(req, res) {
         addRandomSuffix: false,
         allowOverwrite: false,
         contentType,
-        cacheControlMaxAge: 60
+        cacheControlMaxAge: 3600
       });
 
       return sendJson(res, 200, {

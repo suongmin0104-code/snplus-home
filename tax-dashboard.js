@@ -79,6 +79,8 @@ const forecastForm = document.querySelector("[data-forecast-form]");
 const params = new URLSearchParams(window.location.search);
 const isPreview = import.meta.env.DEV && params.has("ui-preview");
 const today = localDateKey();
+const ACCESS_REVALIDATE_STALE_MS = 60 * 1000;
+const WORKSPACE_RELOAD_STALE_MS = 5 * 60 * 1000;
 
 const state = {
   user: null,
@@ -87,9 +89,15 @@ const state = {
   tasks: [],
   forecast: null,
   loading: false,
+  loadingMonth: "",
+  loadPromise: null,
   loadRequest: 0,
   checkingAccess: false,
-  accessNeedsRefresh: false,
+  lastAccessCheckAt: 0,
+  accessMustRevalidate: false,
+  lastWorkspaceLoadAt: 0,
+  loadedMonth: "",
+  forecastConcealed: false,
   toastTimer: null
 };
 
@@ -365,36 +373,60 @@ function render() {
 
 async function loadWorkspace({ notify = false } = {}) {
   const requestedMonth = state.month;
+  if (state.loadPromise && state.loadingMonth === requestedMonth) {
+    const loaded = await state.loadPromise;
+    if (notify && loaded) showToast("세무·회계 업무를 새로 확인했습니다.");
+    return loaded;
+  }
+
   const requestId = ++state.loadRequest;
-  state.loading = true;
-  document.querySelector("[data-tax-refresh]")?.classList.add("is-spinning");
-  try {
-    let nextTransactions;
-    let nextTasks;
-    let nextForecast;
-    if (isPreview) {
-      nextTransactions = [...previewData.transactions];
-      nextTasks = [...previewData.tasks];
-      nextForecast = { ...previewData.forecast, month: requestedMonth };
-    } else {
-      const payload = await fetchJson(`/api/admin/operations?type=tax&month=${encodeURIComponent(requestedMonth)}`);
-      nextTransactions = Array.isArray(payload.transactions) ? payload.transactions : [];
-      nextTasks = Array.isArray(payload.tasks) ? payload.tasks : [];
-      nextForecast = state.user?.role === "owner" && payload.forecast ? payload.forecast : null;
+  const pending = (async () => {
+    state.loading = true;
+    document.querySelector("[data-tax-refresh]")?.classList.add("is-spinning");
+    try {
+      let nextTransactions;
+      let nextTasks;
+      let nextForecast;
+      if (isPreview) {
+        nextTransactions = [...previewData.transactions];
+        nextTasks = [...previewData.tasks];
+        nextForecast = { ...previewData.forecast, month: requestedMonth };
+      } else {
+        const payload = await fetchJson(`/api/admin/operations?type=tax&month=${encodeURIComponent(requestedMonth)}`);
+        nextTransactions = Array.isArray(payload.transactions) ? payload.transactions : [];
+        nextTasks = Array.isArray(payload.tasks) ? payload.tasks : [];
+        nextForecast = state.user?.role === "owner" && payload.forecast ? payload.forecast : null;
+      }
+      if (requestId !== state.loadRequest || requestedMonth !== state.month) return false;
+      state.transactions = nextTransactions;
+      state.tasks = nextTasks;
+      state.forecast = nextForecast;
+      state.lastWorkspaceLoadAt = Date.now();
+      state.loadedMonth = requestedMonth;
+      render();
+      return true;
+    } catch (error) {
+      if (requestId !== state.loadRequest || requestedMonth !== state.month) return false;
+      handleError(error, "세무·회계 업무를 불러오지 못했습니다.");
+      return false;
+    } finally {
+      if (requestId === state.loadRequest) {
+        state.loading = false;
+        document.querySelector("[data-tax-refresh]")?.classList.remove("is-spinning");
+      }
     }
-    if (requestId !== state.loadRequest || requestedMonth !== state.month) return;
-    state.transactions = nextTransactions;
-    state.tasks = nextTasks;
-    state.forecast = nextForecast;
-    render();
-    if (notify) showToast("세무·회계 업무를 새로 확인했습니다.");
-  } catch (error) {
-    if (requestId !== state.loadRequest || requestedMonth !== state.month) return;
-    handleError(error, "세무·회계 업무를 불러오지 못했습니다.");
+  })();
+
+  state.loadingMonth = requestedMonth;
+  state.loadPromise = pending;
+  try {
+    const loaded = await pending;
+    if (notify && loaded) showToast("세무·회계 업무를 새로 확인했습니다.");
+    return loaded;
   } finally {
-    if (requestId === state.loadRequest) {
-      state.loading = false;
-      document.querySelector("[data-tax-refresh]")?.classList.remove("is-spinning");
+    if (state.loadPromise === pending) {
+      state.loadPromise = null;
+      state.loadingMonth = "";
     }
   }
 }
@@ -463,6 +495,25 @@ function upsertPreview(collection, entry) {
   else collection.unshift(entry);
 }
 
+function sortWorkspaceCollections() {
+  state.transactions.sort((left, right) => {
+    return `${right.date}${right.updatedAt}`.localeCompare(`${left.date}${left.updatedAt}`);
+  });
+  state.tasks.sort((left, right) => {
+    if (Boolean(left.done) !== Boolean(right.done)) return left.done ? 1 : -1;
+    return `${left.dueDate}${left.title}`.localeCompare(`${right.dueDate}${right.title}`, "ko");
+  });
+}
+
+function ignorePendingWorkspaceResult() {
+  if (!state.loadPromise) return;
+  state.loadRequest += 1;
+  state.loadPromise = null;
+  state.loadingMonth = "";
+  state.loading = false;
+  document.querySelector("[data-tax-refresh]")?.classList.remove("is-spinning");
+}
+
 async function saveRecord(type, payload) {
   if (isPreview) {
     const entry = { ...payload, id: payload.id || globalThis.crypto?.randomUUID?.() || `preview-${Date.now()}`, updatedAt: new Date().toISOString() };
@@ -473,8 +524,20 @@ async function saveRecord(type, payload) {
     return entry;
   }
   const result = await fetchJson("/api/admin/operations", { method: "POST", body: JSON.stringify({ type: `tax-${type}`, ...payload }) });
-  await loadWorkspace();
-  return result.entry;
+  const entry = result.entry;
+  if (!entry) {
+    await loadWorkspace();
+    return null;
+  }
+  const hadSnapshot = Boolean(state.lastWorkspaceLoadAt) && state.loadedMonth === state.month;
+  ignorePendingWorkspaceResult();
+  if (!hadSnapshot && await loadWorkspace()) return entry;
+  if (type === "transaction") upsertPreview(state.transactions, entry);
+  else if (type === "task") upsertPreview(state.tasks, entry);
+  else state.forecast = entry;
+  sortWorkspaceCollections();
+  render();
+  return entry;
 }
 
 async function deleteRecord(type, id) {
@@ -485,7 +548,12 @@ async function deleteRecord(type, id) {
     return;
   }
   await fetchJson(`/api/admin/operations?type=${encodeURIComponent(`tax-${type}`)}&id=${encodeURIComponent(id)}`, { method: "DELETE" });
-  await loadWorkspace();
+  const hadSnapshot = Boolean(state.lastWorkspaceLoadAt) && state.loadedMonth === state.month;
+  ignorePendingWorkspaceResult();
+  if (!hadSnapshot && await loadWorkspace()) return;
+  if (type === "transaction") state.transactions = state.transactions.filter((entry) => entry.id !== id);
+  else state.tasks = state.tasks.filter((entry) => entry.id !== id);
+  render();
 }
 
 transactionForm?.addEventListener("submit", async (event) => {
@@ -676,7 +744,7 @@ function applyUserAccess(user) {
   document.querySelector("[data-user-role]").textContent = isOwner ? "총책임자 · 모든 권한" : `${user?.title || "직원"} · 세무 권한`;
   document.querySelector("[data-user-initial]").textContent = String(user?.name || "SN").slice(0, 2);
   document.querySelectorAll("[data-owner-forecast]").forEach((element) => {
-    element.hidden = !isOwner;
+    element.hidden = !isOwner || state.forecastConcealed;
   });
   if (!isOwner) {
     state.forecast = null;
@@ -687,17 +755,27 @@ function applyUserAccess(user) {
 
 function concealOwnerForecast() {
   if (isPreview || state.user?.role !== "owner") return;
-  state.forecast = null;
-  state.accessNeedsRefresh = true;
+  state.forecastConcealed = true;
   document.querySelectorAll("[data-owner-forecast]").forEach((element) => {
     element.hidden = true;
   });
   if (forecastDialog?.open) forecastDialog.close();
-  renderForecast();
 }
 
 async function revalidateAccess() {
-  if (isPreview || state.checkingAccess || document.hidden || !state.accessNeedsRefresh) return;
+  if (isPreview || state.checkingAccess || document.hidden) return;
+  const now = Date.now();
+  const accessIsFresh = state.user?.role !== "owner"
+    && !state.accessMustRevalidate
+    && state.lastAccessCheckAt
+    && now - state.lastAccessCheckAt < ACCESS_REVALIDATE_STALE_MS;
+  if (accessIsFresh) {
+    if (state.forecastConcealed) {
+      state.forecastConcealed = false;
+      applyUserAccess(state.user);
+    }
+    return;
+  }
   state.checkingAccess = true;
   try {
     const session = await fetchJson("/api/admin/session");
@@ -711,10 +789,15 @@ async function revalidateAccess() {
       setPageState("access", "이 계정에는 세무·회계 권한이 없습니다. 총책임자에게 권한을 요청해 주세요.");
       return;
     }
+    state.lastAccessCheckAt = Date.now();
+    state.accessMustRevalidate = false;
+    state.forecastConcealed = false;
     applyUserAccess(session.user);
-    state.accessNeedsRefresh = false;
     setPageState("ready");
-    await loadWorkspace();
+    const workspaceIsStale = state.loadedMonth !== state.month
+      || !state.lastWorkspaceLoadAt
+      || Date.now() - state.lastWorkspaceLoadAt >= WORKSPACE_RELOAD_STALE_MS;
+    if (workspaceIsStale) await loadWorkspace();
   } catch (error) {
     handleError(error, "로그인 상태를 다시 확인하지 못했습니다.");
   } finally {
@@ -724,7 +807,7 @@ async function revalidateAccess() {
 
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) {
-    if (!isPreview) state.accessNeedsRefresh = true;
+    if (!isPreview) state.accessMustRevalidate = true;
     concealOwnerForecast();
   } else {
     revalidateAccess();
@@ -749,6 +832,7 @@ async function initialize() {
         return;
       }
       state.user = session.user;
+      state.lastAccessCheckAt = Date.now();
     } catch (error) {
       handleError(error, "로그인 상태를 확인하지 못했습니다.");
       return;

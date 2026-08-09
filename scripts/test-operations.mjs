@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 
 import { buildEstimateOperationPayload, calculateDocumentTotals } from "../admin-document.js";
-import { buildInventoryMovementPayload } from "../admin-operations.js";
-import { calculateInventoryQuantity, estimatePdfPath } from "../lib/operations-store.js";
+import { buildInventoryMovementPayload, createSingleFlightLoader } from "../admin-operations.js";
+import { calculateInventoryQuantity, estimatePdfPath, summarizeDeletedInventoryMovements } from "../lib/operations-store.js";
 
 const inboundPayload = buildInventoryMovementPayload({
   itemId: "inventory-test-item",
@@ -33,6 +33,67 @@ assert.equal(calculateInventoryQuantity(0.1, "in", 0.2).nextQuantity, 0.3);
 
 assert.throws(() => calculateInventoryQuantity(2, "out", 3), /INVENTORY_QUANTITY_SHORT/);
 assert.throws(() => calculateInventoryQuantity(2, "", 1), /INVENTORY_MOVEMENT_INVALID/);
+
+assert.deepEqual(summarizeDeletedInventoryMovements([
+  { type: "in", createdAt: "2026-08-01T01:00:00.000Z" },
+  { type: "out", createdAt: "2026-08-02T01:00:00.000Z" },
+  { type: "in", createdAt: "2026-07-31T01:00:00.000Z" }
+], "2026-08-09"), { total: 3, monthIn: 1, monthOut: 1 });
+
+const loader = createSingleFlightLoader();
+let loadCalls = 0;
+let resolveFirstLoad;
+const appliedLoads = [];
+const firstLoad = loader.run({
+  load: () => {
+    loadCalls += 1;
+    return new Promise((resolve) => { resolveFirstLoad = resolve; });
+  },
+  apply: (value) => appliedLoads.push(value)
+});
+const duplicateLoad = loader.run({
+  load: () => {
+    loadCalls += 1;
+    return Promise.resolve("duplicate");
+  },
+  apply: (value) => appliedLoads.push(value)
+});
+assert.strictEqual(duplicateLoad, firstLoad);
+assert.equal(loadCalls, 1);
+resolveFirstLoad("first");
+assert.equal(await firstLoad, true);
+assert.deepEqual(appliedLoads, ["first"]);
+
+let resolveStaleLoad;
+const staleLoad = loader.run({
+  load: () => new Promise((resolve) => { resolveStaleLoad = resolve; }),
+  apply: (value) => appliedLoads.push(value)
+});
+loader.invalidate();
+let resolveFreshLoad;
+let freshLoadCalls = 0;
+const freshLoad = loader.run({
+  load: () => {
+    freshLoadCalls += 1;
+    return new Promise((resolve) => { resolveFreshLoad = resolve; });
+  },
+  apply: (value) => appliedLoads.push(value)
+});
+resolveStaleLoad("stale");
+assert.equal(await staleLoad, false);
+assert.deepEqual(appliedLoads, ["first"]);
+const duplicateFreshLoad = loader.run({
+  load: () => {
+    freshLoadCalls += 1;
+    return Promise.resolve("duplicate-fresh");
+  },
+  apply: (value) => appliedLoads.push(value)
+});
+assert.strictEqual(duplicateFreshLoad, freshLoad);
+assert.equal(freshLoadCalls, 1);
+resolveFreshLoad("fresh");
+assert.equal(await freshLoad, true);
+assert.deepEqual(appliedLoads, ["first", "fresh"]);
 
 const estimateDocument = {
   estimateId: "estimate-document-test-001",

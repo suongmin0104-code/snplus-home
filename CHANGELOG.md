@@ -1,5 +1,24 @@
 # Changelog
 
+## 2026-08-09 - 0.12.1
+
+### Fixed
+
+- 관리자 통합 현황을 열 때 현장·견적·생산·재고·입출고 JSON을 모두 다시 읽던 Blob 전건 조회 제거
+- 현장·견적·생산·재고·세무 기록의 저장·삭제 직후 같은 목록과 통합 현황을 중복 조회하던 동작 제거
+- 세무 화면의 포커스·탭 복귀가 반복될 때 전체 장부 조회가 겹치던 동작을 단일 요청과 5분 재조회 기준으로 제한
+
+### Changed
+
+- 통합 현황은 사용량 보호 안내를 표시하고 정확한 최신 건수는 각 상세 업무 화면에서 확인
+- 현장사진과 제품사진의 UUID 경로는 Vercel Blob 캐시를 사용하되 관리자 API 응답은 계속 `private, no-store`로 전달
+- 사진 원본의 Blob 캐시 시간을 1시간으로 설정해 같은 사진의 반복 원본 조회 감소
+
+### Verified
+
+- 통합 현황·중복 새로고침·사진 캐시 설정을 보호하는 Blob 사용량 회귀 검사 추가
+- `npm run test:blob-quota`, `npm run test:admin-auth`, `npm run test:operations`, `npm run test:tax`, `npm run lint`, `npm run build` 통과
+
 ## 2026-07-16 - 0.12.0
 
 ### Added
