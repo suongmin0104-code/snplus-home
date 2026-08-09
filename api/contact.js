@@ -259,6 +259,17 @@ function clientErrorResponse(error) {
   return null;
 }
 
+function serverErrorResponse(error) {
+  const code = error instanceof Error ? error.message : "";
+  if (code === "MAIL_CONFIGURATION_MISSING") {
+    return { status: 503, errorCode: "MAIL_CONFIGURATION_MISSING" };
+  }
+  if (code === "MAIL_SEND_FAILED") {
+    return { status: 502, errorCode: "MAIL_PROVIDER_REJECTED" };
+  }
+  return { status: 500, errorCode: "CONTACT_DELIVERY_FAILED" };
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
@@ -278,7 +289,15 @@ export default async function handler(req, res) {
   } catch (error) {
     const clientError = clientErrorResponse(error);
     if (clientError) return sendJson(res, clientError.status, { ok: false, message: clientError.message });
-    console.error("CONTACT_API_FAILED", { message: error instanceof Error ? error.message : "UNKNOWN" });
-    return sendJson(res, 500, { ok: false, message: "문의 접수에 실패했습니다. 031-852-2918 또는 sn6221@naver.com으로 연락 부탁드립니다." });
+    const serverError = serverErrorResponse(error);
+    console.error("CONTACT_API_FAILED", {
+      errorCode: serverError.errorCode,
+      message: error instanceof Error ? error.message : "UNKNOWN"
+    });
+    return sendJson(res, serverError.status, {
+      ok: false,
+      errorCode: serverError.errorCode,
+      message: "문의 접수에 실패했습니다. 031-852-2918 또는 sn6221@naver.com으로 연락 부탁드립니다."
+    });
   }
 }
