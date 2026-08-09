@@ -38,37 +38,71 @@ jobs:
           root_file="$(mktemp)"
           script_file="$(mktemp)"
           sitemap_file="$(mktemp)"
+          api_file="$(mktemp)"
+          analytics_file="$(mktemp)"
+
+          fetch_code() {
+            local url="$1"
+            local output="$2"
+            curl --location --silent --show-error --retry 2 --retry-delay 2 --connect-timeout 15 --max-time 45 \
+              --output "$output" --write-out '%{http_code}' "$url" || true
+          }
 
           ready="false"
-          for attempt in $(seq 1 24); do
-            page_code="$(curl -L --silent --show-error --output "$page_file" --write-out '%{http_code}' "$base_url/bollard" || true)"
+          page_code="000"
+          for attempt in $(seq 1 30); do
+            page_code="$(fetch_code "$base_url/bollard" "$page_file")"
             if [[ "$page_code" == "200" ]] && grep -Fq "볼라드 제작·교체·시공" "$page_file" && grep -Fq "data-bollard-form" "$page_file"; then
               ready="true"
               break
             fi
+            echo "Attempt $attempt: bollard landing HTTP ${page_code:-unknown}"
             sleep 10
           done
 
           if [[ "$ready" != "true" ]]; then
-            echo "Production bollard landing did not become ready."
-            echo "Last HTTP status: ${page_code:-unknown}"
+            echo "::error::Production bollard landing did not become ready. Last HTTP status: ${page_code:-unknown}"
+            head -c 800 "$page_file" || true
             exit 1
           fi
 
-          root_code="$(curl -L --silent --show-error --output "$root_file" --write-out '%{http_code}' "$base_url/")"
-          script_code="$(curl -L --silent --show-error --output "$script_file" --write-out '%{http_code}' "$base_url/bollard.js")"
-          sitemap_code="$(curl -L --silent --show-error --output "$sitemap_file" --write-out '%{http_code}' "$base_url/sitemap.xml")"
-          api_code="$(curl --silent --show-error --output /tmp/contact-get.json --write-out '%{http_code}' "$base_url/api/contact")"
-          analytics_code="$(curl --silent --show-error --output /tmp/vercel-analytics.js --write-out '%{http_code}' "$base_url/_vercel/insights/script.js" || true)"
+          root_code="$(fetch_code "$base_url/" "$root_file")"
+          script_code="$(fetch_code "$base_url/bollard.js" "$script_file")"
+          sitemap_code="$(fetch_code "$base_url/sitemap.xml" "$sitemap_file")"
+          api_code="$(fetch_code "$base_url/api/contact" "$api_file")"
+          analytics_code="$(fetch_code "$base_url/_vercel/insights/script.js" "$analytics_file")"
 
-          [[ "$root_code" == "200" ]]
-          [[ "$script_code" == "200" ]]
-          [[ "$sitemap_code" == "200" ]]
-          [[ "$api_code" == "405" ]]
+          echo "Homepage HTTP: $root_code"
+          echo "Bollard landing HTTP: $page_code"
+          echo "Bollard JavaScript HTTP: $script_code"
+          echo "Sitemap HTTP: $sitemap_code"
+          echo "Contact API GET guard HTTP: $api_code"
+          echo "Vercel Analytics script HTTP: ${analytics_code:-unknown}"
 
-          grep -Fq "주식회사 에스앤" "$root_file"
-          grep -Fq "Quote Submitted" "$script_file"
-          grep -Fq "snplus.ai.kr/bollard" "$sitemap_file"
+          if [[ "$root_code" != "200" ]]; then
+            echo "::error::Homepage returned HTTP $root_code"
+            head -c 800 "$root_file" || true
+            exit 1
+          fi
+          if [[ "$script_code" != "200" ]]; then
+            echo "::error::Bollard JavaScript returned HTTP $script_code"
+            head -c 800 "$script_file" || true
+            exit 1
+          fi
+          if [[ "$sitemap_code" != "200" ]]; then
+            echo "::error::Sitemap returned HTTP $sitemap_code"
+            head -c 800 "$sitemap_file" || true
+            exit 1
+          fi
+          if [[ "$api_code" != "405" ]]; then
+            echo "::error::Contact API GET guard returned HTTP $api_code instead of 405"
+            cat "$api_file" || true
+            exit 1
+          fi
+
+          grep -Fq "주식회사 에스앤" "$root_file" || { echo "::error::Homepage company name missing"; exit 1; }
+          grep -Fq "Quote Submitted" "$script_file" || { echo "::error::Conversion event marker missing from bollard.js"; exit 1; }
+          grep -Fq "snplus.ai.kr/bollard" "$sitemap_file" || { echo "::error::Bollard URL missing from sitemap"; exit 1; }
 
           {
             echo "## SN production smoke"
