@@ -1,0 +1,111 @@
+name: SN contact E2E once
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+    paths:
+      - ".github/workflows/contact-e2e-once.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sn-contact-e2e-once-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  contact-e2e:
+    name: Send one clearly marked test inquiry
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify production POST, lead ID and photo attachment acceptance
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          payload_file="$(mktemp)"
+          response_file="$(mktemp)"
+
+          cat > "$payload_file" <<'JSON'
+          {
+            "companyName": "SNPLUS 시스템 점검",
+            "contactName": "홈페이지 자동 점검",
+            "phone": "031-852-2918",
+            "email": "",
+            "inquiryType": "시스템 점검",
+            "subject": "[TEST] 운영 문의폼 사진첨부 수신 점검",
+            "message": "실제 고객 문의가 아닙니다. 2026-08-09 운영 문의폼의 API, 메일 발송, 접수번호, 사진 첨부를 확인하기 위한 1회 시스템 점검입니다.",
+            "requestKind": "시스템 점검",
+            "region": "경기도 화성시",
+            "quantity": "테스트 1건",
+            "siteType": "시스템 점검",
+            "productPreference": "해당 없음",
+            "contactPreference": "회신 불필요",
+            "privacyConsent": true,
+            "website": "",
+            "photos": [
+              {
+                "name": "snplus-system-test.png",
+                "contentType": "image/png",
+                "content": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9Z4VQAAAAASUVORK5CYII="
+              }
+            ],
+            "pageUrl": "https://snplus.ai.kr/bollard?utm_source=github-actions&utm_medium=e2e-test&utm_campaign=contact-system-check",
+            "siteUrl": "https://snplus.ai.kr",
+            "userAgent": "SNPLUS GitHub Actions contact E2E test",
+            "utmSource": "github-actions",
+            "utmMedium": "e2e-test",
+            "utmCampaign": "contact-system-check",
+            "utmTerm": "bollard-photo-form",
+            "utmContent": "one-time-system-test",
+            "referrer": "https://github.com/suongmin0104-code/snplus-home",
+            "landingPage": "https://snplus.ai.kr/bollard",
+            "firstSeenAt": "2026-08-09T14:20:00.000Z"
+          }
+          JSON
+
+          http_code="$(curl --silent --show-error --retry 2 --retry-delay 2 --connect-timeout 15 --max-time 45 \
+            --request POST \
+            --header 'Content-Type: application/json' \
+            --header 'X-SNPLUS-System-Test: 1' \
+            --data-binary "@$payload_file" \
+            --output "$response_file" \
+            --write-out '%{http_code}' \
+            'https://snplus.ai.kr/api/contact')"
+
+          echo "Contact API HTTP: $http_code"
+          cat "$response_file"
+          echo
+
+          if [[ "$http_code" != "200" ]]; then
+            echo "::error::Production contact API returned HTTP $http_code"
+            exit 1
+          fi
+
+          lead_id="$(python - "$response_file" <<'PY'
+          import json
+          import re
+          import sys
+
+          with open(sys.argv[1], encoding="utf-8") as handle:
+              payload = json.load(handle)
+
+          assert payload.get("ok") is True, payload
+          lead_id = payload.get("leadId", "")
+          assert re.fullmatch(r"SN-\d{8}-[A-F0-9]{8}", lead_id), payload
+          print(lead_id)
+          PY
+          )"
+
+          {
+            echo "## SN contact E2E result"
+            echo ""
+            echo "- Production API: HTTP $http_code"
+            echo "- Lead ID: $lead_id"
+            echo "- Marked test photo: accepted"
+            echo "- Expected recipient: sn6221@naver.com"
+          } >> "$GITHUB_STEP_SUMMARY"
