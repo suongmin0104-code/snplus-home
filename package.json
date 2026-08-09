@@ -7,11 +7,12 @@
     "dev": "vite --host 127.0.0.1",
     "admin:configure": "node scripts/configure-admin-vercel.mjs",
     "admin:hash": "node scripts/hash-admin-password.mjs",
-    "test": "npm run test:admin-auth && npm run test:blob-quota && npm run test:operations && npm run test:tax",
+    "test": "npm run test:admin-auth && npm run test:blob-quota && npm run test:operations && npm run test:tax && npm run test:contact",
     "test:admin-auth": "node scripts/test-admin-auth.mjs",
     "test:blob-quota": "node scripts/test-overview-quota-hotfix.mjs",
     "test:operations": "node scripts/test-operations.mjs",
     "test:tax": "node scripts/test-tax-workspace.mjs",
+    "test:contact": "node scripts/test-contact-lead.mjs",
     "lint": "node scripts/lint-static-site.mjs",
     "build": "vite build && node scripts/copy-linked-static-assets.mjs",
     "preview": "vite preview --host 127.0.0.1"
