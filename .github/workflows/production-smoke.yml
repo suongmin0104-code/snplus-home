@@ -1,0 +1,84 @@
+name: SN production smoke
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "bollard.html"
+      - "bollard.css"
+      - "bollard.js"
+      - "script.js"
+      - "api/contact.js"
+      - "public/sitemap.xml"
+      - "vercel.json"
+      - "vite.config.mjs"
+      - ".github/workflows/production-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sn-production-smoke
+  cancel-in-progress: true
+
+jobs:
+  production-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Verify production landing and inquiry routes
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          base_url="https://snplus.ai.kr"
+          page_file="$(mktemp)"
+          root_file="$(mktemp)"
+          script_file="$(mktemp)"
+          sitemap_file="$(mktemp)"
+
+          ready="false"
+          for attempt in $(seq 1 24); do
+            page_code="$(curl -L --silent --show-error --output "$page_file" --write-out '%{http_code}' "$base_url/bollard" || true)"
+            if [[ "$page_code" == "200" ]] && grep -Fq "볼라드 제작·교체·시공" "$page_file" && grep -Fq "data-bollard-form" "$page_file"; then
+              ready="true"
+              break
+            fi
+            sleep 10
+          done
+
+          if [[ "$ready" != "true" ]]; then
+            echo "Production bollard landing did not become ready."
+            echo "Last HTTP status: ${page_code:-unknown}"
+            exit 1
+          fi
+
+          root_code="$(curl -L --silent --show-error --output "$root_file" --write-out '%{http_code}' "$base_url/")"
+          script_code="$(curl -L --silent --show-error --output "$script_file" --write-out '%{http_code}' "$base_url/bollard.js")"
+          sitemap_code="$(curl -L --silent --show-error --output "$sitemap_file" --write-out '%{http_code}' "$base_url/sitemap.xml")"
+          api_code="$(curl --silent --show-error --output /tmp/contact-get.json --write-out '%{http_code}' "$base_url/api/contact")"
+          analytics_code="$(curl --silent --show-error --output /tmp/vercel-analytics.js --write-out '%{http_code}' "$base_url/_vercel/insights/script.js" || true)"
+
+          [[ "$root_code" == "200" ]]
+          [[ "$script_code" == "200" ]]
+          [[ "$sitemap_code" == "200" ]]
+          [[ "$api_code" == "405" ]]
+
+          grep -Fq "주식회사 에스앤" "$root_file"
+          grep -Fq "Quote Submitted" "$script_file"
+          grep -Fq "snplus.ai.kr/bollard" "$sitemap_file"
+
+          {
+            echo "## SN production smoke"
+            echo ""
+            echo "| Check | Result |"
+            echo "| --- | --- |"
+            echo "| Homepage | HTTP $root_code |"
+            echo "| Bollard landing | HTTP $page_code, required copy and form found |"
+            echo "| Bollard JavaScript | HTTP $script_code, conversion event found |"
+            echo "| Sitemap | HTTP $sitemap_code, /bollard found |"
+            echo "| Contact API GET guard | HTTP $api_code |"
+            echo "| Vercel Analytics script | HTTP ${analytics_code:-unknown} |"
+          } >> "$GITHUB_STEP_SUMMARY"
