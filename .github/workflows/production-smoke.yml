@@ -13,6 +13,7 @@ on:
       - "public/sitemap.xml"
       - "vercel.json"
       - "vite.config.mjs"
+      - "scripts/copy-linked-static-assets.mjs"
       - ".github/workflows/production-smoke.yml"
   workflow_dispatch:
 
@@ -37,6 +38,7 @@ jobs:
           page_file="$(mktemp)"
           root_file="$(mktemp)"
           script_file="$(mktemp)"
+          style_file="$(mktemp)"
           sitemap_file="$(mktemp)"
           api_file="$(mktemp)"
           analytics_file="$(mktemp)"
@@ -52,7 +54,11 @@ jobs:
           page_code="000"
           for attempt in $(seq 1 30); do
             page_code="$(fetch_code "$base_url/bollard" "$page_file")"
-            if [[ "$page_code" == "200" ]] && grep -Fq "볼라드 제작·교체·시공" "$page_file" && grep -Fq "data-bollard-form" "$page_file"; then
+            if [[ "$page_code" == "200" ]] \
+              && grep -Fq "볼라드 제작·교체·시공" "$page_file" \
+              && grep -Fq "data-bollard-form" "$page_file" \
+              && grep -Fq "bollard.css" "$page_file" \
+              && grep -Fq "bollard.js" "$page_file"; then
               ready="true"
               break
             fi
@@ -68,6 +74,7 @@ jobs:
 
           root_code="$(fetch_code "$base_url/" "$root_file")"
           script_code="$(fetch_code "$base_url/bollard.js" "$script_file")"
+          style_code="$(fetch_code "$base_url/bollard.css" "$style_file")"
           sitemap_code="$(fetch_code "$base_url/sitemap.xml" "$sitemap_file")"
           api_code="$(fetch_code "$base_url/api/contact" "$api_file")"
           analytics_code="$(fetch_code "$base_url/_vercel/insights/script.js" "$analytics_file")"
@@ -75,6 +82,7 @@ jobs:
           echo "Homepage HTTP: $root_code"
           echo "Bollard landing HTTP: $page_code"
           echo "Bollard JavaScript HTTP: $script_code"
+          echo "Bollard stylesheet HTTP: $style_code"
           echo "Sitemap HTTP: $sitemap_code"
           echo "Contact API GET guard HTTP: $api_code"
           echo "Vercel Analytics script HTTP: ${analytics_code:-unknown}"
@@ -87,6 +95,11 @@ jobs:
           if [[ "$script_code" != "200" ]]; then
             echo "::error::Bollard JavaScript returned HTTP $script_code"
             head -c 800 "$script_file" || true
+            exit 1
+          fi
+          if [[ "$style_code" != "200" ]]; then
+            echo "::error::Bollard stylesheet returned HTTP $style_code"
+            head -c 800 "$style_file" || true
             exit 1
           fi
           if [[ "$sitemap_code" != "200" ]]; then
@@ -102,6 +115,7 @@ jobs:
 
           grep -Fq "주식회사 에스앤" "$root_file" || { echo "::error::Homepage company name missing"; exit 1; }
           grep -Fq "Quote Submitted" "$script_file" || { echo "::error::Conversion event marker missing from bollard.js"; exit 1; }
+          grep -Fq ".quote-card" "$style_file" || { echo "::error::Bollard form styles missing from bollard.css"; exit 1; }
           grep -Fq "snplus.ai.kr/bollard" "$sitemap_file" || { echo "::error::Bollard URL missing from sitemap"; exit 1; }
 
           {
@@ -110,8 +124,9 @@ jobs:
             echo "| Check | Result |"
             echo "| --- | --- |"
             echo "| Homepage | HTTP $root_code |"
-            echo "| Bollard landing | HTTP $page_code, required copy and form found |"
+            echo "| Bollard landing | HTTP $page_code, required copy, form and assets found |"
             echo "| Bollard JavaScript | HTTP $script_code, conversion event found |"
+            echo "| Bollard stylesheet | HTTP $style_code, quote form styles found |"
             echo "| Sitemap | HTTP $sitemap_code, /bollard found |"
             echo "| Contact API GET guard | HTTP $api_code |"
             echo "| Vercel Analytics script | HTTP ${analytics_code:-unknown} |"
