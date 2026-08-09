@@ -11,6 +11,12 @@ const ALLOWED_PHOTO_TYPES = Object.freeze({
   "image/webp": "webp"
 });
 
+let contactStoreForTests = null;
+
+export function setContactStoreForTests(store) {
+  contactStoreForTests = store && typeof store === "object" ? store : null;
+}
+
 function sendJson(res, statusCode, payload) {
   res.statusCode = statusCode;
   res.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -141,8 +147,9 @@ async function readJsonBody(req) {
 
 function buildInquiry(rawBody) {
   const body = rawBody ?? {};
+  const receivedAt = new Date();
   return {
-    leadId: createLeadId(),
+    leadId: createLeadId(receivedAt),
     companyName: sanitizeText(body.companyName, 120),
     contactName: sanitizeText(body.contactName, 80),
     phone: sanitizeText(body.phone, 40),
@@ -170,7 +177,8 @@ function buildInquiry(rawBody) {
     referrer: sanitizeText(body.referrer, 500),
     landingPage: sanitizeText(body.landingPage, 500),
     firstSeenAt: sanitizeText(body.firstSeenAt, 80),
-    receivedAt: formatKoreanTime()
+    receivedAt: formatKoreanTime(receivedAt),
+    receivedAtIso: receivedAt.toISOString()
   };
 }
 
@@ -237,7 +245,7 @@ async function sendMail(inquiry) {
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
-      "User-Agent": "snplus-contact/0.13.0",
+      "User-Agent": "snplus-contact/0.14.0",
       "Idempotency-Key": inquiry.leadId
     },
     body: JSON.stringify(payload)
@@ -247,6 +255,20 @@ async function sendMail(inquiry) {
     console.error("CONTACT_RESEND_FAILED", { status: response.status, leadId: inquiry.leadId, body: errorBody.slice(0, 300) });
     throw new Error("MAIL_SEND_FAILED");
   }
+}
+
+async function saveInquiry(inquiry, notification) {
+  if (contactStoreForTests?.save) return contactStoreForTests.save(inquiry, notification);
+  const { saveContactInquiry } = await import("../lib/contact-store.js");
+  return saveContactInquiry(inquiry, notification);
+}
+
+async function updateInquiryNotification(entry, notification) {
+  if (contactStoreForTests?.updateNotification) {
+    return contactStoreForTests.updateNotification(entry, notification);
+  }
+  const { updateContactNotification } = await import("../lib/contact-store.js");
+  return updateContactNotification(entry, notification);
 }
 
 function clientErrorResponse(error) {
@@ -267,7 +289,31 @@ function serverErrorResponse(error) {
   if (code === "MAIL_SEND_FAILED") {
     return { status: 502, errorCode: "MAIL_PROVIDER_REJECTED" };
   }
+  if (code === "CONTACT_STORAGE_FAILED") {
+    return { status: 503, errorCode: "CONTACT_STORAGE_FAILED" };
+  }
+  if (code === "CONTACT_DELIVERY_UNAVAILABLE") {
+    return { status: 503, errorCode: "CONTACT_DELIVERY_UNAVAILABLE" };
+  }
   return { status: 500, errorCode: "CONTACT_DELIVERY_FAILED" };
+}
+
+function notificationFromMailResult(mailSent, mailError) {
+  const now = new Date().toISOString();
+  if (mailSent) return { status: "sent", provider: "resend", updatedAt: now, errorCode: "" };
+  const code = mailError instanceof Error ? mailError.message : "";
+  if (code === "MAIL_CONFIGURATION_MISSING") {
+    return { status: "not_configured", provider: "resend", updatedAt: now, errorCode: "MAIL_CONFIGURATION_MISSING" };
+  }
+  if (code === "MAIL_SEND_FAILED") {
+    return { status: "failed", provider: "resend", updatedAt: now, errorCode: "MAIL_PROVIDER_REJECTED" };
+  }
+  return { status: "failed", provider: "resend", updatedAt: now, errorCode: "CONTACT_MAIL_UNKNOWN" };
+}
+
+function combinedDeliveryError(storageError, mailError) {
+  if (storageError && mailError) return new Error("CONTACT_DELIVERY_UNAVAILABLE");
+  return storageError || mailError || new Error("CONTACT_DELIVERY_FAILED");
 }
 
 export default async function handler(req, res) {
@@ -275,20 +321,66 @@ export default async function handler(req, res) {
     res.setHeader("Allow", "POST");
     return sendJson(res, 405, { ok: false, message: "Method Not Allowed" });
   }
+
   try {
     const rawBody = await readJsonBody(req);
     const inquiry = buildInquiry(rawBody);
     if (inquiry.website) return sendJson(res, 200, { ok: true });
+
     const validationErrors = validateInquiry(inquiry);
     if (validationErrors.length > 0) {
       console.warn("CONTACT_VALIDATION_FAILED", { fields: validationErrors });
       return sendJson(res, 400, { ok: false, message: "필수 입력값을 확인해 주세요." });
     }
-    await sendMail(inquiry);
-    return sendJson(res, 200, { ok: true, leadId: inquiry.leadId });
+
+    let storedEntry = null;
+    let storageError = null;
+    try {
+      storedEntry = await saveInquiry(inquiry, {
+        status: "pending",
+        provider: "resend",
+        updatedAt: new Date().toISOString(),
+        errorCode: ""
+      });
+    } catch (error) {
+      storageError = error instanceof Error ? error : new Error("CONTACT_STORAGE_FAILED");
+      console.error("CONTACT_PERSISTENCE_FAILED", { leadId: inquiry.leadId, message: storageError.message });
+    }
+
+    let mailSent = false;
+    let mailError = null;
+    try {
+      await sendMail(inquiry);
+      mailSent = true;
+    } catch (error) {
+      mailError = error instanceof Error ? error : new Error("MAIL_SEND_FAILED");
+    }
+
+    if (storedEntry) {
+      try {
+        storedEntry = await updateInquiryNotification(storedEntry, notificationFromMailResult(mailSent, mailError));
+      } catch (error) {
+        console.error("CONTACT_NOTIFICATION_STATUS_SAVE_FAILED", {
+          leadId: inquiry.leadId,
+          message: error instanceof Error ? error.message : "UNKNOWN"
+        });
+      }
+    }
+
+    if (storedEntry || mailSent) {
+      return sendJson(res, 200, {
+        ok: true,
+        leadId: inquiry.leadId,
+        stored: Boolean(storedEntry),
+        notified: mailSent
+      });
+    }
+
+    throw combinedDeliveryError(storageError, mailError);
   } catch (error) {
     const clientError = clientErrorResponse(error);
     if (clientError) return sendJson(res, clientError.status, { ok: false, message: clientError.message });
+
     const serverError = serverErrorResponse(error);
     console.error("CONTACT_API_FAILED", {
       errorCode: serverError.errorCode,
