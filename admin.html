@@ -13,10 +13,10 @@
     <meta name="apple-mobile-web-app-title" content="SN 업무포털" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <link rel="manifest" href="/admin.webmanifest?v=0.11.1" />
-    <link rel="stylesheet" href="./admin.css?v=0.11.1" />
-    <link rel="stylesheet" href="./admin-operations.css?v=0.11.1" />
-    <script type="module" src="./admin.js?v=0.11.1"></script>
+    <link rel="manifest" href="/admin.webmanifest?v=0.12.2" />
+    <link rel="stylesheet" href="./admin.css?v=0.12.2" />
+    <link rel="stylesheet" href="./admin-operations.css?v=0.12.2" />
+    <script type="module" src="./admin.js?v=0.12.2"></script>
   </head>
   <body data-auth-state="loading">
     <a class="skip-link" href="#admin-main">본문으로 바로가기</a>
@@ -181,22 +181,22 @@
             </section>
 
             <div class="summary-grid">
-              <article class="summary-card">
+              <button class="summary-card summary-card-link" type="button" data-go-module="tasks" aria-label="현장 일정 상세 화면 열기">
                 <span class="summary-icon tone-teal"><i data-lucide="hard-hat"></i></span>
-                <div><p>현장 일정</p><strong data-summary="tasks">확인 중</strong><small data-summary-note="tasks">현장 업무일지</small></div>
-              </article>
-              <article class="summary-card">
+                <span class="summary-card-copy"><span class="summary-card-label">현장 일정</span><strong class="summary-card-action"><span data-summary="tasks">확인 중</span><i data-lucide="chevron-right"></i></strong><small data-summary-note="tasks">현장 업무일지</small></span>
+              </button>
+              <button class="summary-card summary-card-link" type="button" data-go-module="production" aria-label="생산중 작업 상세 화면 열기">
                 <span class="summary-icon tone-blue"><i data-lucide="factory"></i></span>
-                <div><p>생산중 작업</p><strong data-summary="production">확인 중</strong><small data-summary-note="production">생산일보</small></div>
-              </article>
-              <article class="summary-card">
+                <span class="summary-card-copy"><span class="summary-card-label">생산중 작업</span><strong class="summary-card-action"><span data-summary="production">확인 중</span><i data-lucide="chevron-right"></i></strong><small data-summary-note="production">생산일보</small></span>
+              </button>
+              <button class="summary-card summary-card-link" type="button" data-go-module="inventory" aria-label="등록 재고 상세 화면 열기">
                 <span class="summary-icon tone-violet"><i data-lucide="boxes"></i></span>
-                <div><p>등록 재고</p><strong data-summary="inventory">확인 중</strong><small data-summary-note="inventory">제품 재고</small></div>
-              </article>
-              <article class="summary-card">
+                <span class="summary-card-copy"><span class="summary-card-label">등록 재고</span><strong class="summary-card-action"><span data-summary="inventory">확인 중</span><i data-lucide="chevron-right"></i></strong><small data-summary-note="inventory">제품 재고</small></span>
+              </button>
+              <button class="summary-card summary-card-link" type="button" data-go-module="estimate" aria-label="견적 일정 상세 화면 열기">
                 <span class="summary-icon tone-amber"><i data-lucide="file-spreadsheet"></i></span>
-                <div><p>견적 일정</p><strong data-summary="estimates">확인 중</strong><small data-summary-note="estimates">등록 일정</small></div>
-              </article>
+                <span class="summary-card-copy"><span class="summary-card-label">견적 일정</span><strong class="summary-card-action"><span data-summary="estimates">확인 중</span><i data-lucide="chevron-right"></i></strong><small data-summary-note="estimates">등록 일정</small></span>
+              </button>
             </div>
 
             <div class="dashboard-grid">

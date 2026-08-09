@@ -139,6 +139,12 @@ requireAdminMatch(/data-module-view="inventory"/, "Inventory management module i
 requireAdminMatch(/data-module-view="tax"/, "Tax ERP module is required.");
 requireAdminMatch(/data-module-view="templates"/, "Admin work-template module is required.");
 requireAdminMatch(/data-module-view="tasks"/, "Admin field worklog module is required.");
+for (const [moduleName, label] of [["tasks", "현장 일정"], ["production", "생산중 작업"], ["inventory", "등록 재고"], ["estimate", "견적 일정"]]) {
+  requireAdminMatch(
+    new RegExp(`<button[^>]+class="summary-card summary-card-link"[^>]+data-go-module="${moduleName}"[^>]*>`),
+    `${label} summary card must be a direct detail button.`
+  );
+}
 requireAdminMatch(/data-worklog-calendar/, "Admin monthly worklog calendar is required.");
 requireAdminMatch(/capture="environment"/, "Admin worklog must support the mobile rear camera.");
 requireAdminMatch(/\/api\/admin\/template\?file=estimate/, "Estimate template download link is required.");

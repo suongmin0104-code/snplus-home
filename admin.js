@@ -204,6 +204,7 @@ const dialog = document.querySelector("[data-integration-dialog]");
 const toast = document.querySelector("[data-toast]");
 const sidebarScrim = document.querySelector("[data-sidebar-scrim]");
 const mobileMoreButton = document.querySelector("[data-mobile-more]");
+const mobileQuickModules = new Set(["dashboard", "tasks", "estimate", "inventory"]);
 const installHelpDialog = document.querySelector("[data-install-help-dialog]");
 const openChromeButton = document.querySelector("[data-open-chrome]");
 let deferredInstallPrompt = null;
@@ -296,19 +297,25 @@ async function installWorkspaceApp() {
   openInstallHelp();
 }
 
+function syncMobileMoreState(menuOpen = sidebar?.classList.contains("is-open")) {
+  const representsCurrentModule = !mobileQuickModules.has(state.currentModule);
+  mobileMoreButton?.classList.toggle("is-active", Boolean(menuOpen));
+  mobileMoreButton?.classList.toggle("is-current", representsCurrentModule);
+  mobileMoreButton?.setAttribute("aria-current", representsCurrentModule ? "page" : "false");
+  mobileMoreButton?.setAttribute("aria-expanded", menuOpen ? "true" : "false");
+}
+
 function closeMobileMenu() {
   sidebar?.classList.remove("is-open");
   body.classList.remove("mobile-menu-open");
-  mobileMoreButton?.classList.remove("is-active");
-  mobileMoreButton?.setAttribute("aria-expanded", "false");
+  syncMobileMoreState(false);
 }
 
 function toggleMobileMenu() {
   const isOpen = !sidebar?.classList.contains("is-open");
   sidebar?.classList.toggle("is-open", isOpen);
   body.classList.toggle("mobile-menu-open", isOpen);
-  mobileMoreButton?.classList.toggle("is-active", isOpen);
-  mobileMoreButton?.setAttribute("aria-expanded", isOpen ? "true" : "false");
+  syncMobileMoreState(isOpen);
 }
 
 function initializeMobileApp() {
