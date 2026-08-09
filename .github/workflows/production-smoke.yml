@@ -8,8 +8,14 @@ on:
       - "bollard.html"
       - "bollard.css"
       - "bollard.js"
+      - "inquiries.html"
+      - "inquiries.css"
+      - "inquiries.js"
       - "script.js"
       - "api/contact.js"
+      - "api/admin/inquiries.js"
+      - "api/admin/inquiry-photo.js"
+      - "lib/contact-store.js"
       - "public/sitemap.xml"
       - "vercel.json"
       - "vite.config.mjs"
@@ -28,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Verify production landing and inquiry routes
+      - name: Verify production landing, inquiry and administrator routes
         shell: bash
         run: |
           set -euo pipefail
@@ -39,6 +45,9 @@ jobs:
           script_file="$(mktemp)"
           sitemap_file="$(mktemp)"
           api_file="$(mktemp)"
+          admin_page_file="$(mktemp)"
+          admin_page_headers="$(mktemp)"
+          admin_api_file="$(mktemp)"
           analytics_file="$(mktemp)"
 
           fetch_code() {
@@ -48,21 +57,40 @@ jobs:
               --output "$output" --write-out '%{http_code}' "$url" || true
           }
 
+          fetch_code_with_headers() {
+            local url="$1"
+            local output="$2"
+            local headers="$3"
+            curl --location --silent --show-error --retry 2 --retry-delay 2 --connect-timeout 15 --max-time 45 \
+              --dump-header "$headers" --output "$output" --write-out '%{http_code}' "$url" || true
+          }
+
           ready="false"
           page_code="000"
+          admin_page_code="000"
           for attempt in $(seq 1 30); do
             page_code="$(fetch_code "$base_url/bollard" "$page_file")"
-            if [[ "$page_code" == "200" ]] && grep -Fq "볼라드 제작·교체·시공" "$page_file" && grep -Fq "data-bollard-form" "$page_file"; then
+            admin_page_code="$(fetch_code_with_headers "$base_url/admin/inquiries" "$admin_page_file" "$admin_page_headers")"
+            if [[ "$page_code" == "200" ]] \
+              && grep -Fq "볼라드 제작·교체·시공" "$page_file" \
+              && grep -Fq "data-bollard-form" "$page_file" \
+              && [[ "$admin_page_code" == "200" ]] \
+              && grep -Fq "홈페이지 문의함" "$admin_page_file" \
+              && grep -Fq "data-inquiry-list" "$admin_page_file"; then
               ready="true"
               break
             fi
-            echo "Attempt $attempt: bollard landing HTTP ${page_code:-unknown}"
+            echo "Attempt $attempt: bollard HTTP ${page_code:-unknown}, inquiry inbox HTTP ${admin_page_code:-unknown}"
             sleep 10
           done
 
           if [[ "$ready" != "true" ]]; then
-            echo "::error::Production bollard landing did not become ready. Last HTTP status: ${page_code:-unknown}"
+            echo "::error::Production pages did not become ready. Bollard HTTP: ${page_code:-unknown}; inquiry inbox HTTP: ${admin_page_code:-unknown}"
+            echo "--- bollard response ---"
             head -c 800 "$page_file" || true
+            echo
+            echo "--- inquiry inbox response ---"
+            head -c 800 "$admin_page_file" || true
             exit 1
           fi
 
@@ -70,6 +98,7 @@ jobs:
           script_code="$(fetch_code "$base_url/bollard.js" "$script_file")"
           sitemap_code="$(fetch_code "$base_url/sitemap.xml" "$sitemap_file")"
           api_code="$(fetch_code "$base_url/api/contact" "$api_file")"
+          admin_api_code="$(fetch_code "$base_url/api/admin/inquiries" "$admin_api_file")"
           analytics_code="$(fetch_code "$base_url/_vercel/insights/script.js" "$analytics_file")"
 
           echo "Homepage HTTP: $root_code"
@@ -77,6 +106,8 @@ jobs:
           echo "Bollard JavaScript HTTP: $script_code"
           echo "Sitemap HTTP: $sitemap_code"
           echo "Contact API GET guard HTTP: $api_code"
+          echo "Inquiry inbox HTTP: $admin_page_code"
+          echo "Inquiry admin API unauthenticated HTTP: $admin_api_code"
           echo "Vercel Analytics script HTTP: ${analytics_code:-unknown}"
 
           if [[ "$root_code" != "200" ]]; then
@@ -99,10 +130,23 @@ jobs:
             cat "$api_file" || true
             exit 1
           fi
+          if [[ "$admin_page_code" != "200" ]]; then
+            echo "::error::Inquiry inbox returned HTTP $admin_page_code"
+            head -c 800 "$admin_page_file" || true
+            exit 1
+          fi
+          if [[ "$admin_api_code" != "401" ]]; then
+            echo "::error::Unauthenticated inquiry API returned HTTP $admin_api_code instead of 401"
+            cat "$admin_api_file" || true
+            exit 1
+          fi
 
           grep -Fq "주식회사 에스앤" "$root_file" || { echo "::error::Homepage company name missing"; exit 1; }
           grep -Fq "Quote Submitted" "$script_file" || { echo "::error::Conversion event marker missing from bollard.js"; exit 1; }
           grep -Fq "snplus.ai.kr/bollard" "$sitemap_file" || { echo "::error::Bollard URL missing from sitemap"; exit 1; }
+          grep -Fq "data-inquiry-list" "$admin_page_file" || { echo "::error::Inquiry inbox list marker missing"; exit 1; }
+          grep -Eiq '^x-robots-tag:.*noindex' "$admin_page_headers" || { echo "::error::Inquiry inbox noindex response header missing"; cat "$admin_page_headers"; exit 1; }
+          grep -Eiq '^cache-control:.*no-store' "$admin_page_headers" || { echo "::error::Inquiry inbox no-store response header missing"; cat "$admin_page_headers"; exit 1; }
 
           {
             echo "## SN production smoke"
@@ -114,5 +158,7 @@ jobs:
             echo "| Bollard JavaScript | HTTP $script_code, conversion event found |"
             echo "| Sitemap | HTTP $sitemap_code, /bollard found |"
             echo "| Contact API GET guard | HTTP $api_code |"
+            echo "| Inquiry inbox | HTTP $admin_page_code, noindex and no-store confirmed |"
+            echo "| Inquiry admin API without login | HTTP $admin_api_code |"
             echo "| Vercel Analytics script | HTTP ${analytics_code:-unknown} |"
           } >> "$GITHUB_STEP_SUMMARY"
