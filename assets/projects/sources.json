@@ -1,0 +1,161 @@
+{
+  "attribution": "에스앤 공식 네이버 블로그 (sn6221)",
+  "hero_recommendation": "gimpo-lake-1.webp",
+  "notes": "All assets retrieved from exact data-lazy-src URLs in the supplied official blog HTML; original watermarks retained. Locations and model names only where stated in the post. Publication timestamps were not converted into project completion dates.",
+  "projects": [
+    {
+      "post_id": "222926026238",
+      "slug": "schoolzone",
+      "title": "어린이 보호구역(스쿨존) 난간설치",
+      "summary": "어린이 보호구역에 설치한 난간 시공 사례입니다.",
+      "category": "보행자 안전 난간",
+      "location": null,
+      "source_page": "https://blog.naver.com/sn6221/222926026238",
+      "images": [
+        {
+          "file": "assets/projects/schoolzone-1.webp",
+          "source_image_url": "https://postfiles.pstatic.net/MjAyMjExMTFfMjAx/MDAxNjY4MTQ1NjE1NTAx.w7nHc4owRTaHePOxYobR7hxu73UfMhYFOv7Ykd0NSWAg.eXjWxmqFUrnN4hn3sobYlHciXNhxRuiPCNcqT8i0fWQg.JPEG.sn6221/watermarked-KakaoTalk_20221111_135221277.jpg?type=w773",
+          "width": 773,
+          "height": 361,
+          "attribution": "에스앤 공식 네이버 블로그 (sn6221)",
+          "watermark_preserved": true,
+          "alt": "어린이 보호구역(스쿨존) 난간설치"
+        },
+        {
+          "file": "assets/projects/schoolzone-2.webp",
+          "source_image_url": "https://postfiles.pstatic.net/MjAyMjExMTFfNjUg/MDAxNjY4MTQ1NjE1NDk1.UNlOkkTTfqPPxOnxbBoLdhpeolUbXyRu3iOWutn-jD0g.kMDlkiG9yXXxnpqB5cpp42GXsjJRC2pctS8IAa2jazYg.JPEG.sn6221/watermarked-KakaoTalk_20221111_135221277_04.jpg?type=w773",
+          "width": 773,
+          "height": 361,
+          "attribution": "에스앤 공식 네이버 블로그 (sn6221)",
+          "watermark_preserved": true,
+          "alt": "어린이 보호구역(스쿨존) 난간설치"
+        }
+      ],
+      "display_title": "어린이보호구역 안전난간"
+    },
+    {
+      "post_id": "222924024022",
+      "slug": "daejeon-bollards",
+      "title": "대전시 보문산 행복 숲길 볼라드 설치",
+      "summary": "보문산 행복 숲길 진입로의 보행 안전과 차량 무단 주차 방지를 위한 볼라드 설치 사례입니다.",
+      "category": "볼라드",
+      "location": "대전시 보문산 행복 숲길",
+      "source_page": "https://blog.naver.com/sn6221/222924024022",
+      "images": [
+        {
+          "file": "assets/projects/daejeon-bollards-1.webp",
+          "source_image_url": "https://postfiles.pstatic.net/MjAyMjExMDlfMTc0/MDAxNjY3OTU3NTYwNzkw.OxXgBUgj9FMKF9X1HnLT6yOorHNSKzoOWV6PcJLikCsg.t5qh563BNmdz151u1Mz7wOZZXxnq6n6Wjffr3xDzly0g.JPEG.sn6221/watermarked-KakaoTalk_20221109_100334296_01.jpg?type=w773",
+          "width": 773,
+          "height": 580,
+          "attribution": "에스앤 공식 네이버 블로그 (sn6221)",
+          "watermark_preserved": true,
+          "alt": "대전시 보문산 행복 숲길 볼라드 설치"
+        }
+      ],
+      "display_title": "대전 보문산 볼라드"
+    },
+    {
+      "post_id": "222881403930",
+      "slug": "sejong-railings",
+      "title": "세종시 난간 설치하다",
+      "summary": "세종시에 설치한 난간 시공 사례입니다.",
+      "category": "보행자 안전 난간",
+      "location": "세종시",
+      "source_page": "https://blog.naver.com/sn6221/222881403930",
+      "images": [
+        {
+          "file": "assets/projects/sejong-railings-1.webp",
+          "source_image_url": "https://postfiles.pstatic.net/MjAyMjA5MjJfMTYw/MDAxNjYzODI1NzM2NTA5.5HFbjUuCawwoD919f6xSBjNvSlFb-qQwBFffqvSvHOwg.3p0L8VPAkUmJz7kXfh78YUZ117JBEDwYd56_WP_d41gg.JPEG.sn6221/watermarked-KakaoTalk_20220922_121120884_07.jpg?type=w773",
+          "width": 773,
+          "height": 580,
+          "attribution": "에스앤 공식 네이버 블로그 (sn6221)",
+          "watermark_preserved": true,
+          "alt": "세종시 난간 설치하다"
+        }
+      ],
+      "display_title": "세종시 보행 안전난간"
+    },
+    {
+      "post_id": "222528456573",
+      "slug": "samcheok-barrier",
+      "title": "삼척시 자갈방지 막이 시공하다",
+      "summary": "삼척 철도 현장에서 선로의 자갈이 밖으로 튀는 것을 방지하기 위한 펜스를 시공한 사례입니다.",
+      "category": "철도 자갈 방지 펜스",
+      "location": "삼척시",
+      "source_page": "https://blog.naver.com/sn6221/222528456573",
+      "images": [
+        {
+          "file": "assets/projects/samcheok-barrier-1.webp",
+          "source_image_url": "https://postfiles.pstatic.net/MjAyMTEwMDZfMjk1/MDAxNjMzNDg4Mzg3MDIz.L76CJ5wUVofdLmAUPJQRBKj6IXk0tQvg9O0m-5TJOO0g.WrmoFJijXsBACr7ua5OP7FXp7jO_5dNdWPhrmVL-eFsg.JPEG.sn6221/watermarked-20210907_114618.jpg?type=w773",
+          "width": 773,
+          "height": 435,
+          "attribution": "에스앤 공식 네이버 블로그 (sn6221)",
+          "watermark_preserved": true,
+          "alt": "삼척시 자갈방지 막이 시공하다"
+        }
+      ],
+      "display_title": "삼척 철도 자갈 방지 펜스"
+    },
+    {
+      "post_id": "222423150013",
+      "slug": "gimpo-lake",
+      "title": "김포 한강 신도시 호수 공원 디자인 난간 설치하다",
+      "summary": "김포 한강 신도시 호수 공원에 SN-104 모델 디자인 난간을 설치한 사례입니다.",
+      "category": "공원 디자인 난간",
+      "location": "김포 한강 신도시 호수 공원",
+      "source_page": "https://blog.naver.com/sn6221/222423150013",
+      "images": [
+        {
+          "file": "assets/projects/gimpo-lake-1.webp",
+          "source_image_url": "https://postfiles.pstatic.net/MjAyMTA3MDdfNzUg/MDAxNjI1NjIyMTUyNDc1.caneN-OqNPO9bQip8smwdpNMoKs12xQNQqvoQtQP55Yg.Jw74WGmClmjLUF1extNr8ULLVrRtpIrf4RJI81qkX0Eg.JPEG.sn6221/watermarked-KakaoTalk_20210706_104119137.jpg?type=w773",
+          "width": 773,
+          "height": 366,
+          "attribution": "에스앤 공식 네이버 블로그 (sn6221)",
+          "watermark_preserved": true,
+          "alt": "김포 한강 신도시 호수 공원 디자인 난간 설치하다"
+        },
+        {
+          "file": "assets/projects/gimpo-lake-2.webp",
+          "source_image_url": "https://postfiles.pstatic.net/MjAyMTA3MDdfMTYx/MDAxNjI1NjIyMTUzMDk2.eSezHlcxxsE_PC7NKTm17zZMqHVeSIdeSh-h6RYsdPgg.vXR0MNayK4XegoJ5tO52ovKU6xDImMoLdzbx5qYCVlMg.JPEG.sn6221/watermarked-KakaoTalk_20210706_104119137_05.jpg?type=w773",
+          "width": 773,
+          "height": 366,
+          "attribution": "에스앤 공식 네이버 블로그 (sn6221)",
+          "watermark_preserved": true,
+          "alt": "김포 한강 신도시 호수 공원 디자인 난간 설치하다"
+        }
+      ],
+      "display_title": "김포 호수공원 디자인 난간"
+    },
+    {
+      "post_id": "222373290467",
+      "slug": "pohang-coast",
+      "title": "포항 영일만 해수욕장 방파제 디자인 난간·휀스 설치",
+      "original_title": "포항 영일만 해수욕장 방파제 우리의 안전을 지켜줄 디자인 난간, 휀스 설치하다",
+      "summary": "포항 영일만해수욕장 옆 방파제에 디자인 난간을 설치한 사례입니다.",
+      "category": "해안 안전 난간",
+      "location": "포항 영일만해수욕장 옆 방파제",
+      "source_page": "https://blog.naver.com/sn6221/222373290467",
+      "images": [
+        {
+          "file": "assets/projects/pohang-coast-1.webp",
+          "source_image_url": "https://postfiles.pstatic.net/MjAyMTA1MjlfMTI0/MDAxNjIyMjU3MTA0Mjcw.XWwZSKKULKXDEMGq7wvf1SLmf5x-hMe9AKyFSYqHNvYg.bxZo-yZHQG3LDiiDu4WsJQ50rRkmORk1_tL8wlTPatMg.JPEG.sn6221/KakaoTalk_20210528_082819985_14.jpg?type=w773",
+          "width": 773,
+          "height": 1031,
+          "attribution": "에스앤 공식 네이버 블로그 (sn6221)",
+          "watermark_preserved": true,
+          "alt": "포항 영일만 해수욕장 방파제 디자인 난간·휀스 설치"
+        },
+        {
+          "file": "assets/projects/pohang-coast-2.webp",
+          "source_image_url": "https://postfiles.pstatic.net/MjAyMTA1MjlfMTA3/MDAxNjIyMjU3MTA2Mjc2.BvOeK--y8xYOXtyNXtOoGOx6sn_6yfORm6LgYYhhZQkg.9Tc_6xxxZKxzXkR70NCSCuct9uJbAm6N7mXFT4_2ZyYg.JPEG.sn6221/KakaoTalk_20210528_082819985_19.jpg?type=w773",
+          "width": 773,
+          "height": 1031,
+          "attribution": "에스앤 공식 네이버 블로그 (sn6221)",
+          "watermark_preserved": true,
+          "alt": "포항 영일만 해수욕장 방파제 디자인 난간·휀스 설치"
+        }
+      ],
+      "display_title": "포항 영일만 해안 난간"
+    }
+  ]
+}
