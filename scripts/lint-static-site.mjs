@@ -60,7 +60,7 @@ requireMatch(/name="keywords"/, "keywords 메타 태그가 필요합니다.");
 requireMatch(/rel="canonical"\s+href="https:\/\/snplus\.ai\.kr\/"/, "canonical URL이 snplus.ai.kr인지 확인이 필요합니다.");
 requireMatch(/property="og:title"/, "Open Graph title 확인이 필요합니다.");
 requireMatch(/property="og:description"/, "Open Graph description 확인이 필요합니다.");
-requireMatch(/property="og:image"\s+content="https:\/\/snplus\.ai\.kr\/assets\/company\/sn-og-image\.jpg"/, "Open Graph 이미지 확인이 필요합니다.");
+requireMatch(/property="og:image"\s+content="https:\/\/snplus\.ai\.kr\/assets\/company\/sn-og-image-20260918\.jpg"/, "Open Graph 이미지 확인이 필요합니다.");
 requireMatch(/name="twitter:card"\s+content="summary_large_image"/, "Twitter card 설정 확인이 필요합니다.");
 requireMatch(/rel="manifest"\s+href="\/site\.webmanifest"/, "manifest 링크가 필요합니다.");
 requireMatch(/name="robots"\s+content="index, follow"/, "robots 메타 태그 확인이 필요합니다.");
@@ -102,6 +102,7 @@ requireFile("assets/docs/sn-catalog.pdf", "제품 카탈로그 PDF가 필요합�
 requireFile("assets/docs/sn-company-profile-2026-cover.pdf", "공사 지명원 공개용 첫 페이지 PDF가 필요합니다.");
 requireFile("assets/docs/sn-credit-report-cover.pdf", "신용평가보고서 공개용 첫 페이지 PDF가 필요합니다.");
 requireFile("assets/company/sn-og-image.jpg", "Open Graph 대표 이미지가 필요합니다.");
+requireFile("assets/company/sn-og-image-20260918.jpg", "한글을 복구한 공유 이미지가 필요합니다.");
 requireFile("public/favicon.png", "favicon 파일이 필요합니다.");
 requireFile("public/apple-touch-icon.png", "apple-touch-icon 파일이 필요합니다.");
 requireFile("public/site.webmanifest", "site.webmanifest 파일이 필요합니다.");
