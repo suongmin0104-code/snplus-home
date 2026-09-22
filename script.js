@@ -185,10 +185,31 @@ function bindNavigation() {
   document.querySelectorAll("[data-view-link]").forEach((link) => {
     link.addEventListener("click", (event) => {
       event.preventDefault();
+      if (link.dataset.viewLink === "estimate") prefillEstimate(link);
       closeDropdowns();
       navigateToView(link.dataset.viewLink);
     });
   });
+}
+
+function prefillEstimate(link) {
+  const form = document.querySelector("[data-contact-form]");
+  if (!form || contactSubmitting) return;
+  const project = link.closest(".project-detail");
+  const title = project?.querySelector("h1")?.textContent?.trim();
+  if (!title) return;
+  const subject = form.elements.subject;
+  // Only replace our own suggestion; preserve everything the visitor wrote.
+  if (subject && (!subject.value.trim() || subject.value === subject.dataset.suggestedValue)) {
+    subject.value = `${title} 관련 견적 문의`;
+    subject.dataset.suggestedValue = subject.value;
+  }
+  const type = form.elements.inquiryType;
+  const suggestedType = link.dataset.inquiryType;
+  if (type && suggestedType && (!type.value || type.value === type.dataset.suggestedValue)) {
+    type.value = suggestedType;
+    type.dataset.suggestedValue = suggestedType;
+  }
 }
 
 function closeDropdowns() {
@@ -322,6 +343,12 @@ function bindEstimateForm() {
   if (!form) return;
   const submitButton = form.querySelector("[data-contact-submit]");
   const defaultButtonText = submitButton?.textContent ?? "문의 접수하기";
+
+  for (const name of ["subject", "inquiryType"]) {
+    form.elements[name]?.addEventListener("input", () => {
+      delete form.elements[name].dataset.suggestedValue;
+    });
+  }
 
   form.addEventListener("input", () => {
     if (!rootFormStarted) {

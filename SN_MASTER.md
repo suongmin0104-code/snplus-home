@@ -11,3 +11,5 @@
 - 공개 홈페이지 디자인: refinement.css. 기존 스타일/업무앱 스타일과 분리.
 - 상세 경로: #project-gimpo-lake, #project-daejeon-bollards, #project-schoolzone, #project-pohang-coast, #project-samcheok-barrier, #project-sejong-railings.
 - 필수 확인: npm run lint, npm run build. 실제 브라우저 확인·메일 수신은 별도 검증해야 한다.
+
+- 2026-09-09 후속 수정: 사례 견적 연결 및 직접 입력 보존. 기능 검증·빌드 완료, 운영 반영 여부는 별도 기록.
